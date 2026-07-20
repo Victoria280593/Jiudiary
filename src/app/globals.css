@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root {
+  /* Тёплый премиум спорт-клуб: тёмная шапка + золотой акцент */
+  --background: #f7f3ec;
+  --foreground: #211c15;
+  --surface: #ffffff;
+  --surface-muted: #efe9dd;
+  --border: #e4dcc9;
+  --muted: #7a715f;
+
+  --header: #171310;
+  --header-foreground: #f5efe2;
+  --header-muted: #b8ac93;
+  --header-border: #322a20;
+
+  --accent: #b8862f;
+  --accent-hover: #a2762a;
+  --accent-soft: #f6e9cf;
+  --accent-foreground: #211c15;
+
+  --danger: #b3432f;
+  --danger-soft: #fbe9e4;
+  --success: #3f7d4d;
+  --success-soft: #e6f1e7;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+
+  --color-header: var(--header);
+  --color-header-foreground: var(--header-foreground);
+  --color-header-muted: var(--header-muted);
+  --color-header-border: var(--header-border);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.card-shadow {
+  box-shadow: 0 1px 2px rgba(33, 28, 21, 0.04), 0 8px 24px -12px rgba(33, 28, 21, 0.12);
+}

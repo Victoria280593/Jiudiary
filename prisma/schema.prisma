@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  COACH
+  STUDENT
+  PARENT
+}
+
+enum Belt {
+  WHITE
+  GREY_WHITE
+  GREY
+  GREY_BLACK
+  YELLOW_WHITE
+  YELLOW
+  YELLOW_BLACK
+  ORANGE_WHITE
+  ORANGE
+  ORANGE_BLACK
+  GREEN_WHITE
+  GREEN
+  GREEN_BLACK
+  BLUE
+  PURPLE
+  BROWN
+  BLACK
+  BLACK_RED
+  RED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Спортивный профиль (для тренеров и учеников BJJ)
+  countryCode         String?
+  birthDate           DateTime?
+  belt                Belt?
+  stripes             Int?
+  blackBeltDegree     Int?
+  blackBeltAwardedAt  DateTime?
+  blackBeltProfessor  String?
+
+  // Student: assigned to a coach
+  coachId String?
+  coach   User?   @relation("CoachStudents", fields: [coachId], references: [id])
+  students User[] @relation("CoachStudents")
+
+  // Trainings created by this user when role = COACH
+  trainings Training[] @relation("CoachTrainings")
+
+  // Attendance records when role = STUDENT
+  attendances Attendance[]
+
+  // Parent <-> child links
+  childrenLinks ParentChild[] @relation("ParentLinks")
+  parentLinks   ParentChild[] @relation("ChildLinks")
+
+  passwordResetTokens PasswordResetToken[]
+  achievements        Achievement[]
+}
+
+model Achievement {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  description String
+  date        DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model ParentChild {
+  id        String @id @default(cuid())
+  parentId  String
+  parent    User   @relation("ParentLinks", fields: [parentId], references: [id])
+  studentId String
+  student   User   @relation("ChildLinks", fields: [studentId], references: [id])
+
+  @@unique([parentId, studentId])
+}
+
+model Training {
+  id        String   @id @default(cuid())
+  coachId   String
+  coach     User     @relation("CoachTrainings", fields: [coachId], references: [id])
+  title     String
+  date      DateTime
+  location  String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  attendances Attendance[]
+}
+
+model Attendance {
+  id         String   @id @default(cuid())
+  trainingId String
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  studentId  String
+  student    User     @relation(fields: [studentId], references: [id])
+  attended   Boolean?
+  comment    String?
+
+  @@unique([trainingId, studentId])
+}

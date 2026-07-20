@@ -1,0 +1,43 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { LoginForm } from "@/components/LoginForm";
+import { AuthCard } from "@/components/AuthCard";
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reset?: string }>;
+}) {
+  const session = await getSession();
+  if (session) redirect("/dashboard");
+
+  const { reset } = await searchParams;
+
+  return (
+    <AuthCard
+      title="Вход в дневник"
+      subtitle="Спортивный дневник для тренеров, учеников и родителей"
+      footer={
+        <>
+          <Link href="/forgot-password" className="font-medium text-accent hover:text-accent-hover">
+            Забыли пароль?
+          </Link>
+          <p>
+            Нет аккаунта?{" "}
+            <Link href="/register" className="font-medium text-accent hover:text-accent-hover">
+              Зарегистрироваться
+            </Link>
+          </p>
+        </>
+      }
+    >
+      {reset === "success" && (
+        <p className="mb-4 rounded-md bg-success-soft px-3 py-2 text-sm text-success">
+          Пароль обновлён. Войдите с новым паролем.
+        </p>
+      )}
+      <LoginForm />
+    </AuthCard>
+  );
+}

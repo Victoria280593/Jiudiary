@@ -1,0 +1,8 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN "belt" TEXT;
+ALTER TABLE "User" ADD COLUMN "birthDate" DATETIME;
+ALTER TABLE "User" ADD COLUMN "blackBeltAwardedAt" DATETIME;
+ALTER TABLE "User" ADD COLUMN "blackBeltDegree" INTEGER;
+ALTER TABLE "User" ADD COLUMN "blackBeltProfessor" TEXT;
+ALTER TABLE "User" ADD COLUMN "countryCode" TEXT;
+ALTER TABLE "User" ADD COLUMN "stripes" INTEGER;
