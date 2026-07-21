@@ -1,0 +1,25 @@
+@JiuDiary_Api_HostAddress = http://localhost:5136
+
+GET {{JiuDiary_Api_HostAddress}}/api/health
+Accept: application/json
+
+###
+
+POST {{JiuDiary_Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "login": "admin@jiudiary.local",
+  "password": "JiuDiary2026!"
+}
+
+### Подставьте accessToken из ответа на запрос входа
+
+GET {{JiuDiary_Api_HostAddress}}/api/auth/me
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+
+POST {{JiuDiary_Api_HostAddress}}/api/auth/logout
+Authorization: Bearer {{accessToken}}
