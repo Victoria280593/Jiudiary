@@ -1,14 +1,21 @@
 # DeployFiles
 
-Файлы развёртывания JIUDIARY. Папка находится рядом с `front` и `back`.
+Файлы и инструкции для развёртывания JIUDIARY. Папка находится на одном уровне
+с `front` и `back`.
 
 ## Структура
 
 ```text
 DeployFiles/
 ├── compose/
+│   ├── backend/
+│   │   └── docker-compose.yml
 │   └── mssql/
 │       └── docker-compose.yml
+├── dokploy/
+│   └── backend-application.md
+├── git/
+│   └── README.md
 ├── scripts/
 │   ├── check-mssql-port.ps1
 │   ├── configure-firewall.sh
@@ -20,68 +27,101 @@ DeployFiles/
 └── .env.example
 ```
 
-## Вариант 1: развёртывание через Dokploy
+## Что сейчас развёрнуто
 
-Для этого варианта папку `DeployFiles` копировать на VPS не нужно:
+| Сервис | Тип в Dokploy | Внешний адрес |
+|---|---|---|
+| MSSQL | Compose | `217.114.15.222:1433` |
+| JiuDiary API | Application | `http://217.114.15.222:5136` |
 
-1. Откройте проект в Dokploy и создайте сервис типа **Compose**.
-2. Выберите провайдер **Raw**.
-3. Скопируйте содержимое `compose/mssql/docker-compose.yml` из локального репозитория в редактор Dokploy.
-4. В разделе **Environment** добавьте значения из `.env.example`, заменив пароль.
-5. Нажмите **Deploy**.
-6. Выполните `sql/001-create-users-and-roles.sql` через SSMS или терминал контейнера.
+Swagger API:
 
-## Вариант 2: ручной запуск на VPS
-
-Сначала репозиторий нужно клонировать или скопировать на сервер. Пример после клонирования:
-
-```bash
-git clone <URL_ВАШЕГО_РЕПОЗИТОРИЯ> jiudiary
-cd jiudiary/DeployFiles
-cp .env.example .env
-nano .env
-docker compose --env-file .env -f compose/mssql/docker-compose.yml up -d
-bash scripts/init-mssql.sh
+```text
+http://217.114.15.222:5136/swagger/index.html
 ```
 
-В `.env` обязательно замените `MSSQL_SA_PASSWORD`. Файл `.env` исключён из Git, реальный пароль коммитить нельзя.
+Health check:
 
-Скрипт инициализации создаёт базу `JiuDiary`, таблицы `Roles` и `Users`, а также роль `Admin` с `Id = 1`.
+```text
+http://217.114.15.222:5136/api/health
+```
+
+## Развёртывание через Dokploy
+
+- MSSQL создаётся как сервис типа **Compose** из
+  `compose/mssql/docker-compose.yml`.
+- Backend создаётся как отдельный сервис типа **Application**. Полный список
+  значений для Git, Dockerfile, портов и автодеплоя находится в
+  `dokploy/backend-application.md`.
+- Настройка read-only deploy key и GitHub webhook описана в `git/README.md`.
+
+Копировать папку `DeployFiles` на VPS при таком варианте не нужно: Dokploy сам
+клонирует репозиторий и собирает контейнер.
+
+## Ручной запуск через Docker Compose
+
+Сначала клонируйте репозиторий:
+
+```bash
+git clone <URL_РЕПОЗИТОРИЯ> jiudiary
+cd jiudiary
+cp DeployFiles/.env.example DeployFiles/.env
+nano DeployFiles/.env
+```
+
+Запуск MSSQL:
+
+```bash
+docker compose \
+  --env-file DeployFiles/.env \
+  -f DeployFiles/compose/mssql/docker-compose.yml \
+  up -d
+```
+
+Запуск backend:
+
+```bash
+docker compose \
+  --env-file DeployFiles/.env \
+  -f DeployFiles/compose/backend/docker-compose.yml \
+  up -d --build
+```
+
+Файл `DeployFiles/.env` нельзя добавлять в Git. Настоящие пароли, приватные
+SSH-ключи и полный URL webhook также нельзя хранить в репозитории.
 
 ## Установка Docker и Dokploy
 
-Скрипты рассчитаны на чистый Ubuntu VPS:
+Скрипты рассчитаны на Ubuntu VPS:
 
 ```bash
 sudo bash DeployFiles/scripts/install-docker-ubuntu.sh
 sudo bash DeployFiles/scripts/install-dokploy.sh 217.114.15.222
 ```
 
-Dokploy будет доступен по адресу `http://IP_СЕРВЕРА:3000`. Его официальный установщик сам умеет устанавливать Docker, поэтому отдельный Docker-скрипт нужен только для ручной установки.
+Панель Dokploy будет доступна по адресу:
 
-## Firewall и подключение через SSMS
-
-Скрипт можно запускать только после копирования репозитория на VPS. Разрешите `1433` только для своего внешнего IP:
-
-```bash
-sudo bash DeployFiles/scripts/configure-firewall.sh ВАШ_ВНЕШНИЙ_IP
+```text
+http://217.114.15.222:3000
 ```
 
-Скрипт использует цепочку Docker `DOCKER-USER`, потому что опубликованные Docker-порты могут обходить обычные правила UFW. Если на VPS есть отдельный firewall у хостинг-провайдера, добавьте такое же ограничение и там. Для сохранения правил после перезагрузки установите `iptables-persistent`.
+## Инициализация MSSQL
+
+После запуска MSSQL:
+
+```bash
+bash DeployFiles/scripts/init-mssql.sh
+```
+
+Либо выполните `sql/001-create-users-and-roles.sql` через SSMS.
 
 Проверка порта с Windows:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\DeployFiles\scripts\check-mssql-port.ps1 -ServerIp 217.114.15.222
+powershell -ExecutionPolicy Bypass `
+  -File .\DeployFiles\scripts\check-mssql-port.ps1 `
+  -ServerIp 217.114.15.222
 ```
 
-Настройки SSMS:
-
-- Server name: `217.114.15.222,1433`
-- Authentication: `SQL Server Authentication`
-- Login: `sa`
-- Database: `JiuDiary`
-- Encrypt: включено
-- Trust server certificate: включено для первичной настройки
-
-Не открывайте порт `1433` для всего интернета. Для постоянной эксплуатации лучше использовать VPN или SSH-туннель и отдельного SQL-пользователя вместо `sa`.
+Не открывайте MSSQL-порт `1433` для всего интернета. Ограничьте его своим IP,
+VPN или SSH-туннелем.

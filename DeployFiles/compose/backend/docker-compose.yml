@@ -1,0 +1,16 @@
+services:
+  api:
+    build:
+      context: ../../../back
+      dockerfile: JiuDiary.Api/Dockerfile
+    image: jiudiary-api:local
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      TemporaryAuth__Login: "${API_TEMPORARY_LOGIN:-admin@jiudiary.local}"
+      TemporaryAuth__Password: "${API_TEMPORARY_PASSWORD:?Set API_TEMPORARY_PASSWORD in .env}"
+      TemporaryAuth__Name: "${API_TEMPORARY_NAME:-Administrator}"
+      TemporaryAuth__Role: "${API_TEMPORARY_ROLE:-ADMIN}"
+    ports:
+      - "${API_HOST_PORT:-5136}:8080"
