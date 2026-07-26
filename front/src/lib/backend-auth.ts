@@ -23,6 +23,10 @@ export type LoginResult =
   | { ok: true; session: BackendSession }
   | { ok: false; error: string };
 
+export type RegisterResult =
+  | { ok: true; user: BackendUser }
+  | { ok: false; error: string };
+
 const roles = new Set<Role>(["ADMIN", "COACH", "STUDENT", "PARENT"]);
 
 function isBackendSession(value: unknown): value is BackendSession {
@@ -91,6 +95,39 @@ export async function loginWithBackend(login: string, password: string): Promise
     return await readSessionResponse(response);
   } catch {
     return { ok: false, error: "Не удалось подключиться к сервису авторизации" };
+  }
+}
+
+export async function registerWithBackend(
+  login: string,
+  name: string,
+  password: string
+): Promise<RegisterResult> {
+  try {
+    const response = await fetch(`${backendUrl}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ login, name, password }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (response.status === 409) {
+      return { ok: false, error: "Пользователь с таким email уже зарегистрирован" };
+    }
+    if (response.status === 400) {
+      return { ok: false, error: "Проверьте имя, email и пароль" };
+    }
+    if (!response.ok) {
+      return { ok: false, error: "Сервис регистрации временно недоступен" };
+    }
+
+    const user: unknown = await response.json();
+    return isBackendUser(user)
+      ? { ok: true, user }
+      : { ok: false, error: "Сервис регистрации вернул некорректный ответ" };
+  } catch {
+    return { ok: false, error: "Не удалось подключиться к сервису регистрации" };
   }
 }
 

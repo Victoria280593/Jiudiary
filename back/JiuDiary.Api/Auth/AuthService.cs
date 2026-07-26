@@ -20,15 +20,69 @@ public sealed class AuthService(
     IOptions<JwtOptions> jwtOptions,
     IOptions<AuthBootstrapOptions> bootstrapOptions) : IAuthService
 {
+    private const int CoachRoleId = 2;
+    private const string CoachRoleName = "Coach";
     private readonly JwtOptions _jwtOptions = jwtOptions.Value;
     private readonly AuthBootstrapOptions _bootstrapOptions = bootstrapOptions.Value;
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Регистрирует тренера и сохраняет только безопасный хеш его пароля.
+    /// </summary>
+    public async Task<UserResponse?> RegisterAsync(
+        string login,
+        string name,
+        string password,
+        CancellationToken cancellationToken)
+    {
+        var normalizedLogin = login.Trim();
+
+        // Логин уникален: повторная регистрация возвращает Conflict через контроллер.
+        if (await dbContext.Users.AnyAsync(
+                user => user.Login == normalizedLogin,
+                cancellationToken))
+        {
+            return null;
+        }
+
+        // Пока открыта только регистрация тренеров; роль создаётся один раз при необходимости.
+        var role = await dbContext.Roles.SingleOrDefaultAsync(
+            existingRole => existingRole.Name == CoachRoleName,
+            cancellationToken);
+
+        if (role is null)
+        {
+            role = new Role { Id = CoachRoleId, Name = CoachRoleName };
+            dbContext.Roles.Add(role);
+        }
+
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Login = normalizedLogin,
+            Name = name.Trim(),
+            IsActive = true,
+            Role = role,
+            RoleId = role.Id
+        };
+
+        // Открытый пароль не записывается в БД и после вычисления хеша больше не используется.
+        user.PasswordHash = passwordHasher.HashPassword(user, password);
+
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return UserResponse.From(ToAuthenticatedUser(user));
+    }
+
+    /// <summary>
+    /// Проверяет пароль пользователя и при успехе создаёт JWT-сессию.
+    /// </summary>
     public async Task<LoginResponse?> LoginAsync(
         string login,
         string password,
         CancellationToken cancellationToken)
     {
+        // Роль загружается вместе с пользователем, чтобы поместить её в claims JWT.
         var user = await dbContext.Users
             .Include(x => x.Role)
             .SingleOrDefaultAsync(x => x.Login == login.Trim(), cancellationToken);
@@ -38,6 +92,7 @@ public sealed class AuthService(
             return null;
         }
 
+        // Bootstrap нужен только для первого входа заранее созданного администратора без хеша.
         if (string.IsNullOrWhiteSpace(user.PasswordHash))
         {
             if (!CanBootstrap(user.Login, password))
@@ -49,6 +104,7 @@ public sealed class AuthService(
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
+        // PasswordHasher сам извлекает salt из PasswordHash и безопасно сравнивает пароль.
         var verification = passwordHasher.VerifyHashedPassword(
             user,
             user.PasswordHash,
@@ -59,12 +115,17 @@ public sealed class AuthService(
             : await CreateSessionAsync(user, cancellationToken);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Обменивает действующий refresh-токен на полностью новую пару токенов.
+    /// </summary>
     public async Task<LoginResponse?> RefreshAsync(
         string refreshToken,
         CancellationToken cancellationToken)
     {
+        // В БД ищется SHA-256-хеш: исходный refresh-токен хранится только у клиента.
         var tokenHash = HashToken(refreshToken);
+
+        // Serializable-транзакция не позволяет двум запросам одновременно использовать один токен.
         await using var transaction = await dbContext.Database.BeginTransactionAsync(
             IsolationLevel.Serializable,
             cancellationToken);
@@ -83,18 +144,24 @@ public sealed class AuthService(
             return null;
         }
 
+        // Старый refresh-токен становится недействительным сразу после единственного применения.
         session.LastUsedAt = DateTime.UtcNow;
         session.RevokedAt = DateTime.UtcNow;
+
+        // Создаётся новая серверная сессия, новый refresh-токен и новый access JWT.
         var response = await CreateSessionAsync(session.User, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return response;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Завершает сессию, помечая соответствующий refresh-токен отозванным.
+    /// </summary>
     public async Task LogoutAsync(
         string refreshToken,
         CancellationToken cancellationToken)
     {
+        // Клиент присылает исходный токен, а сравнение выполняется по его хешу.
         var tokenHash = HashToken(refreshToken);
         var session = await dbContext.AuthSessions
             .SingleOrDefaultAsync(x => x.RefreshTokenHash == tokenHash, cancellationToken);
@@ -109,12 +176,13 @@ public sealed class AuthService(
     }
 
     /// <summary>
-    /// Создаёт JWT, refresh-токен и запись серверной сессии.
+    /// Создаёт access JWT, одноразовый refresh-токен и запись серверной сессии.
     /// </summary>
     private async Task<LoginResponse> CreateSessionAsync(
         User user,
         CancellationToken cancellationToken)
     {
+        // Access-токен короткий, refresh-сессия живёт дольше и позволяет выпустить новую пару.
         var refreshToken = CreateRefreshToken();
         var refreshExpiresAt = DateTimeOffset.UtcNow.AddDays(_jwtOptions.RefreshTokenDays);
         var authenticatedUser = ToAuthenticatedUser(user);
@@ -127,9 +195,14 @@ public sealed class AuthService(
             ExpiresAt = refreshExpiresAt.UtcDateTime,
             CreatedAt = DateTime.UtcNow
         });
+
+        // В MSSQL сохраняется только хеш refresh-токена: украденная БД не раскрывает сам токен.
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        // Access JWT не хранится на сервере: его подлинность подтверждается HMAC-подписью.
         var accessToken = jwtTokenService.Issue(authenticatedUser);
+
+        // Исходный refresh-токен возвращается клиенту единственный раз.
         return new LoginResponse(
             accessToken.Token,
             "Bearer",

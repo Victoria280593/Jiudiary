@@ -16,6 +16,7 @@ EF Core работает через `DataBase/JiuDiaryDbContext.cs` и стро�
 
 ## Авторизация
 
+- `POST /api/auth/register` создаёт активного тренера с ролью `Coach`, сохраняя только хеш пароля.
 - `POST /api/auth/login` проверяет пользователя в MSSQL и возвращает JWT access-токен
   и одноразовый refresh-токен.
 - `POST /api/auth/refresh` выполняет ротацию refresh-токена и возвращает новую пару.

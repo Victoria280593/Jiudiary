@@ -16,7 +16,7 @@ public sealed class AuthSession
     public Guid UserId { get; set; }
 
     /// <summary>
-    /// SHA-256-хеш refresh-токена.
+    /// SHA-256-хеш refresh-токена; исходное значение хранится только в защищённой cookie клиента.
     /// </summary>
     public string RefreshTokenHash { get; set; } = string.Empty;
 

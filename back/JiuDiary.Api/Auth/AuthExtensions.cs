@@ -22,6 +22,7 @@ public static class AuthExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // Ошибка в ключе или сроках жизни останавливает приложение при запуске, а не при первом входе.
         services
             .AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
@@ -42,6 +43,7 @@ public static class AuthExtensions
         services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
+        // Каждый Bearer-токен проверяется по подписи, издателю, получателю и сроку действия.
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -57,6 +59,7 @@ public static class AuthExtensions
                     IssuerSigningKey = new SymmetricSecurityKey(
                         Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
                     ValidateLifetime = true,
+                    // Небольшой допуск компенсирует незначительное расхождение времени серверов.
                     ClockSkew = TimeSpan.FromSeconds(30),
                     NameClaimType = ClaimTypes.Name,
                     RoleClaimType = ClaimTypes.Role

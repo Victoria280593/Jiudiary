@@ -2,12 +2,30 @@
 
 import { redirect } from "next/navigation";
 import { createSession, destroySession } from "@/lib/auth";
-import { loginWithBackend } from "@/lib/backend-auth";
+import { loginWithBackend, registerWithBackend } from "@/lib/backend-auth";
 
 export type FormState = { error?: string } | undefined;
 
-export async function registerAction(): Promise<FormState> {
-  return { error: "Регистрация временно отключена" };
+export async function registerAction(
+  _prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const name = String(formData.get("name") || "").trim();
+  const email = String(formData.get("email") || "")
+    .trim()
+    .toLowerCase();
+  const password = String(formData.get("password") || "");
+
+  if (!name || !email || password.length < 8) {
+    return { error: "Введите имя, email и пароль не короче 8 символов" };
+  }
+
+  const result = await registerWithBackend(email, name, password);
+  if (!result.ok) {
+    return { error: result.error };
+  }
+
+  redirect("/login?registered=success");
 }
 
 export async function loginAction(

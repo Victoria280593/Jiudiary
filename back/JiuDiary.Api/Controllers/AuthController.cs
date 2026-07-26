@@ -16,6 +16,44 @@ namespace JiuDiary.Api.Controllers;
 public sealed class AuthController(IAuthService authService) : ControllerBase
 {
     /// <summary>
+    /// Создаёт нового активного тренера с ролью Coach.
+    /// </summary>
+    /// <param name="request">Логин, имя и пароль нового пользователя.</param>
+    /// <param name="cancellationToken">Токен отмены HTTP-запроса.</param>
+    /// <returns>Созданный пользователь без пароля и его хеша.</returns>
+    [HttpPost("register")]
+    [ProducesResponseType<UserResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<UserResponse>> Register(
+        RegisterRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.Login) ||
+            request.Login.Trim().Length > 256 ||
+            string.IsNullOrWhiteSpace(request.Name) ||
+            request.Name.Trim().Length > 200 ||
+            request.Password is null ||
+            request.Password.Length is < 8 or > 128)
+        {
+            return BadRequest(new
+            {
+                error = "Login and name are required; password must contain from 8 to 128 characters."
+            });
+        }
+
+        var user = await authService.RegisterAsync(
+            request.Login,
+            request.Name,
+            request.Password,
+            cancellationToken);
+
+        return user is null
+            ? Conflict(new { error = "A user with this login already exists." })
+            : StatusCode(StatusCodes.Status201Created, user);
+    }
+
+    /// <summary>
     /// Проверяет логин и пароль и возвращает access/refresh-токены.
     /// </summary>
     /// <param name="request">Логин и пароль пользователя.</param>

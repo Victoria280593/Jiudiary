@@ -14,6 +14,9 @@ export async function hashPassword(password: string) {
   return bcrypt.hash(password, 10);
 }
 
+/**
+ * Записывает полученные от C# API токены в недоступные JavaScript httpOnly-cookie.
+ */
 export async function createSession(session: BackendSession) {
   const expires = new Date(session.expiresAt);
   const cookieStore = await cookies();
@@ -22,6 +25,7 @@ export async function createSession(session: BackendSession) {
     ? appUrl.startsWith("https://")
     : process.env.NODE_ENV === "production";
 
+  // Access JWT живёт недолго и отправляется только серверной частью фронта.
   cookieStore.set(SESSION_COOKIE_NAME, session.accessToken, {
     httpOnly: true,
     secure: secureCookie,
@@ -30,6 +34,7 @@ export async function createSession(session: BackendSession) {
     expires,
   });
 
+  // Refresh-токен живёт дольше и нужен только для получения новой пары токенов.
   cookieStore.set(REFRESH_COOKIE_NAME, session.refreshToken, {
     httpOnly: true,
     secure: secureCookie,
@@ -39,6 +44,9 @@ export async function createSession(session: BackendSession) {
   });
 }
 
+/**
+ * Отзывает refresh-сессию на backend и удаляет обе локальные cookie.
+ */
 export async function destroySession() {
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get(REFRESH_COOKIE_NAME)?.value;
@@ -56,6 +64,7 @@ export const getSession = cache(async () => {
   const accessToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   if (!accessToken) return null;
 
+  // Backend проверяет подпись и срок JWT; одной только наличия cookie недостаточно.
   const user = await getBackendUser(accessToken);
   return user ? { accessToken, user } : null;
 });

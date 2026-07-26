@@ -7,12 +7,12 @@ import { AuthCard } from "@/components/AuthCard";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ reset?: string }>;
+  searchParams: Promise<{ reset?: string; registered?: string }>;
 }) {
   const session = await getSession();
   if (session) redirect("/dashboard");
 
-  const { reset } = await searchParams;
+  const { reset, registered } = await searchParams;
 
   return (
     <AuthCard
@@ -35,6 +35,11 @@ export default async function LoginPage({
       {reset === "success" && (
         <p className="mb-4 rounded-md bg-success-soft px-3 py-2 text-sm text-success">
           Пароль обновлён. Войдите с новым паролем.
+        </p>
+      )}
+      {registered === "success" && (
+        <p className="mb-4 rounded-md bg-success-soft px-3 py-2 text-sm text-success">
+          Аккаунт тренера создан. Теперь войдите с указанными данными.
         </p>
       )}
       <LoginForm />

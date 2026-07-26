@@ -24,6 +24,7 @@ function isRefreshedSession(value: unknown): value is RefreshedSession {
 
 async function refreshSession(refreshToken: string): Promise<RefreshedSession | null> {
   try {
+    // Backend принимает refresh-токен один раз и возвращает полностью новую пару.
     const response = await fetch(`${backendUrl}/api/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -46,6 +47,7 @@ async function resolveSession(request: NextRequest) {
 
   if (accessToken) {
     try {
+      // /me подтверждает подпись и срок access JWT перед доступом к закрытым страницам.
       const response = await fetch(`${backendUrl}/api/auth/me`, {
         headers: { Authorization: `Bearer ${accessToken}` },
         cache: "no-store",
@@ -83,6 +85,7 @@ export async function proxy(request: NextRequest) {
   const { authed, stale, session } = await resolveSession(request);
 
   if (session) {
+    // Новые токены сразу заменяют старые в текущем запросе и последующем ответе.
     request.cookies.set(SESSION_COOKIE_NAME, session.accessToken);
     request.cookies.set(REFRESH_COOKIE_NAME, session.refreshToken);
   }
@@ -108,6 +111,7 @@ export async function proxy(request: NextRequest) {
       sameSite: "lax" as const,
       path: "/",
     };
+    // Set-Cookie перезаписывает старые httpOnly-cookie с теми же именем и path.
     response.cookies.set(SESSION_COOKIE_NAME, session.accessToken, {
       ...cookieOptions,
       expires: new Date(session.expiresAt),
