@@ -37,8 +37,10 @@ export default async function ProfilePage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Мой профиль</h1>
-        <p className="text-sm text-muted">
+        <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">
+          Мой профиль
+        </h1>
+        <p className="mt-2 text-sm text-muted sm:text-base">
           {user.name} · {ROLE_LABELS[user.role]}
         </p>
       </div>

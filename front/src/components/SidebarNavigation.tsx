@@ -55,7 +55,7 @@ export function SidebarNavigation({ role }: { role: Role }) {
         className={`sidebar-link ${pathname === "/dashboard/profile" ? "sidebar-link-active" : ""}`}
       >
         <ProfileIcon />
-        <span>Мой аккаунт</span>
+        <span>Мой профиль</span>
       </Link>
     </nav>
   );
@@ -95,7 +95,7 @@ export function MobileNavigation({ role }: { role: Role }) {
         }`}
       >
         <ProfileIcon />
-        <span>Аккаунт</span>
+        <span>Профиль</span>
       </Link>
     </nav>
   );
