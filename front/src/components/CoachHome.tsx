@@ -26,7 +26,7 @@ export async function CoachHome({
         <section className="mb-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
           <div>
             <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">
-              Добро пожаловать, тренер! <span aria-hidden="true">👋</span>
+              Добро пожаловать, тренер!
             </h1>
             <p className="mt-2 text-sm text-muted sm:text-base">
               {coachName}, выберите дату, чтобы запланировать тренировку или посмотреть темы.

@@ -2,22 +2,22 @@
 
 :root {
   /* Спокойная светлая палитра: молочный фон и мягкий шалфейный акцент. */
-  --background: #f6f7fb;
-  --foreground: #111827;
+  --background: #f7f3ec;
+  --foreground: #2b241d;
   --surface: #ffffff;
-  --surface-muted: #f1f3f9;
-  --border: #e5e8f0;
-  --muted: #687086;
+  --surface-muted: #f1ebe2;
+  --border: #e5dacb;
+  --muted: #7b6f61;
 
   --header: #ffffff;
-  --header-foreground: #111827;
-  --header-muted: #687086;
-  --header-border: #e5e8f0;
+  --header-foreground: #2b241d;
+  --header-muted: #7b6f61;
+  --header-border: #e5dacb;
 
-  --accent: #435bdb;
-  --accent-hover: #344bc9;
-  --accent-soft: #edf0ff;
-  --accent-foreground: #3148c0;
+  --accent: #9b7045;
+  --accent-hover: #835d39;
+  --accent-soft: #f1e6d8;
+  --accent-foreground: #684521;
 
   --danger: #b3432f;
   --danger-soft: #fbe9e4;
@@ -56,26 +56,26 @@
 body {
   background-color: var(--background);
   background-image:
-    radial-gradient(circle at 12% 0%, rgba(226, 231, 255, 0.75), transparent 30rem),
-    radial-gradient(circle at 100% 16%, rgba(237, 228, 249, 0.65), transparent 34rem),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.8), transparent 38rem);
+    radial-gradient(circle at 12% 0%, rgba(232, 214, 193, 0.72), transparent 30rem),
+    radial-gradient(circle at 100% 16%, rgba(242, 226, 207, 0.68), transparent 34rem),
+    linear-gradient(145deg, rgba(255, 253, 249, 0.88), transparent 38rem);
   background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
 .card-shadow {
-  box-shadow: 0 1px 2px rgba(18, 27, 55, 0.04), 0 18px 45px -28px rgba(39, 51, 110, 0.25);
+  box-shadow: 0 1px 2px rgba(56, 42, 29, 0.04), 0 18px 45px -28px rgba(86, 61, 38, 0.25);
 }
 
 .header-shadow {
-  box-shadow: 0 14px 40px -24px rgba(39, 51, 110, 0.32);
+  box-shadow: 0 14px 40px -24px rgba(86, 61, 38, 0.3);
 }
 
 .calendar-shadow {
   box-shadow:
-    0 2px 5px rgba(24, 33, 68, 0.025),
-    0 24px 65px -38px rgba(34, 48, 112, 0.28);
+    0 2px 5px rgba(56, 42, 29, 0.025),
+    0 24px 65px -38px rgba(86, 61, 38, 0.26);
 }
 
 .sidebar-link {
