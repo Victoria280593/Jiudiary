@@ -17,10 +17,14 @@ export async function hashPassword(password: string) {
 export async function createSession(session: BackendSession) {
   const expires = new Date(session.expiresAt);
   const cookieStore = await cookies();
+  const appUrl = process.env.APP_URL;
+  const secureCookie = appUrl
+    ? appUrl.startsWith("https://")
+    : process.env.NODE_ENV === "production";
 
   cookieStore.set(SESSION_COOKIE_NAME, session.accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: secureCookie,
     sameSite: "lax",
     path: "/",
     expires,

@@ -10,10 +10,13 @@ DeployFiles/
 ├── compose/
 │   ├── backend/
 │   │   └── docker-compose.yml
+│   ├── frontend/
+│   │   └── docker-compose.yml
 │   └── mssql/
 │       └── docker-compose.yml
 ├── dokploy/
-│   └── backend-application.md
+│   ├── backend-application.md
+│   └── frontend-application.md
 ├── git/
 │   └── README.md
 ├── scripts/
@@ -33,6 +36,7 @@ DeployFiles/
 |---|---|---|
 | MSSQL | Compose | `217.114.15.222:1433` |
 | JiuDiary API | Application | `http://217.114.15.222:5136` |
+| JiuDiary Frontend | Application | `http://217.114.15.222:3001` |
 
 Swagger API:
 
@@ -53,6 +57,8 @@ http://217.114.15.222:5136/api/health
 - Backend создаётся как отдельный сервис типа **Application**. Полный список
   значений для Git, Dockerfile, портов и автодеплоя находится в
   `dokploy/backend-application.md`.
+- Frontend создаётся как отдельный сервис типа **Application** по инструкции
+  `dokploy/frontend-application.md`.
 - Настройка read-only deploy key и GitHub webhook описана в `git/README.md`.
 
 Копировать папку `DeployFiles` на VPS при таком варианте не нужно: Dokploy сам
@@ -84,6 +90,15 @@ docker compose \
 docker compose \
   --env-file DeployFiles/.env \
   -f DeployFiles/compose/backend/docker-compose.yml \
+  up -d --build
+```
+
+Запуск frontend:
+
+```bash
+docker compose \
+  --env-file DeployFiles/.env \
+  -f DeployFiles/compose/frontend/docker-compose.yml \
   up -d --build
 ```
 

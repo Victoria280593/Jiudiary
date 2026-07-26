@@ -1,0 +1,20 @@
+services:
+  frontend:
+    build:
+      context: ../../../front
+      dockerfile: Dockerfile
+    image: jiudiary-frontend:local
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "file:/app/data/app.db"
+      BACKEND_URL: "${FRONTEND_BACKEND_URL:-http://217.114.15.222:5136}"
+      APP_URL: "${FRONTEND_APP_URL:-http://217.114.15.222:3001}"
+    ports:
+      - "${FRONTEND_HOST_PORT:-3001}:3000"
+    volumes:
+      - frontend-data:/app/data
+      - frontend-avatars:/app/public/avatars
+
+volumes:
+  frontend-data:
+  frontend-avatars:
