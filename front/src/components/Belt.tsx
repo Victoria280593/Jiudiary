@@ -2,6 +2,7 @@ import { BELT_COLORS } from "@/lib/belt";
 import type { Belt as BeltType } from "@prisma/client";
 
 const SIZES = {
+  xs: { width: 36, height: 27 },
   sm: { width: 64, height: 46 },
   md: { width: 104, height: 74 },
   lg: { width: 160, height: 114 },

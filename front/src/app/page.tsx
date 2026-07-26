@@ -1,7 +1,14 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { CoachHome } from "@/components/CoachHome";
+import { getCurrentUser } from "@/lib/auth";
 
 export default async function Home() {
-  const session = await getSession();
-  redirect(session ? "/dashboard" : "/login");
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  if (user.role === "COACH") {
+    return <CoachHome coachId={user.id} coachName={user.name} />;
+  }
+
+  redirect("/dashboard");
 }
