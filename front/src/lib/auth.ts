@@ -8,7 +8,7 @@ import {
   logoutFromBackend,
   type BackendSession,
 } from "@/lib/backend-auth";
-import { SESSION_COOKIE_NAME } from "@/lib/auth-constants";
+import { REFRESH_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/auth-constants";
 
 export async function hashPassword(password: string) {
   return bcrypt.hash(password, 10);
@@ -29,17 +29,26 @@ export async function createSession(session: BackendSession) {
     path: "/",
     expires,
   });
+
+  cookieStore.set(REFRESH_COOKIE_NAME, session.refreshToken, {
+    httpOnly: true,
+    secure: secureCookie,
+    sameSite: "lax",
+    path: "/",
+    expires: new Date(session.refreshExpiresAt),
+  });
 }
 
 export async function destroySession() {
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const refreshToken = cookieStore.get(REFRESH_COOKIE_NAME)?.value;
 
-  if (accessToken) {
-    await logoutFromBackend(accessToken);
+  if (refreshToken) {
+    await logoutFromBackend(refreshToken);
   }
 
   cookieStore.delete(SESSION_COOKIE_NAME);
+  cookieStore.delete(REFRESH_COOKIE_NAME);
 }
 
 export const getSession = cache(async () => {

@@ -1,29 +1,14 @@
-using System.Security.Claims;
 using System.Threading.RateLimiting;
 using JiuDiary.Api.Auth;
-using JiuDiary.Api.Contracts.Auth;
-using Microsoft.AspNetCore.Authentication;
+using JiuDiary.Api.DataBase;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services
-    .AddOptions<TemporaryAuthOptions>()
-    .Bind(builder.Configuration.GetSection(TemporaryAuthOptions.SectionName))
-    .Validate(options => !string.IsNullOrWhiteSpace(options.Login), "TemporaryAuth:Login is required")
-    .Validate(options => !string.IsNullOrWhiteSpace(options.Password), "TemporaryAuth:Password is required")
-    .ValidateOnStart();
-
-builder.Services.AddSingleton<IUserAuthenticator, HardcodedUserAuthenticator>();
-builder.Services.AddSingleton<ITokenStore, InMemoryTokenStore>();
-
-builder.Services
-    .AddAuthentication(BearerTokenAuthenticationHandler.SchemeName)
-    .AddScheme<AuthenticationSchemeOptions, BearerTokenAuthenticationHandler>(
-        BearerTokenAuthenticationHandler.SchemeName,
-        _ => { });
-builder.Services.AddAuthorization();
+builder.Services.AddDataBase(builder.Configuration);
+builder.Services.AddJiuDiaryAuth(builder.Configuration);
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -33,11 +18,13 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1",
         Description = "API авторизации и данных спортивного дневника."
     });
+    options.IncludeXmlComments(
+        Path.Combine(AppContext.BaseDirectory, "JiuDiary.Api.xml"));
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
-        BearerFormat = "opaque token",
+        BearerFormat = "JWT",
         Description = "Вставьте accessToken, полученный через POST /api/auth/login."
     });
     options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
@@ -57,10 +44,14 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
+var frontendOrigins = builder.Configuration
+    .GetSection("Cors:FrontendOrigins")
+    .Get<string[]>() ?? ["http://localhost:3000"];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins(frontendOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -79,67 +70,12 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/", () => Results.Redirect("/swagger"))
-    .ExcludeFromDescription();
-
+app.MapControllers();
+app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }))
     .WithName("HealthCheck")
     .WithSummary("Проверить доступность API")
     .WithTags("System");
-
-app.MapPost("/api/auth/login", (
-        LoginRequest request,
-        IUserAuthenticator authenticator,
-        ITokenStore tokenStore) =>
-    {
-        if (string.IsNullOrWhiteSpace(request.Login) || string.IsNullOrEmpty(request.Password))
-        {
-            return Results.BadRequest(new { error = "Login and password are required." });
-        }
-
-        var user = authenticator.Authenticate(request.Login, request.Password);
-        if (user is null)
-        {
-            return Results.Unauthorized();
-        }
-
-        var session = tokenStore.Issue(user);
-        return Results.Ok(new LoginResponse(
-            session.Token,
-            "Bearer",
-            session.ExpiresAt,
-            UserResponse.From(user)));
-    })
-    .RequireRateLimiting("login")
-    .WithName("Login")
-    .WithSummary("Войти и получить bearer-токен")
-    .WithTags("Auth");
-
-app.MapGet("/api/auth/me", (ClaimsPrincipal principal) =>
-    Results.Ok(new UserResponse(
-        principal.FindFirstValue(ClaimTypes.NameIdentifier)!,
-        principal.FindFirstValue(ClaimTypes.Email)!,
-        principal.FindFirstValue(ClaimTypes.Name)!,
-        principal.FindFirstValue(ClaimTypes.Role)!)))
-    .RequireAuthorization()
-    .WithName("GetCurrentUser")
-    .WithSummary("Получить текущего пользователя")
-    .WithTags("Auth");
-
-app.MapPost("/api/auth/logout", (HttpRequest request, ITokenStore tokenStore) =>
-    {
-        var token = BearerTokenAuthenticationHandler.ReadToken(request);
-        if (token is not null)
-        {
-            tokenStore.Revoke(token);
-        }
-
-        return Results.NoContent();
-    })
-    .RequireAuthorization()
-    .WithName("Logout")
-    .WithSummary("Завершить текущую сессию")
-    .WithTags("Auth");
 
 app.Run();
 

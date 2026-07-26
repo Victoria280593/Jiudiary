@@ -8,9 +8,13 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_HTTP_PORTS: "8080"
-      TemporaryAuth__Login: "${API_TEMPORARY_LOGIN:-admin@jiudiary.local}"
-      TemporaryAuth__Password: "${API_TEMPORARY_PASSWORD:?Set API_TEMPORARY_PASSWORD in .env}"
-      TemporaryAuth__Name: "${API_TEMPORARY_NAME:-Administrator}"
-      TemporaryAuth__Role: "${API_TEMPORARY_ROLE:-ADMIN}"
+      ConnectionStrings__Default: "${API_MSSQL_CONNECTION_STRING:?Set API_MSSQL_CONNECTION_STRING in .env}"
+      Jwt__Issuer: "${API_JWT_ISSUER:-JiuDiary}"
+      Jwt__Audience: "${API_JWT_AUDIENCE:-JiuDiary.Api}"
+      Jwt__SigningKey: "${API_JWT_SIGNING_KEY:?Set API_JWT_SIGNING_KEY in .env}"
+      AuthBootstrap__Enabled: "${API_AUTH_BOOTSTRAP_ENABLED:-false}"
+      AuthBootstrap__Login: "${API_AUTH_BOOTSTRAP_LOGIN:-}"
+      AuthBootstrap__Password: "${API_AUTH_BOOTSTRAP_PASSWORD:-}"
+      Cors__FrontendOrigins__0: "${FRONTEND_APP_URL:-http://localhost:3000}"
     ports:
       - "${API_HOST_PORT:-5136}:8080"

@@ -1,142 +1,60 @@
 # DeployFiles
 
-Файлы и инструкции для развёртывания JIUDIARY. Папка находится на одном уровне
-с `front` и `back`.
-
-## Структура
+Файлы развёртывания JiuDiary. Папка находится рядом с `front` и `back`.
 
 ```text
 DeployFiles/
 ├── compose/
-│   ├── backend/
-│   │   └── docker-compose.yml
-│   ├── frontend/
-│   │   └── docker-compose.yml
-│   └── mssql/
-│       └── docker-compose.yml
+│   ├── backend/docker-compose.yml
+│   ├── frontend/docker-compose.yml
+│   └── mssql/docker-compose.yml
 ├── dokploy/
 │   ├── backend-application.md
 │   └── frontend-application.md
-├── git/
-│   └── README.md
+├── git/README.md
 ├── scripts/
-│   ├── check-mssql-port.ps1
-│   ├── configure-firewall.sh
-│   ├── init-mssql.sh
-│   ├── install-docker-ubuntu.sh
-│   └── install-dokploy.sh
-├── sql/
-│   └── 001-create-users-and-roles.sql
 └── .env.example
 ```
 
-## Что сейчас развёрнуто
+## Сервисы
 
-| Сервис | Тип в Dokploy | Внешний адрес |
+| Сервис | Тип Dokploy | Адрес |
 |---|---|---|
 | MSSQL | Compose | `217.114.15.222:1433` |
-| JiuDiary API | Application | `http://217.114.15.222:5136` |
-| JiuDiary Frontend | Application | `http://217.114.15.222:3001` |
+| API | Application | `http://217.114.15.222:5136` |
+| Frontend | Application | `http://217.114.15.222:3001` |
 
-Swagger API:
+Swagger: `http://217.114.15.222:5136/swagger/index.html`.
 
-```text
-http://217.114.15.222:5136/swagger/index.html
-```
+## Создание базы
 
-Health check:
+После запуска контейнера MSSQL выполните через SSMS единственный файл:
 
 ```text
-http://217.114.15.222:5136/api/health
+back/JiuDiary.Api/DataBase/Scripts/create-database.sql
 ```
 
-## Развёртывание через Dokploy
+Скрипт рассчитан на пустой сервер и создаёт базу `JiuDiary` целиком.
 
-- MSSQL создаётся как сервис типа **Compose** из
-  `compose/mssql/docker-compose.yml`.
-- Backend создаётся как отдельный сервис типа **Application**. Полный список
-  значений для Git, Dockerfile, портов и автодеплоя находится в
-  `dokploy/backend-application.md`.
-- Frontend создаётся как отдельный сервис типа **Application** по инструкции
-  `dokploy/frontend-application.md`.
-- Настройка read-only deploy key и GitHub webhook описана в `git/README.md`.
-
-Копировать папку `DeployFiles` на VPS при таком варианте не нужно: Dokploy сам
-клонирует репозиторий и собирает контейнер.
-
-## Ручной запуск через Docker Compose
-
-Сначала клонируйте репозиторий:
+## Ручной запуск Compose
 
 ```bash
-git clone <URL_РЕПОЗИТОРИЯ> jiudiary
-cd jiudiary
 cp DeployFiles/.env.example DeployFiles/.env
-nano DeployFiles/.env
+
+docker compose --env-file DeployFiles/.env \
+  -f DeployFiles/compose/mssql/docker-compose.yml up -d
+
+docker compose --env-file DeployFiles/.env \
+  -f DeployFiles/compose/backend/docker-compose.yml up -d --build
+
+docker compose --env-file DeployFiles/.env \
+  -f DeployFiles/compose/frontend/docker-compose.yml up -d --build
 ```
 
-Запуск MSSQL:
+Настоящие пароли, JWT-ключи, SSH-ключи и webhook URL нельзя коммитить в Git.
 
-```bash
-docker compose \
-  --env-file DeployFiles/.env \
-  -f DeployFiles/compose/mssql/docker-compose.yml \
-  up -d
-```
+## Dokploy
 
-Запуск backend:
-
-```bash
-docker compose \
-  --env-file DeployFiles/.env \
-  -f DeployFiles/compose/backend/docker-compose.yml \
-  up -d --build
-```
-
-Запуск frontend:
-
-```bash
-docker compose \
-  --env-file DeployFiles/.env \
-  -f DeployFiles/compose/frontend/docker-compose.yml \
-  up -d --build
-```
-
-Файл `DeployFiles/.env` нельзя добавлять в Git. Настоящие пароли, приватные
-SSH-ключи и полный URL webhook также нельзя хранить в репозитории.
-
-## Установка Docker и Dokploy
-
-Скрипты рассчитаны на Ubuntu VPS:
-
-```bash
-sudo bash DeployFiles/scripts/install-docker-ubuntu.sh
-sudo bash DeployFiles/scripts/install-dokploy.sh 217.114.15.222
-```
-
-Панель Dokploy будет доступна по адресу:
-
-```text
-http://217.114.15.222:3000
-```
-
-## Инициализация MSSQL
-
-После запуска MSSQL:
-
-```bash
-bash DeployFiles/scripts/init-mssql.sh
-```
-
-Либо выполните `sql/001-create-users-and-roles.sql` через SSMS.
-
-Проверка порта с Windows:
-
-```powershell
-powershell -ExecutionPolicy Bypass `
-  -File .\DeployFiles\scripts\check-mssql-port.ps1 `
-  -ServerIp 217.114.15.222
-```
-
-Не открывайте MSSQL-порт `1433` для всего интернета. Ограничьте его своим IP,
-VPN или SSH-туннелем.
+- API: `dokploy/backend-application.md`.
+- Frontend: `dokploy/frontend-application.md`.
+- GitHub deploy key и webhook: `git/README.md`.

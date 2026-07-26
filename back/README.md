@@ -1,6 +1,49 @@
-# JiuDiary backend
+# JiuDiary API
 
-Отдельный backend на ASP.NET Core Web API (.NET 10).
+ASP.NET Core Web API на .NET 10.
+
+## База данных
+
+EF Core работает через `DataBase/JiuDiaryDbContext.cs` и строку подключения
+`ConnectionStrings:Default`.
+
+Для пустого MSSQL выполните единственный скрипт:
+
+`JiuDiary.Api/DataBase/Scripts/create-database.sql`
+
+Он создаёт базу `JiuDiary`, таблицы `Roles`, `Users`, `AuthSessions`, роль `Admin`
+и пользователя `admin@jiudiary.local`.
+
+## Авторизация
+
+- `POST /api/auth/login` проверяет пользователя в MSSQL и возвращает JWT access-токен
+  и одноразовый refresh-токен.
+- `POST /api/auth/refresh` выполняет ротацию refresh-токена и возвращает новую пару.
+- `GET /api/auth/me` возвращает текущего пользователя по JWT.
+- `POST /api/auth/logout` отзывает refresh-сессию.
+
+Access-токен живёт 15 минут. Refresh-сессия живёт 30 дней и хранится в
+`dbo.AuthSessions`; в базе сохраняется только SHA-256-хеш токена.
+
+Пароли пользователей хранятся в `dbo.Users.PasswordHash` в формате стандартного
+ASP.NET Core Identity `PasswordHasher`.
+
+## Переменные окружения
+
+```dotenv
+ConnectionStrings__Default=Server=localhost,1433;Database=JiuDiary;User Id=sa;Password=...;Encrypt=True;TrustServerCertificate=True
+Jwt__Issuer=JiuDiary
+Jwt__Audience=JiuDiary.Api
+Jwt__SigningKey=replace-with-at-least-32-random-characters
+AuthBootstrap__Enabled=true
+AuthBootstrap__Login=admin@jiudiary.local
+AuthBootstrap__Password=temporary-initial-password
+Cors__FrontendOrigins__0=http://localhost:3000
+```
+
+Bootstrap используется только для первого заполнения `PasswordHash` существующего
+администратора. После первого успешного входа установите
+`AuthBootstrap__Enabled=false` и удалите bootstrap-пароль из окружения.
 
 ## Запуск
 
@@ -8,32 +51,4 @@
 dotnet run --project JiuDiary.Api
 ```
 
-По умолчанию API доступно по адресу `http://localhost:5136`.
-
 Swagger UI: `http://localhost:5136/swagger`.
-
-## Временная авторизация
-
-- Логин: `admin@jiudiary.local`
-- Пароль: `JiuDiary2026!`
-- `POST /api/auth/login` — получить временный bearer-токен.
-- `GET /api/auth/me` — получить данные текущего пользователя.
-- `POST /api/auth/logout` — отозвать текущий токен.
-
-Токены хранятся только в памяти и пропадают после перезапуска API. Ограничение
-на вход — 10 попыток в минуту.
-
-## Связь с Next.js
-
-Next.js обращается к API по серверной переменной `BACKEND_URL` (локально —
-`http://localhost:5136`). Bearer-токен не передаётся в клиентский JavaScript:
-фронтенд хранит его в `HttpOnly` cookie `backend_session` и проверяет через
-`GET /api/auth/me`.
-
-## Следующий этап
-
-`IUserAuthenticator` отделяет API от способа хранения пользователей. При
-подключении БД `HardcodedUserAuthenticator` можно заменить реализацией на EF
-Core, сохранив маршруты и форматы ответов. Пароли следует хранить не в
-зашифрованном виде, а как стойкие хеши с солью (например, Argon2id или bcrypt).
-Временные токены затем можно заменить JWT либо серверными сессиями в БД/Redis.

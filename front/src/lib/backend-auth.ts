@@ -14,6 +14,8 @@ export type BackendSession = {
   accessToken: string;
   tokenType: "Bearer";
   expiresAt: string;
+  refreshToken: string;
+  refreshExpiresAt: string;
   user: BackendUser;
 };
 
@@ -33,6 +35,8 @@ function isBackendSession(value: unknown): value is BackendSession {
     typeof session.accessToken === "string" &&
     session.tokenType === "Bearer" &&
     typeof session.expiresAt === "string" &&
+    typeof session.refreshToken === "string" &&
+    typeof session.refreshExpiresAt === "string" &&
     !!user &&
     typeof user.id === "string" &&
     typeof user.login === "string" &&
@@ -55,6 +59,25 @@ function isBackendUser(value: unknown): value is BackendUser {
   );
 }
 
+async function readSessionResponse(response: Response): Promise<LoginResult> {
+  if (response.status === 401) {
+    return { ok: false, error: "Неверный email или пароль" };
+  }
+  if (response.status === 429) {
+    return { ok: false, error: "Слишком много попыток. Повторите через минуту" };
+  }
+  if (!response.ok) {
+    return { ok: false, error: "Сервис авторизации временно недоступен" };
+  }
+
+  const session: unknown = await response.json();
+  if (!isBackendSession(session)) {
+    return { ok: false, error: "Сервис авторизации вернул некорректный ответ" };
+  }
+
+  return { ok: true, session };
+}
+
 export async function loginWithBackend(login: string, password: string): Promise<LoginResult> {
   try {
     const response = await fetch(`${backendUrl}/api/auth/login`, {
@@ -65,24 +88,27 @@ export async function loginWithBackend(login: string, password: string): Promise
       signal: AbortSignal.timeout(5_000),
     });
 
-    if (response.status === 401) {
-      return { ok: false, error: "Неверный email или пароль" };
-    }
-    if (response.status === 429) {
-      return { ok: false, error: "Слишком много попыток. Повторите через минуту" };
-    }
-    if (!response.ok) {
-      return { ok: false, error: "Сервис авторизации временно недоступен" };
-    }
-
-    const session: unknown = await response.json();
-    if (!isBackendSession(session)) {
-      return { ok: false, error: "Сервис авторизации вернул некорректный ответ" };
-    }
-
-    return { ok: true, session };
+    return await readSessionResponse(response);
   } catch {
     return { ok: false, error: "Не удалось подключиться к сервису авторизации" };
+  }
+}
+
+export async function refreshBackendSession(refreshToken: string): Promise<BackendSession | null> {
+  try {
+    const response = await fetch(`${backendUrl}/api/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!response.ok) return null;
+
+    const session: unknown = await response.json();
+    return isBackendSession(session) ? session : null;
+  } catch {
+    return null;
   }
 }
 
@@ -103,15 +129,16 @@ export async function getBackendUser(accessToken: string): Promise<BackendUser |
   }
 }
 
-export async function logoutFromBackend(accessToken: string): Promise<void> {
+export async function logoutFromBackend(refreshToken: string): Promise<void> {
   try {
     await fetch(`${backendUrl}/api/auth/logout`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
       cache: "no-store",
       signal: AbortSignal.timeout(5_000),
     });
   } catch {
-    // The local cookie is deleted even if the backend is temporarily unavailable.
+    // Local cookies are deleted even if the backend is temporarily unavailable.
   }
 }

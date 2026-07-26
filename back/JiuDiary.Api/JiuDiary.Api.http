@@ -13,7 +13,7 @@ Content-Type: application/json
   "password": "JiuDiary2026!"
 }
 
-### Подставьте accessToken из ответа на запрос входа
+### Подставьте accessToken и refreshToken из ответа на запрос входа
 
 GET {{JiuDiary_Api_HostAddress}}/api/auth/me
 Authorization: Bearer {{accessToken}}
@@ -21,5 +21,18 @@ Accept: application/json
 
 ###
 
+POST {{JiuDiary_Api_HostAddress}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+###
+
 POST {{JiuDiary_Api_HostAddress}}/api/auth/logout
-Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
