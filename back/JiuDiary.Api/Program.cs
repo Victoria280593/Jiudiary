@@ -30,7 +30,7 @@ builder.Services.AddSwaggerGen(options =>
     options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
         [new OpenApiSecuritySchemeReference("Bearer", document, null)] = []
-    });
+    }); 
 });
 
 builder.Services.AddRateLimiter(options =>
