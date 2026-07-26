@@ -16,8 +16,8 @@ export default async function LoginPage({
 
   return (
     <AuthCard
-      title="Вход в дневник"
-      subtitle="Спортивный дневник для тренеров, учеников и родителей"
+      title="С возвращением"
+      subtitle="Войдите, чтобы продолжить работу в JiuDiary"
       footer={
         <>
           <Link href="/forgot-password" className="font-medium text-accent hover:text-accent-hover">

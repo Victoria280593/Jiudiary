@@ -16,14 +16,6 @@ export function AuthCard({
         className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-accent/20 blur-3xl"
       />
       <div className="card-shadow relative w-full max-w-sm rounded-xl border border-border bg-surface p-6">
-        <div className="mb-5 flex justify-center">
-          <span
-            aria-hidden
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-2xl"
-          >
-            🥋
-          </span>
-        </div>
         <h1 className="mb-1 text-center text-xl font-semibold text-foreground">
           {title}
         </h1>
