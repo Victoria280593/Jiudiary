@@ -30,8 +30,12 @@ function startOfWeek(date: Date) {
 
 function weekTitle(weekStart: Date) {
   const weekEnd = addDays(weekStart, 6);
-  const startMonth = new Intl.DateTimeFormat("ru-RU", { month: "long" }).format(weekStart);
-  const endMonth = new Intl.DateTimeFormat("ru-RU", { month: "long" }).format(weekEnd);
+  const monthInDate = (date: Date) =>
+    new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" })
+      .formatToParts(date)
+      .find((part) => part.type === "month")?.value ?? "";
+  const startMonth = monthInDate(weekStart);
+  const endMonth = monthInDate(weekEnd);
 
   if (weekStart.getFullYear() !== weekEnd.getFullYear()) {
     return `${weekStart.getDate()} ${startMonth} ${weekStart.getFullYear()} — ${weekEnd.getDate()} ${endMonth} ${weekEnd.getFullYear()}`;
