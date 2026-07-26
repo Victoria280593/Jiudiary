@@ -10,7 +10,7 @@ export function AuthCard({
   footer?: React.ReactNode;
 }) {
   return (
-    <div className="relative flex flex-1 items-center justify-center overflow-hidden px-4 py-12">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12">
       <div
         aria-hidden
         className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-accent/20 blur-3xl"
