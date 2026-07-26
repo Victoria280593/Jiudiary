@@ -1,4 +1,4 @@
-export const WEEKDAY_LABELS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+export const WEEKDAY_LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
 export const MONTH_LABELS = [
   "Январь",
@@ -25,7 +25,8 @@ export function dateKey(date: Date): string {
 }
 
 export function getMonthGrid(year: number, month: number): CalendarCell[][] {
-  const firstWeekday = new Date(year, month - 1, 1).getDay();
+  // JavaScript считает воскресенье нулевым днём; переводим индекс к неделе с понедельника.
+  const firstWeekday = (new Date(year, month - 1, 1).getDay() + 6) % 7;
   const totalDaysInMonth = new Date(year, month, 0).getDate();
   const totalCells = Math.ceil((firstWeekday + totalDaysInMonth) / 7) * 7;
   const todayKey = dateKey(new Date());
