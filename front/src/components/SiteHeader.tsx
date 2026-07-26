@@ -39,13 +39,7 @@ export async function SiteHeader() {
   const user = await getCurrentUser();
 
   if (!user) {
-    return (
-      <header className="fixed inset-x-0 top-0 z-40 px-4 pt-4">
-        <div className="mx-auto flex max-w-sm items-center justify-center rounded-2xl border border-white/90 bg-white/85 px-4 py-3 shadow-sm backdrop-blur-xl">
-          <Logo belt={null} stripes={0} />
-        </div>
-      </header>
-    );
+    return null;
   }
 
   const beltStripes = user.belt === "BLACK" ? user.blackBeltDegree : user.stripes;

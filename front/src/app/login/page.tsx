@@ -16,7 +16,7 @@ export default async function LoginPage({
 
   return (
     <AuthCard
-      title="С возвращением"
+      title="JiuDiary"
       subtitle="Войдите, чтобы продолжить работу в JiuDiary"
       footer={
         <>
