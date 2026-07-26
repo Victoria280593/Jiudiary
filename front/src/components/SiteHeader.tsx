@@ -21,7 +21,7 @@ function Logo({
 }) {
   return (
     <Link href="/" className="group flex items-center gap-2.5" aria-label="Jiu Diary — на главную">
-      <span className="font-brand text-[1.65rem] font-semibold tracking-[-0.065em] text-foreground">
+      <span className="font-brand text-[1.55rem] font-bold tracking-[-0.045em] text-foreground">
         JiuDiary
       </span>
       <Belt
@@ -94,25 +94,31 @@ export async function SiteHeader() {
             <span>Календарь</span>
           </Link>
           {user.role === "COACH" && (
-            <Link href="/#students" className="sidebar-link">
+            <div className="sidebar-link sidebar-link-disabled" aria-disabled="true">
               <UsersIcon />
               <span>Ученики</span>
-            </Link>
+              <span className="ml-auto rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-medium">
+                Скоро
+              </span>
+            </div>
           )}
-          <Link href="/dashboard/profile" className="sidebar-link">
+          <div className="sidebar-link sidebar-link-disabled" aria-disabled="true">
             <ProfileIcon />
             <span>Мой аккаунт</span>
-          </Link>
+            <span className="ml-auto rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-medium">
+              Скоро
+            </span>
+          </div>
         </nav>
 
         <div className="mt-auto border-t border-border/70 pt-5">
-          <Link href="/dashboard/profile" className="flex min-w-0 items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-surface-muted">
+          <div className="flex min-w-0 cursor-not-allowed items-center gap-3 rounded-2xl p-2 opacity-70">
             <Avatar src={user.avatarUrl} name={user.name} size={40} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-semibold text-foreground">{user.name}</span>
               <span className="block text-xs text-muted">{ROLE_LABELS[user.role]}</span>
             </span>
-          </Link>
+          </div>
           <form action={logoutAction}>
             <button type="submit" className="mt-2 w-full rounded-xl px-3 py-2 text-left text-xs font-medium text-muted transition-colors hover:bg-surface-muted hover:text-foreground">
               Выйти из аккаунта
@@ -123,9 +129,18 @@ export async function SiteHeader() {
 
       <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border/70 bg-white/85 px-4 py-3 backdrop-blur-xl lg:hidden">
         <Logo belt={user.belt} stripes={beltStripes} />
-        <Link href="/dashboard/profile" aria-label="Открыть аккаунт" className="rounded-full ring-4 ring-accent-soft">
-          <Avatar src={user.avatarUrl} name={user.name} size={36} />
-        </Link>
+        <div className="flex items-center gap-2">
+          <span aria-label="Аккаунт временно недоступен" aria-disabled="true" className="cursor-not-allowed rounded-full opacity-70 ring-4 ring-accent-soft">
+            <Avatar src={user.avatarUrl} name={user.name} size={36} />
+          </span>
+          <form action={logoutAction}>
+            <button type="submit" aria-label="Выйти из аккаунта" className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-surface-muted hover:text-foreground">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14 8l4 4-4 4m4-4H7M10 5H6a2 2 0 00-2 2v10a2 2 0 002 2h4" />
+              </svg>
+            </button>
+          </form>
+        </div>
       </header>
     </>
   );

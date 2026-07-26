@@ -77,7 +77,6 @@ export function TrainingCalendar({
         <div className="hidden justify-self-end rounded-xl bg-surface-muted p-1 md:flex" aria-label="Вид календаря">
           <span className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-sm">Месяц</span>
           <span className="px-4 py-2 text-sm text-muted">Неделя</span>
-          <span className="px-4 py-2 text-sm text-muted">Повестка</span>
         </div>
       </div>
 

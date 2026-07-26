@@ -50,7 +50,7 @@
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-brand: var(--font-space-grotesk);
+  --font-brand: var(--font-geist-sans);
 }
 
 body {
@@ -101,6 +101,17 @@ body {
   background: var(--accent-soft);
   color: var(--accent);
   font-weight: 650;
+}
+
+.sidebar-link-disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.sidebar-link-disabled:hover {
+  background: transparent;
+  color: var(--muted);
+  transform: none;
 }
 
 .calendar-control {

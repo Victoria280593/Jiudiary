@@ -2,14 +2,11 @@ import { BELT_COLORS } from "@/lib/belt";
 import type { Belt as BeltType } from "@prisma/client";
 
 const SIZES = {
-  xs: { width: 36, height: 27 },
-  sm: { width: 64, height: 46 },
-  md: { width: 104, height: 74 },
-  lg: { width: 160, height: 114 },
+  xs: { width: 39, height: 29 },
+  sm: { width: 68, height: 50 },
+  md: { width: 108, height: 79 },
+  lg: { width: 164, height: 120 },
 };
-
-const VIEW_W = 120;
-const VIEW_H = 100;
 
 export function Belt({
   belt,
@@ -24,94 +21,91 @@ export function Belt({
 }) {
   const colors = BELT_COLORS[belt];
   const { width, height } = SIZES[size];
-  // Белый пояс сливается с белым фоном без обводки — обводим серым;
-  // остальные пояса обводим белым, чтобы отделить узел/концы/наконечники друг от друга.
   const isWhiteBelt = belt === "WHITE";
-  const edgeStroke = isWhiteBelt ? "#c9c9c6" : "#ffffff";
-  const edgeStrokeWidth = isWhiteBelt ? 1.2 : 1.5;
-  const isSplit = colors.pattern === "split" && colors.accent;
-  const isStripe = colors.pattern === "stripe" && colors.accent;
-  const rightColor = isSplit ? colors.accent! : colors.main;
+  const outline = isWhiteBelt ? "#bcc3cf" : "rgba(255,255,255,0.9)";
+  const secondaryColor =
+    colors.pattern === "split" && colors.accent ? colors.accent : colors.main;
   const tickCount = Math.max(0, Math.min(stripes, 4));
-
-  const stripeTicks = (cx: number) =>
-    Array.from({ length: tickCount }).map((_, i) => (
-      <rect
-        key={i}
-        x={cx - 4}
-        y={78 + i * 3}
-        width={8}
-        height={1.4}
-        fill="#ffffff"
-      />
-    ));
 
   return (
     <svg
-      viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+      viewBox="0 0 120 88"
       width={width}
       height={height}
       className={`shrink-0 ${className}`}
       role="img"
       aria-label="пояс"
     >
-      {/* пояс, обёрнутый вокруг пояса кимоно */}
-      <rect x={0} y={26} width={60} height={14} fill={colors.main} stroke={edgeStroke} strokeWidth={edgeStrokeWidth} />
-      <rect x={60} y={26} width={60} height={14} fill={rightColor} stroke={edgeStroke} strokeWidth={edgeStrokeWidth} />
-      {isStripe && <rect x={0} y={31} width={VIEW_W} height={4} fill={colors.accent} />}
+      {/* Замкнутая часть пояса — как пояс вокруг талии. */}
+      <ellipse
+        cx="60"
+        cy="35"
+        rx="47"
+        ry="22"
+        fill="none"
+        stroke={colors.main}
+        strokeWidth="11"
+      />
+      <path
+        d="M60 13c26 0 47 10 47 22S86 57 60 57"
+        fill="none"
+        stroke={secondaryColor}
+        strokeWidth="11"
+      />
+      <ellipse
+        cx="60"
+        cy="35"
+        rx="47"
+        ry="22"
+        fill="none"
+        stroke={outline}
+        strokeWidth="1.2"
+      />
 
-      {/* узел */}
+      {/* Узел и два коротких конца находятся впереди кольца. */}
       <polygon
-        points="60,22 74,35 60,48 46,35"
+        points="60,45 72,55 60,65 48,55"
         fill={colors.main}
-        stroke={edgeStroke}
-        strokeWidth={edgeStrokeWidth}
+        stroke={outline}
+        strokeWidth="1.2"
         strokeLinejoin="round"
       />
-      {isSplit && (
-        <polygon
-          points="60,22 74,35 60,48"
-          fill={rightColor}
-          stroke={edgeStroke}
-          strokeWidth={edgeStrokeWidth}
-          strokeLinejoin="round"
+      <polygon
+        points="60,45 72,55 60,65"
+        fill={secondaryColor}
+        stroke={outline}
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+      <polygon
+        points="55,61 63,64 51,86 42,82"
+        fill={colors.main}
+        stroke={outline}
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+      <polygon
+        points="65,61 57,64 69,86 78,82"
+        fill={secondaryColor}
+        stroke={outline}
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+      <polygon points="46,75 55,78 51,86 42,82" fill="#111827" />
+      <polygon points="65,78 74,75 78,82 69,86" fill="#111827" />
+
+      {Array.from({ length: tickCount }).map((_, index) => (
+        <line
+          key={index}
+          x1={45 + index * 2.2}
+          y1={78 + index * 0.7}
+          x2={52 + index * 2.2}
+          y2={80.5 + index * 0.7}
+          stroke="#ffffff"
+          strokeWidth="1.2"
+          strokeLinecap="round"
         />
-      )}
-      <line x1={46} y1={35} x2={74} y2={35} stroke="rgba(0,0,0,0.18)" strokeWidth={1.5} />
-
-      {/* свисающие концы, перекрещённые под узлом */}
-      <polygon
-        points="66,46 56,46 36,92 46,92"
-        fill={colors.main}
-        stroke={edgeStroke}
-        strokeWidth={edgeStrokeWidth}
-        strokeLinejoin="round"
-      />
-      <polygon
-        points="54,46 64,46 84,92 74,92"
-        fill={rightColor}
-        stroke={edgeStroke}
-        strokeWidth={edgeStrokeWidth}
-        strokeLinejoin="round"
-      />
-
-      {/* чёрные наконечники со страйпами */}
-      <polygon
-        points="53,76 43,76 36,92 46,92"
-        fill="#111827"
-        stroke={edgeStroke}
-        strokeWidth={edgeStrokeWidth}
-        strokeLinejoin="round"
-      />
-      <polygon
-        points="67,76 77,76 84,92 74,92"
-        fill="#111827"
-        stroke={edgeStroke}
-        strokeWidth={edgeStrokeWidth}
-        strokeLinejoin="round"
-      />
-      {stripeTicks(44)}
-      {stripeTicks(76)}
+      ))}
     </svg>
   );
 }
