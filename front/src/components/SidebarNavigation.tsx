@@ -50,13 +50,13 @@ export function SidebarNavigation({ role }: { role: Role }) {
         </Link>
       )}
 
-      <div className="sidebar-link sidebar-link-disabled" aria-disabled="true">
+      <Link
+        href="/dashboard/profile"
+        className={`sidebar-link ${pathname === "/dashboard/profile" ? "sidebar-link-active" : ""}`}
+      >
         <ProfileIcon />
         <span>Мой аккаунт</span>
-        <span className="ml-auto rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-medium">
-          Скоро
-        </span>
-      </div>
+      </Link>
     </nav>
   );
 }
@@ -88,10 +88,15 @@ export function MobileNavigation({ role }: { role: Role }) {
       ) : (
         <span />
       )}
-      <span className="flex min-h-10 cursor-not-allowed items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold text-muted opacity-45">
+      <Link
+        href="/dashboard/profile"
+        className={`flex min-h-10 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold ${
+          pathname === "/dashboard/profile" ? "bg-accent-soft text-accent" : "text-muted"
+        }`}
+      >
         <ProfileIcon />
         <span>Аккаунт</span>
-      </span>
+      </Link>
     </nav>
   );
 }
