@@ -6,6 +6,7 @@ import { AthleteCard } from "@/components/AthleteCard";
 import { AthleteProfileForm } from "@/components/AthleteProfileForm";
 import { AchievementForm } from "@/components/AchievementForm";
 import { Card } from "@/components/Card";
+import { PersonalDataForm } from "@/components/PersonalDataForm";
 import { deleteAchievementAction } from "@/app/actions/achievement";
 import { calculateAge } from "@/lib/belt";
 import { flagEmoji, getCountryList, getCountryName } from "@/lib/countries";
@@ -97,6 +98,10 @@ export default async function ProfilePage() {
             ))}
           </ul>
         )}
+      </Card>
+
+      <Card title="Личные данные">
+        <PersonalDataForm name={user.name} />
       </Card>
 
       <Card title="Данные аккаунта">
