@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using JiuDiary.Api.Auth;
 using JiuDiary.Models.Auth;
 using Microsoft.AspNetCore.Authorization;
@@ -13,7 +12,7 @@ namespace JiuDiary.Api.Controllers;
 [ApiController]
 [Route("api/auth")]
 [Produces("application/json")]
-public sealed class AuthController(IAuthService authService) : ControllerBase
+public sealed class AuthController(IAuthService authService) : BaseController
 {
     /// <summary>
     /// Создаёт нового активного тренера с ролью Coach.
@@ -117,10 +116,10 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     public ActionResult<UserOutputModel> Me() =>
         Ok(new UserOutputModel
         {
-            Id = User.FindFirstValue("sub")!,
-            Login = User.FindFirstValue("email")!,
-            Name = User.FindFirstValue(ClaimTypes.Name)!,
-            Role = User.FindFirstValue(ClaimTypes.Role)!
+            Id = CurrentUser.Id,
+            Login = CurrentUser.Login,
+            Name = CurrentUser.Name,
+            Role = CurrentUser.Role
         });
 
     /// <summary>

@@ -1,23 +1,35 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+
 namespace JiuDiary.Database.Entities;
 
 /// <summary>
 /// Серверная refresh-сессия пользователя.
 /// </summary>
+[Table("AuthSessions")]
+[Index(nameof(RefreshTokenHash), IsUnique = true)]
 public sealed class AuthSession
 {
     /// <summary>
     /// Уникальный идентификатор сессии.
     /// </summary>
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public Guid Id { get; set; }
 
     /// <summary>
     /// Идентификатор владельца сессии.
     /// </summary>
+    [ForeignKey(nameof(User))]
     public Guid UserId { get; set; }
 
     /// <summary>
     /// SHA-256-хеш refresh-токена; исходное значение хранится только в защищённой cookie клиента.
     /// </summary>
+    [Required]
+    [MaxLength(64)]
+    [Column(TypeName = "char(64)")]
     public string RefreshTokenHash { get; set; } = string.Empty;
 
     /// <summary>
