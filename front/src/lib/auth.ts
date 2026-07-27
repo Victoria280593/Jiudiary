@@ -14,6 +14,32 @@ import { getCountryList } from "@/lib/countries";
 import type { Belt } from "@prisma/client";
 import { REFRESH_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/auth-constants";
 
+const BELT_BY_ID: Record<number, Belt> = {
+  1: "WHITE",
+  2: "GREY_WHITE",
+  3: "GREY",
+  4: "GREY_BLACK",
+  5: "YELLOW_WHITE",
+  6: "YELLOW",
+  7: "YELLOW_BLACK",
+  8: "ORANGE_WHITE",
+  9: "ORANGE",
+  10: "ORANGE_BLACK",
+  11: "GREEN_WHITE",
+  12: "GREEN",
+  13: "GREEN_BLACK",
+  14: "BLUE",
+  15: "PURPLE",
+  16: "BROWN",
+  17: "BLACK",
+  18: "BLACK_RED",
+  19: "RED",
+};
+
+function normalizeText(value: string): string {
+  return value.normalize("NFC").trim().toLocaleLowerCase("ru-RU");
+}
+
 export async function hashPassword(password: string) {
   return bcrypt.hash(password, 10);
 }
@@ -83,11 +109,17 @@ export const getCurrentUser = cache(async () => {
 
   const clientInfo = await getBackendClientInfo(session.accessToken);
   const countryCode = clientInfo?.country
-    ? getCountryList().find((country) => country.name === clientInfo.country)?.code ?? null
-    : null;
-  const belt = clientInfo?.beltName
-    ? (Object.entries(BELT_LABELS).find(([, name]) => name === clientInfo.beltName)?.[0] as Belt | undefined) ?? null
-    : null;
+    ? getCountryList().find(
+        (country) => normalizeText(country.name) === normalizeText(clientInfo.country as string)
+      )?.code ?? persistedUser?.countryCode ?? null
+    : persistedUser?.countryCode ?? null;
+  const belt = clientInfo?.beltId
+    ? BELT_BY_ID[clientInfo.beltId] ?? null
+    : clientInfo?.beltName
+      ? (Object.entries(BELT_LABELS).find(
+          ([, name]) => normalizeText(name) === normalizeText(clientInfo.beltName as string)
+        )?.[0] as Belt | undefined) ?? null
+      : persistedUser?.belt ?? null;
   const sportsData = clientInfo
     ? {
         countryCode,
