@@ -118,18 +118,18 @@ export function AthleteProfileForm({
           </label>
           <select
             id="countryCode"
-            name="countryCode"
-            value={selectedCountryCode}
-            onChange={(event) => setSelectedCountryCode(event.target.value)}
+            value="RU"
+            disabled
             className={inputClass}
           >
             <option value="">Не указана</option>
-            {countries.map((c) => (
+            {countries.filter((c) => c.code === "RU").map((c) => (
               <option key={c.code} value={c.code}>
                 {c.name}
               </option>
             ))}
           </select>
+          <input type="hidden" name="countryCode" value="RU" />
         </div>
 
         <div className="flex flex-col gap-1">

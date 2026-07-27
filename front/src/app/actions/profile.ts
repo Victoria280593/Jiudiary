@@ -49,7 +49,7 @@ export async function updateAthleteProfileAction(
     return { error: "Доступ запрещён" };
   }
 
-  const countryCode = String(formData.get("countryCode") || "").trim();
+  const countryCode = "RU";
   const birthDateStr = String(formData.get("birthDate") || "").trim();
   const belt = String(formData.get("belt") || "").trim() as Belt;
   const stripesRaw = String(formData.get("stripes") || "").trim();
@@ -113,9 +113,7 @@ export async function updateAthleteProfileAction(
     stripes = s;
   }
 
-  const countryName = countryCode
-    ? getCountryList().find((country) => country.code === countryCode)?.name ?? null
-    : null;
+  const countryName = "Российская Федерация";
 
   const saved = await updateBackendClientInfo(session.accessToken, {
     country: countryName,
