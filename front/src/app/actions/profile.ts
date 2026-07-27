@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { updateBackendClientInfo } from "@/lib/backend-auth";
 import {
   ADULT_BELTS,
   KIDS_BELTS,
@@ -18,12 +18,34 @@ export type FormState = { error?: string } | undefined;
 
 const ALL_BELTS = new Set<Belt>([...KIDS_BELTS, ...ADULT_BELTS]);
 
+const BELT_IDS: Record<Belt, number> = {
+  WHITE: 1,
+  GREY_WHITE: 2,
+  GREY: 3,
+  GREY_BLACK: 4,
+  YELLOW_WHITE: 5,
+  YELLOW: 6,
+  YELLOW_BLACK: 7,
+  ORANGE_WHITE: 8,
+  ORANGE: 9,
+  ORANGE_BLACK: 10,
+  GREEN_WHITE: 11,
+  GREEN: 12,
+  GREEN_BLACK: 13,
+  BLUE: 14,
+  PURPLE: 15,
+  BROWN: 16,
+  BLACK: 17,
+  BLACK_RED: 18,
+  RED: 19,
+};
+
 export async function updateAthleteProfileAction(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const user = await getCurrentUser();
-  if (!user) {
+  const session = await getSession();
+  if (!session) {
     return { error: "Доступ запрещён" };
   }
 
@@ -91,18 +113,20 @@ export async function updateAthleteProfileAction(
     stripes = s;
   }
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      countryCode: countryCode || null,
-      birthDate,
-      belt,
-      stripes,
-      blackBeltDegree,
-      blackBeltAwardedAt,
-      blackBeltProfessor: belt === "BLACK" ? blackBeltProfessor || null : null,
-    },
+  const countryName = countryCode
+    ? getCountryList().find((country) => country.code === countryCode)?.name ?? null
+    : null;
+
+  const saved = await updateBackendClientInfo(session.accessToken, {
+    country: countryName,
+    birthDate: birthDateStr || null,
+    beltId: BELT_IDS[belt],
+    stripesCount: stripes ?? 0,
   });
+
+  if (!saved) {
+    return { error: "Не удалось сохранить спортивные данные на сервере" };
+  }
 
   revalidatePath("/dashboard", "layout");
   return undefined;

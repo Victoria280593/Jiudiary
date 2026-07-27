@@ -5,9 +5,13 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import {
   getBackendUser,
+  getBackendClientInfo,
   logoutFromBackend,
   type BackendSession,
 } from "@/lib/backend-auth";
+import { BELT_LABELS } from "@/lib/belt";
+import { getCountryList } from "@/lib/countries";
+import type { Belt } from "@prisma/client";
 import { REFRESH_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/auth-constants";
 
 export async function hashPassword(password: string) {
@@ -77,7 +81,23 @@ export const getCurrentUser = cache(async () => {
     where: { email: session.user.login.toLowerCase() },
   });
 
-  if (persistedUser) return persistedUser;
+  const clientInfo = await getBackendClientInfo(session.accessToken);
+  const countryCode = clientInfo?.country
+    ? getCountryList().find((country) => country.name === clientInfo.country)?.code ?? null
+    : null;
+  const belt = clientInfo?.beltName
+    ? (Object.entries(BELT_LABELS).find(([, name]) => name === clientInfo.beltName)?.[0] as Belt | undefined) ?? null
+    : null;
+  const sportsData = clientInfo
+    ? {
+        countryCode,
+        birthDate: clientInfo.birthDate ? new Date(`${clientInfo.birthDate}T00:00:00`) : null,
+        belt,
+        stripes: clientInfo.stripesCount,
+      }
+    : {};
+
+  if (persistedUser) return { ...persistedUser, ...sportsData };
 
   return {
     id: session.user.id,
@@ -95,5 +115,6 @@ export const getCurrentUser = cache(async () => {
     blackBeltAwardedAt: null,
     blackBeltProfessor: null,
     coachId: null,
+    ...sportsData,
   };
 });

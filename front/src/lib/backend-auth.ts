@@ -19,6 +19,14 @@ export type BackendSession = {
   user: BackendUser;
 };
 
+export type BackendClientInfo = {
+  country: string | null;
+  birthDate: string | null;
+  beltId: number | null;
+  beltName: string | null;
+  stripesCount: number;
+};
+
 export type LoginResult =
   | { ok: true; session: BackendSession }
   | { ok: false; error: string };
@@ -163,6 +171,48 @@ export async function getBackendUser(accessToken: string): Promise<BackendUser |
     return isBackendUser(user) ? user : null;
   } catch {
     return null;
+  }
+}
+
+export async function getBackendClientInfo(accessToken: string): Promise<BackendClientInfo | null> {
+  try {
+    const response = await fetch(`${backendUrl}/api/client-info`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) return null;
+    return (await response.json()) as BackendClientInfo;
+  } catch {
+    return null;
+  }
+}
+
+export async function updateBackendClientInfo(
+  accessToken: string,
+  data: {
+    country: string | null;
+    birthDate: string | null;
+    beltId: number | null;
+    stripesCount: number;
+  }
+): Promise<boolean> {
+  try {
+    const response = await fetch(`${backendUrl}/api/client-info`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    return response.ok;
+  } catch {
+    return false;
   }
 }
 

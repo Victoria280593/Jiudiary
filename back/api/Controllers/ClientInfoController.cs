@@ -13,6 +13,26 @@ namespace JiuDiary.Api.Controllers;
 [Produces("application/json")]
 public sealed class ClientInfoController(JiuDiaryDbContext dbContext) : BaseController
 {
+    [HttpGet]
+    [ProducesResponseType<ClientInfoOutputModel>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ClientInfoOutputModel>> Get(
+        CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(CurrentUser.Id, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var clientInfo = await dbContext.ClientInfos
+            .Include(x => x.Belt)
+            .SingleOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+
+        return Ok(clientInfo is null
+            ? new ClientInfoOutputModel()
+            : ToOutputModel(clientInfo));
+    }
+
     [HttpPut]
     [ProducesResponseType<ClientInfoOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -61,15 +81,18 @@ public sealed class ClientInfoController(JiuDiaryDbContext dbContext) : BaseCont
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return Ok(new ClientInfoOutputModel
+        return Ok(ToOutputModel(clientInfo));
+    }
+
+    private static ClientInfoOutputModel ToOutputModel(ClientInfo clientInfo) =>
+        new()
         {
             Country = clientInfo.Country,
             BirthDate = clientInfo.BirthDate,
             BeltId = clientInfo.BeltId,
             BeltName = clientInfo.Belt?.Name,
             StripesCount = clientInfo.StripesCount
-        });
-    }
+        };
 
     private static string? Normalize(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
