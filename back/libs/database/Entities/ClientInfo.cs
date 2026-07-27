@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace JiuDiary.Database.Entities;
 
@@ -7,12 +8,19 @@ namespace JiuDiary.Database.Entities;
 /// Дополнительная информация о клиенте, связанная с пользователем.
 /// </summary>
 [Table("ClientInfo")]
+[Index(nameof(UserId), IsUnique = true)]
 public sealed class ClientInfo
 {
     /// <summary>
     /// Идентификатор пользователя и первичный ключ записи.
     /// </summary>
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public Guid Id { get; set; }
+
+    /// <summary>
+    /// Идентификатор пользователя и уникальная ссылка на пользователя.
+    /// </summary>
     [ForeignKey(nameof(User))]
     public Guid UserId { get; set; }
 
@@ -34,10 +42,10 @@ public sealed class ClientInfo
     public DateOnly? BirthDate { get; set; }
 
     /// <summary>
-    /// Пояс клиента. Пока хранится как текст.
+    /// Идентификатор пояса клиента.
     /// </summary>
-    [MaxLength(100)]
-    public string? Belt { get; set; }
+    [ForeignKey(nameof(Belt))]
+    public int? BeltId { get; set; }
 
     /// <summary>
     /// Количество страйпов на поясе.
@@ -48,4 +56,6 @@ public sealed class ClientInfo
     /// Пользователь, которому принадлежит информация.
     /// </summary>
     public User User { get; set; } = null!;
+
+    public Belt? Belt { get; set; }
 }

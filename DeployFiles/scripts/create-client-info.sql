@@ -1,29 +1,32 @@
-IF OBJECT_ID(N'dbo.ClientInfo', N'U') IS NULL
+IF OBJECT_ID(N'dbo.ClientInfo', N'U') IS NOT NULL
 BEGIN
-    CREATE TABLE dbo.ClientInfo
-    (
-        UserId uniqueidentifier NOT NULL,
-          Country nvarchar(100) NULL,
-          City nvarchar(100) NULL,
-          BirthDate date NULL,
-          Belt nvarchar(100) NULL,
-          StripesCount int NOT NULL
-            CONSTRAINT DF_ClientInfo_StripesCount DEFAULT (0),
-        CONSTRAINT PK_ClientInfo PRIMARY KEY (UserId),
-        CONSTRAINT FK_ClientInfo_Users_UserId
-            FOREIGN KEY (UserId) REFERENCES dbo.Users (Id)
-            ON DELETE CASCADE,
-        CONSTRAINT CK_ClientInfo_StripesCount_NonNegative
-            CHECK (StripesCount >= 0)
-    );
+    DROP TABLE dbo.ClientInfo;
 END;
 
-IF COL_LENGTH(N'dbo.ClientInfo', N'BirthDate') IS NULL
+IF OBJECT_ID(N'dbo.client_info', N'U') IS NOT NULL
 BEGIN
-    ALTER TABLE dbo.ClientInfo ADD BirthDate date NULL;
+    DROP TABLE dbo.client_info;
 END;
 
-IF COL_LENGTH(N'dbo.ClientInfo', N'Belt') IS NULL
-BEGIN
-    ALTER TABLE dbo.ClientInfo ADD Belt nvarchar(100) NULL;
-END;
+CREATE TABLE dbo.ClientInfo
+(
+    Id uniqueidentifier NOT NULL
+        CONSTRAINT DF_ClientInfo_Id DEFAULT (NEWSEQUENTIALID()),
+    UserId uniqueidentifier NOT NULL,
+    Country nvarchar(100) NULL,
+    City nvarchar(100) NULL,
+    BirthDate date NULL,
+    BeltId int NULL,
+    StripesCount int NOT NULL
+        CONSTRAINT DF_ClientInfo_StripesCount DEFAULT (0),
+    CONSTRAINT PK_ClientInfo PRIMARY KEY (Id),
+    CONSTRAINT UQ_ClientInfo_UserId UNIQUE (UserId),
+    CONSTRAINT FK_ClientInfo_Users_UserId
+        FOREIGN KEY (UserId) REFERENCES dbo.Users (Id)
+        ON DELETE CASCADE,
+    CONSTRAINT FK_ClientInfo_Belts_BeltId
+        FOREIGN KEY (BeltId) REFERENCES dbo.Belts (Id)
+        ON DELETE NO ACTION,
+    CONSTRAINT CK_ClientInfo_StripesCount
+        CHECK (StripesCount BETWEEN 0 AND 4)
+);

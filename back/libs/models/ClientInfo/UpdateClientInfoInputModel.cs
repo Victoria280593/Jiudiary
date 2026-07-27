@@ -9,8 +9,7 @@ public sealed class UpdateClientInfoInputModel
 
     public DateOnly? BirthDate { get; set; }
 
-    [MaxLength(100)]
-    public string? Belt { get; set; }
+    public int? BeltId { get; set; }
 
     [Range(0, 4)]
     public int StripesCount { get; set; }

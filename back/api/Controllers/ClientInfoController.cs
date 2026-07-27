@@ -44,7 +44,19 @@ public sealed class ClientInfoController(JiuDiaryDbContext dbContext) : BaseCont
 
         clientInfo.Country = Normalize(request.Country);
         clientInfo.BirthDate = request.BirthDate;
-        clientInfo.Belt = Normalize(request.Belt);
+        Belt? belt = null;
+        if (request.BeltId.HasValue)
+        {
+            belt = await dbContext.Belts
+                .SingleOrDefaultAsync(x => x.Id == request.BeltId.Value, cancellationToken);
+            if (belt is null)
+            {
+                return BadRequest(new { error = "The selected belt does not exist." });
+            }
+        }
+
+        clientInfo.BeltId = request.BeltId;
+        clientInfo.Belt = belt;
         clientInfo.StripesCount = request.StripesCount;
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -53,7 +65,8 @@ public sealed class ClientInfoController(JiuDiaryDbContext dbContext) : BaseCont
         {
             Country = clientInfo.Country,
             BirthDate = clientInfo.BirthDate,
-            Belt = clientInfo.Belt,
+            BeltId = clientInfo.BeltId,
+            BeltName = clientInfo.Belt?.Name,
             StripesCount = clientInfo.StripesCount
         });
     }
