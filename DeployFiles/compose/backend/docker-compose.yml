@@ -8,6 +8,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_HTTP_PORTS: "8080"
+      TZ: Europe/Moscow
       ConnectionStrings__Default: "${API_MSSQL_CONNECTION_STRING:?Set API_MSSQL_CONNECTION_STRING in .env}"
       Jwt__Issuer: "${API_JWT_ISSUER:-JiuDiary}"
       Jwt__Audience: "${API_JWT_AUDIENCE:-JiuDiary.Api}"
