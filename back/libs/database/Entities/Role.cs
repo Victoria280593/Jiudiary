@@ -1,4 +1,4 @@
-namespace JiuDiary.Api.DataBase.Entities;
+namespace JiuDiary.Database.Entities;
 
 /// <summary>
 /// Роль пользователя, определяющая доступ к функциям системы.

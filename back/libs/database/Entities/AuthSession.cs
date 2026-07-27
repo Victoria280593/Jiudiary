@@ -1,4 +1,4 @@
-namespace JiuDiary.Api.DataBase.Entities;
+namespace JiuDiary.Database.Entities;
 
 /// <summary>
 /// Серверная refresh-сессия пользователя.
@@ -21,22 +21,22 @@ public sealed class AuthSession
     public string RefreshTokenHash { get; set; } = string.Empty;
 
     /// <summary>
-    /// Момент окончания действия refresh-токена в UTC.
+    /// Момент окончания действия refresh-токена по локальному времени сервера.
     /// </summary>
     public DateTime ExpiresAt { get; set; }
 
     /// <summary>
-    /// Момент создания сессии в UTC.
+    /// Момент создания сессии по локальному времени сервера.
     /// </summary>
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
-    /// Момент последней ротации сессии в UTC.
+    /// Момент последней ротации сессии по локальному времени сервера.
     /// </summary>
     public DateTime? LastUsedAt { get; set; }
 
     /// <summary>
-    /// Момент отзыва сессии в UTC.
+    /// Момент отзыва сессии по локальному времени сервера.
     /// </summary>
     public DateTime? RevokedAt { get; set; }
 

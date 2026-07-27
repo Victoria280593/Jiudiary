@@ -1,11 +1,13 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace JiuDiary.Api.DataBase;
+namespace JiuDiary.Database;
 
 /// <summary>
 /// Регистрирует слой доступа к MSSQL в контейнере зависимостей.
 /// </summary>
-public static class DataBaseExtensions
+public static class DatabaseExtensions
 {
     /// <summary>
     /// Читает `ConnectionStrings:Default` и подключает <see cref="JiuDiaryDbContext"/>.
@@ -16,7 +18,7 @@ public static class DataBaseExtensions
     /// <exception cref="InvalidOperationException">
     /// Выбрасывается, если строка подключения отсутствует.
     /// </exception>
-    public static IServiceCollection AddDataBase(
+    public static IServiceCollection AddDatabase(
         this IServiceCollection services,
         IConfiguration configuration)
     {

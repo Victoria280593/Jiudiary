@@ -1,3 +1,5 @@
 <Solution>
-  <Project Path="JiuDiary.Api/JiuDiary.Api.csproj" />
+  <Project Path="api/JiuDiary.Api.csproj" />
+  <Project Path="libs/database/JiuDiary.Database.csproj" />
+  <Project Path="libs/models/JiuDiary.Models.csproj" />
 </Solution>

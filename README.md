@@ -18,7 +18,7 @@ Frontend: `http://localhost:3000`.
 
 ```powershell
 cd back
-dotnet run --project JiuDiary.Api
+dotnet run --project api/JiuDiary.Api.csproj
 ```
 
 Backend: `http://localhost:5136`.

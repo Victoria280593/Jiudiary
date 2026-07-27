@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using JiuDiary.Api.Auth;
-using JiuDiary.Api.Contracts.Auth;
+using JiuDiary.Models.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -22,11 +22,11 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     /// <param name="cancellationToken">Токен отмены HTTP-запроса.</param>
     /// <returns>Созданный пользователь без пароля и его хеша.</returns>
     [HttpPost("register")]
-    [ProducesResponseType<UserResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType<UserOutputModel>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<UserResponse>> Register(
-        RegisterRequest request,
+    public async Task<ActionResult<UserOutputModel>> Register(
+        RegisterInputModel request,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Login) ||
@@ -61,12 +61,12 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     /// <returns>Новая авторизационная сессия.</returns>
     [HttpPost("login")]
     [EnableRateLimiting("login")]
-    [ProducesResponseType<LoginResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<LoginOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-    public async Task<ActionResult<LoginResponse>> Login(
-        LoginRequest request,
+    public async Task<ActionResult<LoginOutputModel>> Login(
+        LoginInputModel request,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Login) || string.IsNullOrEmpty(request.Password))
@@ -88,11 +88,11 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     /// <param name="cancellationToken">Токен отмены HTTP-запроса.</param>
     /// <returns>Новая авторизационная сессия.</returns>
     [HttpPost("refresh")]
-    [ProducesResponseType<LoginResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<LoginOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<LoginResponse>> Refresh(
-        RefreshRequest request,
+    public async Task<ActionResult<LoginOutputModel>> Refresh(
+        RefreshInputModel request,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.RefreshToken))
@@ -112,14 +112,16 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     /// <returns>Текущий пользователь и его роль.</returns>
     [Authorize]
     [HttpGet("me")]
-    [ProducesResponseType<UserResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<UserOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public ActionResult<UserResponse> Me() =>
-        Ok(new UserResponse(
-            User.FindFirstValue("sub")!,
-            User.FindFirstValue("email")!,
-            User.FindFirstValue(ClaimTypes.Name)!,
-            User.FindFirstValue(ClaimTypes.Role)!));
+    public ActionResult<UserOutputModel> Me() =>
+        Ok(new UserOutputModel
+        {
+            Id = User.FindFirstValue("sub")!,
+            Login = User.FindFirstValue("email")!,
+            Name = User.FindFirstValue(ClaimTypes.Name)!,
+            Role = User.FindFirstValue(ClaimTypes.Role)!
+        });
 
     /// <summary>
     /// Отзывает refresh-сессию пользователя.
@@ -129,7 +131,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     [HttpPost("logout")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Logout(
-        LogoutRequest request,
+        LogoutInputModel request,
         CancellationToken cancellationToken)
     {
         if (!string.IsNullOrWhiteSpace(request.RefreshToken))

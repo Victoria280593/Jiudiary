@@ -4,12 +4,12 @@ ASP.NET Core Web API на .NET 10.
 
 ## База данных
 
-EF Core работает через `DataBase/JiuDiaryDbContext.cs` и строку подключения
+EF Core работает через `libs/database/JiuDiaryDbContext.cs` и строку подключения
 `ConnectionStrings:Default`.
 
 Для пустого MSSQL выполните единственный скрипт:
 
-`JiuDiary.Api/DataBase/Scripts/create-database.sql`
+`libs/database/Scripts/create-database.sql`
 
 Он создаёт базу `JiuDiary`, таблицы `Roles`, `Users`, `AuthSessions`, роль `Admin`
 и пользователя `admin@jiudiary.local`.
@@ -49,7 +49,7 @@ Bootstrap используется только для первого запол
 ## Запуск
 
 ```powershell
-dotnet run --project JiuDiary.Api
+dotnet run --project api/JiuDiary.Api.csproj
 ```
 
 Swagger UI: `http://localhost:5136/swagger`.

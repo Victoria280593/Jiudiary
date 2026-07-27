@@ -1,12 +1,12 @@
 using System.Threading.RateLimiting;
 using JiuDiary.Api.Auth;
-using JiuDiary.Api.DataBase;
+using JiuDiary.Database;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDataBase(builder.Configuration);
+builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddJiuDiaryAuth(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

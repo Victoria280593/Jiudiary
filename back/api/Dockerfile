@@ -3,11 +3,14 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY ["JiuDiary.Api/JiuDiary.Api.csproj", "JiuDiary.Api/"]
-RUN dotnet restore "JiuDiary.Api/JiuDiary.Api.csproj"
+COPY ["api/JiuDiary.Api.csproj", "api/"]
+COPY ["libs/database/JiuDiary.Database.csproj", "libs/database/"]
+COPY ["libs/models/JiuDiary.Models.csproj", "libs/models/"]
+RUN dotnet restore "api/JiuDiary.Api.csproj"
 
-COPY ["JiuDiary.Api/", "JiuDiary.Api/"]
-WORKDIR /src/JiuDiary.Api
+COPY ["api/", "api/"]
+COPY ["libs/", "libs/"]
+WORKDIR /src/api
 RUN dotnet publish "JiuDiary.Api.csproj" \
     --configuration Release \
     --output /app/publish \

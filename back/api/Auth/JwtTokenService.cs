@@ -20,7 +20,7 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
     /// <returns>JWT и время его окончания; сам access-токен в БД не сохраняется.</returns>
     public IssuedAccessToken Issue(AuthenticatedUser user)
     {
-        var now = DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.Now;
         var expiresAt = now.AddMinutes(_options.AccessTokenMinutes);
 
         // Claims — минимальные данные, которые API затем читает из проверенного JWT.
@@ -43,8 +43,8 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
             issuer: _options.Issuer,
             audience: _options.Audience,
             claims: claims,
-            notBefore: now.UtcDateTime,
-            expires: expiresAt.UtcDateTime,
+            notBefore: now.DateTime,
+            expires: expiresAt.DateTime,
             signingCredentials: credentials);
 
         // JWT сериализуется в строку и возвращается клиенту; сервер хранит только ключ подписи.

@@ -15,7 +15,7 @@ Backend развёртывается как отдельный сервис ти
 | Build Path | `/back` |
 | Watch Paths | `back/**` |
 | Build Type | `Dockerfile` |
-| Docker File | `JiuDiary.Api/Dockerfile` |
+| Docker File | `api/Dockerfile` |
 | Docker Context Path | `/back` |
 
 ## Environment

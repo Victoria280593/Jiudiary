@@ -31,7 +31,7 @@ Swagger: `http://217.114.15.222:5136/swagger/index.html`.
 После запуска контейнера MSSQL выполните через SSMS единственный файл:
 
 ```text
-back/JiuDiary.Api/DataBase/Scripts/create-database.sql
+back/libs/database/Scripts/create-database.sql
 ```
 
 Скрипт рассчитан на пустой сервер и создаёт базу `JiuDiary` целиком.

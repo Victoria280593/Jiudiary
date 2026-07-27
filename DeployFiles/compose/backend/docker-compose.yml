@@ -2,7 +2,7 @@ services:
   api:
     build:
       context: ../../../back
-      dockerfile: JiuDiary.Api/Dockerfile
+      dockerfile: api/Dockerfile
     image: jiudiary-api:local
     restart: unless-stopped
     environment:

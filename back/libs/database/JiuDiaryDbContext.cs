@@ -1,7 +1,7 @@
-using JiuDiary.Api.DataBase.Entities;
+using JiuDiary.Database.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace JiuDiary.Api.DataBase;
+namespace JiuDiary.Database;
 
 /// <summary>
 /// Контекст доступа к основной базе данных JiuDiary.
@@ -69,7 +69,7 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
             session.HasKey(x => x.Id);
             session.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
             session.Property(x => x.RefreshTokenHash).HasMaxLength(64).IsFixedLength().IsRequired();
-            session.Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+            session.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
             session.HasIndex(x => x.RefreshTokenHash).IsUnique();
             session.HasOne(x => x.User)
                 .WithMany(x => x.AuthSessions)

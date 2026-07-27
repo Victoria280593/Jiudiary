@@ -6,7 +6,7 @@ DEPLOY_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 REPO_DIR="$(cd "${DEPLOY_DIR}/.." && pwd)"
 ENV_FILE="${DEPLOY_DIR}/.env"
 COMPOSE_FILE="${DEPLOY_DIR}/compose/mssql/docker-compose.yml"
-SQL_FILE="${REPO_DIR}/back/JiuDiary.Api/DataBase/Scripts/create-database.sql"
+SQL_FILE="${REPO_DIR}/back/libs/database/Scripts/create-database.sql"
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "Create ${ENV_FILE} from .env.example first."

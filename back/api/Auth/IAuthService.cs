@@ -1,4 +1,4 @@
-using JiuDiary.Api.Contracts.Auth;
+using JiuDiary.Models.Auth;
 
 namespace JiuDiary.Api.Auth;
 
@@ -15,7 +15,7 @@ public interface IAuthService
     /// <param name="password">Открытый пароль, используемый только для вычисления хеша.</param>
     /// <param name="cancellationToken">Токен отмены запроса.</param>
     /// <returns>Созданный пользователь или <see langword="null"/>, если логин занят.</returns>
-    Task<UserResponse?> RegisterAsync(
+    Task<UserOutputModel?> RegisterAsync(
         string login,
         string name,
         string password,
@@ -28,7 +28,7 @@ public interface IAuthService
     /// <param name="password">Пароль для проверки по сохранённому хешу.</param>
     /// <param name="cancellationToken">Токен отмены запроса.</param>
     /// <returns>Новая пара access/refresh или <see langword="null"/> при отказе.</returns>
-    Task<LoginResponse?> LoginAsync(
+    Task<LoginOutputModel?> LoginAsync(
         string login,
         string password,
         CancellationToken cancellationToken);
@@ -39,7 +39,7 @@ public interface IAuthService
     /// <param name="refreshToken">Текущий refresh-токен клиента.</param>
     /// <param name="cancellationToken">Токен отмены запроса.</param>
     /// <returns>Новая пара токенов или <see langword="null"/>, если сессия недействительна.</returns>
-    Task<LoginResponse?> RefreshAsync(
+    Task<LoginOutputModel?> RefreshAsync(
         string refreshToken,
         CancellationToken cancellationToken);
 

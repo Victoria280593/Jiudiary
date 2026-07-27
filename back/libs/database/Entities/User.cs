@@ -1,4 +1,4 @@
-namespace JiuDiary.Api.DataBase.Entities;
+namespace JiuDiary.Database.Entities;
 
 /// <summary>
 /// Учётная запись пользователя JiuDiary.
