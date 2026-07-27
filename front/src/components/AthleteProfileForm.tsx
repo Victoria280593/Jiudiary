@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { updateAthleteProfileAction, type FormState } from "@/app/actions/profile";
 import { SubmitButton } from "@/components/SubmitButton";
 import { BELT_LABELS, MAX_BLACK_BELT_DEGREE, MAX_STRIPES, beltsForAge, calculateAge } from "@/lib/belt";
@@ -39,6 +39,64 @@ export function AthleteProfileForm({
 
   const [birthDateValue, setBirthDateValue] = useState(toDateInputValue(birthDate));
   const [selectedBelt, setSelectedBelt] = useState<Belt | "">(belt ?? "");
+  const [selectedCountryCode, setSelectedCountryCode] = useState(countryCode ?? "");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadClientInfo() {
+      try {
+        const response = await fetch("/api/client-info", { cache: "no-store" });
+        if (!response.ok) return;
+
+        const clientInfo: {
+          country: string | null;
+          birthDate: string | null;
+          beltId: number | null;
+          beltName: string | null;
+        } = await response.json();
+
+        if (cancelled) return;
+
+        const normalizedCountry = clientInfo.country?.normalize("NFC").trim().toLocaleLowerCase("ru-RU");
+        const selectedCountry = countries.find(
+          (country) => country.name.normalize("NFC").trim().toLocaleLowerCase("ru-RU") === normalizedCountry
+        );
+        const beltById: Record<number, Belt> = {
+          1: "WHITE",
+          2: "GREY_WHITE",
+          3: "GREY",
+          4: "GREY_BLACK",
+          5: "YELLOW_WHITE",
+          6: "YELLOW",
+          7: "YELLOW_BLACK",
+          8: "ORANGE_WHITE",
+          9: "ORANGE",
+          10: "ORANGE_BLACK",
+          11: "GREEN_WHITE",
+          12: "GREEN",
+          13: "GREEN_BLACK",
+          14: "BLUE",
+          15: "PURPLE",
+          16: "BROWN",
+          17: "BLACK",
+          18: "BLACK_RED",
+          19: "RED",
+        };
+
+        setSelectedCountryCode(selectedCountry?.code ?? countryCode ?? "");
+        setBirthDateValue(clientInfo.birthDate ?? "");
+        setSelectedBelt(beltById[clientInfo.beltId ?? 0] ?? belt ?? "");
+      } catch {
+        // Server-rendered values remain visible if the API is temporarily unavailable.
+      }
+    }
+
+    void loadClientInfo();
+    return () => {
+      cancelled = true;
+    };
+  }, [countries, countryCode, belt, state]);
 
   const availableBelts = useMemo(() => {
     if (!birthDateValue) return null; // возраст неизвестен — не ограничиваем выбор
@@ -61,7 +119,8 @@ export function AthleteProfileForm({
           <select
             id="countryCode"
             name="countryCode"
-            defaultValue={countryCode ?? ""}
+            value={selectedCountryCode}
+            onChange={(event) => setSelectedCountryCode(event.target.value)}
             className={inputClass}
           >
             <option value="">Не указана</option>
