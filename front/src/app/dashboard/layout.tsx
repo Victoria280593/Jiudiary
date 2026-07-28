@@ -10,6 +10,6 @@ export default async function DashboardLayout({
   if (!user) redirect("/login");
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">{children}</main>
+    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 lg:px-7 lg:py-8">{children}</main>
   );
 }

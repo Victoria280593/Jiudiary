@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { AvatarUploadForm } from "@/components/AvatarUploadForm";
-import { AthleteCard } from "@/components/AthleteCard";
 import { AthleteProfileForm } from "@/components/AthleteProfileForm";
 import { Card } from "@/components/Card";
 import { PersonalDataForm } from "@/components/PersonalDataForm";
+import { ProfileHero } from "@/components/ProfileHero";
 import { calculateAge } from "@/lib/belt";
 import { getCountryList, getCountryName } from "@/lib/countries";
 import type { Role } from "@prisma/client";
@@ -21,31 +20,26 @@ export default async function ProfilePage() {
   if (!user) redirect("/login");
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <div>
         <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">
           Мой профиль
         </h1>
-        <p className="mt-2 text-sm text-muted sm:text-base">
-          {user.name} · {ROLE_LABELS[user.role]}
+        <p className="mt-1.5 text-sm text-muted">
+          Управляйте своими данными и настройками
         </p>
       </div>
 
-      <AthleteCard
+      <ProfileHero
         name={user.name}
+        roleLabel={ROLE_LABELS[user.role]}
         avatarUrl={user.avatarUrl}
-        flagEmoji={null}
         countryName={getCountryName(user.countryCode)}
         age={user.birthDate ? calculateAge(user.birthDate) : null}
         belt={user.belt}
         stripes={user.stripes}
         blackBeltDegree={user.blackBeltDegree}
-        showBeltBadge
       />
-
-      <Card title="Аватар">
-        <AvatarUploadForm name={user.name} avatarUrl={user.avatarUrl} />
-      </Card>
 
       <Card title="Спортивные данные">
         <AthleteProfileForm
@@ -62,24 +56,7 @@ export default async function ProfilePage() {
       </Card>
 
       <Card title="Личные данные">
-        <PersonalDataForm name={user.name} />
-      </Card>
-
-      <Card title="Данные аккаунта">
-        <dl className="flex flex-col gap-2 text-sm">
-          <div className="flex justify-between">
-            <dt className="text-muted">Имя</dt>
-            <dd className="text-foreground">{user.name}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-muted">Email</dt>
-            <dd className="text-foreground">{user.email}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-muted">Роль</dt>
-            <dd className="text-foreground">{ROLE_LABELS[user.role]}</dd>
-          </div>
-        </dl>
+        <PersonalDataForm name={user.name} email={user.email} />
       </Card>
     </div>
   );

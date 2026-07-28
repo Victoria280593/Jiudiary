@@ -35,6 +35,14 @@ export function SidebarNavigation({ role }: { role: Role }) {
 
   return (
     <nav aria-label="Основная навигация" className="mt-12 flex flex-col gap-2">
+      <Link
+        href="/dashboard/profile"
+        className={`sidebar-link ${pathname === "/dashboard/profile" ? "sidebar-link-active" : ""}`}
+      >
+        <ProfileIcon />
+        <span>Мой профиль</span>
+      </Link>
+
       <Link href="/" className={`sidebar-link ${pathname === "/" ? "sidebar-link-active" : ""}`}>
         <CalendarIcon />
         <span>Календарь</span>
@@ -49,14 +57,6 @@ export function SidebarNavigation({ role }: { role: Role }) {
           <span>Ученики</span>
         </Link>
       )}
-
-      <Link
-        href="/dashboard/profile"
-        className={`sidebar-link ${pathname === "/dashboard/profile" ? "sidebar-link-active" : ""}`}
-      >
-        <ProfileIcon />
-        <span>Мой профиль</span>
-      </Link>
     </nav>
   );
 }
@@ -67,13 +67,13 @@ export function MobileNavigation({ role }: { role: Role }) {
   return (
     <nav aria-label="Мобильная навигация" className="mt-3 grid w-full grid-cols-3 gap-1">
       <Link
-        href="/"
+        href="/dashboard/profile"
         className={`flex min-h-10 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold ${
-          pathname === "/" ? "bg-accent-soft text-accent" : "text-muted"
+          pathname === "/dashboard/profile" ? "bg-accent-soft text-accent" : "text-muted"
         }`}
       >
-        <CalendarIcon />
-        <span>Календарь</span>
+        <ProfileIcon />
+        <span>Профиль</span>
       </Link>
       {role === "COACH" ? (
         <Link
@@ -89,13 +89,13 @@ export function MobileNavigation({ role }: { role: Role }) {
         <span />
       )}
       <Link
-        href="/dashboard/profile"
+        href="/"
         className={`flex min-h-10 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold ${
-          pathname === "/dashboard/profile" ? "bg-accent-soft text-accent" : "text-muted"
+          pathname === "/" ? "bg-accent-soft text-accent" : "text-muted"
         }`}
       >
-        <ProfileIcon />
-        <span>Профиль</span>
+        <CalendarIcon />
+        <span>Календарь</span>
       </Link>
     </nav>
   );

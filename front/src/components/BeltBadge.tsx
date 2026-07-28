@@ -23,10 +23,10 @@ export function BeltBadge({
     >
       <TiedBeltIcon belt={belt} stripes={stripes} className="h-9 w-16 shrink-0" />
       <span
-        className="whitespace-nowrap text-xs font-bold uppercase tracking-[0.08em]"
+        className="whitespace-nowrap text-xs font-semibold"
         style={{ color: labelColor }}
       >
-        {BELT_LABELS[belt]} пояс
+        {BELT_LABELS[belt].toLocaleLowerCase("ru-RU")} пояс
       </span>
     </div>
   );

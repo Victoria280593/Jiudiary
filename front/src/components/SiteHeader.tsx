@@ -16,32 +16,25 @@ const ROLE_LABELS: Record<Role, string> = {
 function Logo({
   belt,
   stripes,
-  stacked = false,
 }: {
   belt: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>["belt"];
   stripes: number | null;
-  stacked?: boolean;
 }) {
   return (
     <Link
       href="/"
-      className={`group flex ${stacked ? "flex-col items-center gap-1" : "items-center gap-2.5"}`}
+      className="flex items-center gap-2"
       aria-label="Jiu Diary — на главную"
     >
-      <span className={`font-brand text-[1.55rem] font-bold tracking-[-0.045em] text-foreground ${stacked ? "leading-none" : ""}`}>
-        JiuDiary
-      </span>
       <LiveBelt
         belt={belt ?? "WHITE"}
         stripes={stripes ?? 0}
         size="xs"
-        stretch={stacked}
-        className={
-          stacked
-            ? "!h-7 !w-[6.25rem]"
-            : "transition-transform duration-200 group-hover:-rotate-3 group-hover:scale-105"
-        }
+        className="!h-6 !w-10 shrink-0"
       />
+      <span className="font-brand text-[1.35rem] font-bold tracking-[-0.045em] text-foreground">
+        JiuDiary
+      </span>
     </Link>
   );
 }
@@ -58,8 +51,8 @@ export async function SiteHeader() {
   return (
     <>
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border/70 bg-white/82 px-5 py-7 backdrop-blur-xl lg:flex">
-        <div className="flex justify-center">
-          <Logo belt={user.belt} stripes={beltStripes} stacked />
+        <div className="flex">
+          <Logo belt={user.belt} stripes={beltStripes} />
         </div>
 
         <SidebarNavigation role={user.role} />

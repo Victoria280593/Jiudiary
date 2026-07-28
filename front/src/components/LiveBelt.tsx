@@ -43,13 +43,11 @@ export function LiveBelt({
   stripes,
   size,
   className,
-  stretch = false,
 }: {
   belt: BeltType;
   stripes: number;
   size: "xs" | "sm" | "md" | "lg";
   className?: string;
-  stretch?: boolean;
 }) {
   const liveBelt = useLiveBelt(belt, stripes);
 
@@ -57,7 +55,6 @@ export function LiveBelt({
     <TiedBeltIcon
       belt={liveBelt.belt ?? belt}
       stripes={liveBelt.stripes}
-      stretch={stretch}
       className={`${size === "xs" ? "h-8 w-14" : "h-12 w-24"} ${className ?? ""}`}
     />
   );
