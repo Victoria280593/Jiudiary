@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Role } from "@prisma/client";
 import { logoutAction } from "@/app/actions/auth";
 import { Avatar } from "@/components/Avatar";
-import { LiveBelt } from "@/components/LiveBelt";
 import { MobileNavigation, SidebarNavigation } from "@/components/SidebarNavigation";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -13,26 +12,14 @@ const ROLE_LABELS: Record<Role, string> = {
   PARENT: "Родитель",
 };
 
-function Logo({
-  belt,
-  stripes,
-}: {
-  belt: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>["belt"];
-  stripes: number | null;
-}) {
+function Logo() {
   return (
     <Link
       href="/"
-      className="flex items-center gap-2"
+      className="flex items-center"
       aria-label="Jiu Diary — на главную"
     >
-      <LiveBelt
-        belt={belt ?? "WHITE"}
-        stripes={stripes ?? 0}
-        size="xs"
-        className="!h-8 !w-11 shrink-0"
-      />
-      <span className="font-brand text-[1.35rem] font-bold tracking-[-0.045em] text-foreground">
+      <span className="font-brand text-[1.7rem] font-bold tracking-[-0.05em] text-foreground">
         JiuDiary
       </span>
     </Link>
@@ -46,13 +33,11 @@ export async function SiteHeader() {
     return null;
   }
 
-  const beltStripes = user.belt === "BLACK" ? user.blackBeltDegree : user.stripes;
-
   return (
     <>
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border/70 bg-white/82 px-5 py-7 backdrop-blur-xl lg:flex">
         <div className="flex justify-center">
-          <Logo belt={user.belt} stripes={beltStripes} />
+          <Logo />
         </div>
 
         <SidebarNavigation role={user.role} />
@@ -75,7 +60,7 @@ export async function SiteHeader() {
 
       <header className="sticky top-0 z-40 flex flex-col border-b border-border/70 bg-white/90 px-4 py-3 backdrop-blur-xl lg:hidden">
         <div className="flex w-full items-center justify-between">
-          <Logo belt={user.belt} stripes={beltStripes} />
+          <Logo />
           <div className="flex items-center gap-2">
             <Link href="/dashboard/profile" aria-label="Открыть аккаунт" className="rounded-full ring-4 ring-accent-soft">
               <Avatar src={user.avatarUrl} name={user.name} size={36} />
