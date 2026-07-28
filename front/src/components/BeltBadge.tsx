@@ -15,15 +15,15 @@ export function BeltBadge({
 
   return (
     <div
-      className="inline-flex w-full max-w-72 items-center justify-start gap-4 rounded-full border px-5 py-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.07)] backdrop-blur-sm"
+      className="inline-flex items-center justify-center gap-2.5 rounded-full border px-3.5 py-1.5 shadow-[0_8px_22px_rgba(15,23,42,0.07)] backdrop-blur-sm"
       style={{
         borderColor: `${colors.main}30`,
         background: `linear-gradient(135deg, ${colors.main}16, ${accent}0D)`,
       }}
     >
-      <TiedBeltIcon belt={belt} stripes={stripes} className="h-12 w-24 shrink-0" />
+      <TiedBeltIcon belt={belt} stripes={stripes} className="h-8 w-14 shrink-0" />
       <span
-        className="whitespace-nowrap text-base font-semibold"
+        className="whitespace-nowrap text-sm font-semibold"
         style={{ color: labelColor }}
       >
         {BELT_LABELS[belt]} пояс
