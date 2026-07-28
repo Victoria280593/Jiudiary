@@ -24,9 +24,7 @@ public sealed class AuthController(IAuthService authService) : BaseController
     [ProducesResponseType<UserOutputModel>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<UserOutputModel>> Register(
-        RegisterInputModel request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<UserOutputModel>> Register(RegisterInputModel request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Login) ||
             request.Login.Trim().Length > 256 ||
@@ -41,11 +39,7 @@ public sealed class AuthController(IAuthService authService) : BaseController
             });
         }
 
-        var user = await authService.RegisterAsync(
-            request.Login,
-            request.Name,
-            request.Password,
-            cancellationToken);
+        var user = await authService.RegisterAsync(request, cancellationToken);
 
         return user is null
             ? Conflict(new { error = "A user with this login already exists." })
@@ -64,19 +58,14 @@ public sealed class AuthController(IAuthService authService) : BaseController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-    public async Task<ActionResult<LoginOutputModel>> Login(
-        LoginInputModel request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<LoginOutputModel>> Login(LoginInputModel request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Login) || string.IsNullOrEmpty(request.Password))
         {
             return BadRequest(new { error = "Login and password are required." });
         }
 
-        var response = await authService.LoginAsync(
-            request.Login,
-            request.Password,
-            cancellationToken);
+        var response = await authService.LoginAsync(request, cancellationToken);
         return response is null ? Unauthorized() : Ok(response);
     }
 
@@ -90,18 +79,14 @@ public sealed class AuthController(IAuthService authService) : BaseController
     [ProducesResponseType<LoginOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<LoginOutputModel>> Refresh(
-        RefreshInputModel request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<LoginOutputModel>> Refresh(RefreshInputModel request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.RefreshToken))
         {
             return BadRequest(new { error = "Refresh token is required." });
         }
 
-        var response = await authService.RefreshAsync(
-            request.RefreshToken,
-            cancellationToken);
+        var response = await authService.RefreshAsync(request, cancellationToken);
         return response is null ? Unauthorized() : Ok(response);
     }
 
@@ -129,13 +114,11 @@ public sealed class AuthController(IAuthService authService) : BaseController
     /// <param name="cancellationToken">Токен отмены HTTP-запроса.</param>
     [HttpPost("logout")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Logout(
-        LogoutInputModel request,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Logout(LogoutInputModel request, CancellationToken cancellationToken)
     {
         if (!string.IsNullOrWhiteSpace(request.RefreshToken))
         {
-            await authService.LogoutAsync(request.RefreshToken, cancellationToken);
+            await authService.LogoutAsync(request, cancellationToken);
         }
 
         return NoContent();

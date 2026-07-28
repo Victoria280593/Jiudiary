@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using JiuDiary.Database.Entities;
+using JiuDiary.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -40,6 +41,7 @@ public static class AuthExtensions
             .Get<JwtOptions>() ?? new JwtOptions();
 
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IClientInfoService, ClientInfoService>();
         services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
 

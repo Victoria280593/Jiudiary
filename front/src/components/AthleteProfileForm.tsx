@@ -96,7 +96,7 @@ export function AthleteProfileForm({
     return () => {
       cancelled = true;
     };
-  }, [countries, countryCode, belt, state]);
+  }, [countries, countryCode, belt]);
 
   const availableBelts = useMemo(() => {
     if (!birthDateValue) return null; // возраст неизвестен — не ограничиваем выбор

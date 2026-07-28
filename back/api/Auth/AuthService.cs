@@ -28,13 +28,9 @@ public sealed class AuthService(
     /// <summary>
     /// Регистрирует тренера и сохраняет только безопасный хеш его пароля.
     /// </summary>
-    public async Task<UserOutputModel?> RegisterAsync(
-        string login,
-        string name,
-        string password,
-        CancellationToken cancellationToken)
+    public async Task<UserOutputModel?> RegisterAsync(RegisterInputModel inputModel, CancellationToken cancellationToken)
     {
-        var normalizedLogin = login.Trim();
+        var normalizedLogin = inputModel.Login?.Trim() ?? string.Empty;
 
         // Логин уникален: повторная регистрация возвращает Conflict через контроллер.
         if (await dbContext.Users.AnyAsync(
@@ -59,14 +55,14 @@ public sealed class AuthService(
         {
             Id = Guid.NewGuid(),
             Login = normalizedLogin,
-            Name = name.Trim(),
+            Name = inputModel.Name?.Trim() ?? string.Empty,
             IsActive = true,
             Role = role,
             RoleId = role.Id
         };
 
         // Открытый пароль не записывается в БД и после вычисления хеша больше не используется.
-        user.PasswordHash = passwordHasher.HashPassword(user, password);
+        user.PasswordHash = passwordHasher.HashPassword(user, inputModel.Password!);
 
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -77,15 +73,13 @@ public sealed class AuthService(
     /// <summary>
     /// Проверяет пароль пользователя и при успехе создаёт JWT-сессию.
     /// </summary>
-    public async Task<LoginOutputModel?> LoginAsync(
-        string login,
-        string password,
-        CancellationToken cancellationToken)
+    public async Task<LoginOutputModel?> LoginAsync(LoginInputModel inputModel, CancellationToken cancellationToken)
     {
         // Роль загружается вместе с пользователем, чтобы поместить её в claims JWT.
+        var normalizedLogin = inputModel.Login ?? string.Empty;
         var user = await dbContext.Users
             .Include(x => x.Role)
-            .SingleOrDefaultAsync(x => x.Login == login.Trim(), cancellationToken);
+            .SingleOrDefaultAsync(x => x.Login == normalizedLogin.Trim(), cancellationToken);
 
         if (user is null || !user.IsActive)
         {
@@ -95,12 +89,12 @@ public sealed class AuthService(
         // Bootstrap нужен только для первого входа заранее созданного администратора без хеша.
         if (string.IsNullOrWhiteSpace(user.PasswordHash))
         {
-            if (!CanBootstrap(user.Login, password))
+            if (!CanBootstrap(user.Login, inputModel.Password!))
             {
                 return null;
             }
 
-            user.PasswordHash = passwordHasher.HashPassword(user, password);
+            user.PasswordHash = passwordHasher.HashPassword(user, inputModel.Password!);
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
@@ -108,7 +102,7 @@ public sealed class AuthService(
         var verification = passwordHasher.VerifyHashedPassword(
             user,
             user.PasswordHash,
-            password);
+            inputModel.Password!);
 
         return verification == PasswordVerificationResult.Failed
             ? null
@@ -118,12 +112,10 @@ public sealed class AuthService(
     /// <summary>
     /// Обменивает действующий refresh-токен на полностью новую пару токенов.
     /// </summary>
-    public async Task<LoginOutputModel?> RefreshAsync(
-        string refreshToken,
-        CancellationToken cancellationToken)
+    public async Task<LoginOutputModel?> RefreshAsync(RefreshInputModel inputModel, CancellationToken cancellationToken)
     {
         // В БД ищется SHA-256-хеш: исходный refresh-токен хранится только у клиента.
-        var tokenHash = HashToken(refreshToken);
+        var tokenHash = HashToken(inputModel.RefreshToken!);
 
         // Serializable-транзакция не позволяет двум запросам одновременно использовать один токен.
         await using var transaction = await dbContext.Database.BeginTransactionAsync(
@@ -157,12 +149,10 @@ public sealed class AuthService(
     /// <summary>
     /// Завершает сессию, помечая соответствующий refresh-токен отозванным.
     /// </summary>
-    public async Task LogoutAsync(
-        string refreshToken,
-        CancellationToken cancellationToken)
+    public async Task LogoutAsync(LogoutInputModel inputModel, CancellationToken cancellationToken)
     {
         // Клиент присылает исходный токен, а сравнение выполняется по его хешу.
-        var tokenHash = HashToken(refreshToken);
+        var tokenHash = HashToken(inputModel.RefreshToken!);
         var session = await dbContext.AuthSessions
             .SingleOrDefaultAsync(x => x.RefreshTokenHash == tokenHash, cancellationToken);
 
