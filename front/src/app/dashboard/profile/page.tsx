@@ -40,6 +40,7 @@ export default async function ProfilePage() {
         belt={user.belt}
         stripes={user.stripes}
         blackBeltDegree={user.blackBeltDegree}
+        showBeltBadge
       />
 
       <Card title="Аватар">

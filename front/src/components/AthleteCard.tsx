@@ -2,6 +2,7 @@
 
 import { Avatar } from "@/components/Avatar";
 import { Belt } from "@/components/Belt";
+import { BeltBadge } from "@/components/BeltBadge";
 import { Card } from "@/components/Card";
 import { useLiveBelt } from "@/components/LiveBelt";
 import { BELT_LABELS } from "@/lib/belt";
@@ -16,6 +17,7 @@ export function AthleteCard({
   belt,
   stripes,
   blackBeltDegree,
+  showBeltBadge = false,
 }: {
   name: string;
   avatarUrl: string | null;
@@ -25,6 +27,7 @@ export function AthleteCard({
   belt: BeltType | null;
   stripes: number | null;
   blackBeltDegree: number | null;
+  showBeltBadge?: boolean;
 }) {
   const beltStripeCount = belt === "BLACK" ? blackBeltDegree ?? 0 : stripes ?? 0;
   const liveBelt = useLiveBelt(belt, beltStripeCount);
@@ -52,16 +55,22 @@ export function AthleteCard({
 
       {currentBelt && (
         <div className="flex flex-col items-center gap-1">
-          <Belt belt={currentBelt} stripes={currentStripes} size="lg" />
-          <p className="text-sm font-medium text-foreground/80">
-            {BELT_LABELS[currentBelt]} пояс по джиу-джитсу
-            {currentBelt === "BLACK" && blackBeltDegree
-              ? ` · ${blackBeltDegree}-я степень`
-              : ""}
-            {currentBelt !== "BLACK" && currentStripes
-              ? ` · ${currentStripes} ${pluralStripes(currentStripes)}`
-              : ""}
-          </p>
+          {showBeltBadge ? (
+            <BeltBadge belt={currentBelt} stripes={currentStripes} />
+          ) : (
+            <>
+              <Belt belt={currentBelt} stripes={currentStripes} size="lg" />
+              <p className="text-sm font-medium text-foreground/80">
+                {BELT_LABELS[currentBelt]} пояс по джиу-джитсу
+                {currentBelt === "BLACK" && blackBeltDegree
+                  ? ` · ${blackBeltDegree}-я степень`
+                  : ""}
+                {currentBelt !== "BLACK" && currentStripes
+                  ? ` · ${currentStripes} ${pluralStripes(currentStripes)}`
+                  : ""}
+              </p>
+            </>
+          )}
         </div>
       )}
     </Card>
