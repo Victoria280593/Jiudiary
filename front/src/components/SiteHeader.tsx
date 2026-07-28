@@ -16,12 +16,18 @@ const ROLE_LABELS: Record<Role, string> = {
 function Logo({
   belt,
   stripes,
+  stacked = false,
 }: {
   belt: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>["belt"];
   stripes: number | null;
+  stacked?: boolean;
 }) {
   return (
-    <Link href="/" className="group flex items-center gap-2.5" aria-label="Jiu Diary — на главную">
+    <Link
+      href="/"
+      className={`group flex ${stacked ? "flex-col items-center gap-0.5" : "items-center gap-2.5"}`}
+      aria-label="Jiu Diary — на главную"
+    >
       <span className="font-brand text-[1.55rem] font-bold tracking-[-0.045em] text-foreground">
         JiuDiary
       </span>
@@ -29,7 +35,7 @@ function Logo({
         belt={belt ?? "WHITE"}
         stripes={stripes ?? 0}
         size="xs"
-        className="transition-transform duration-200 group-hover:-rotate-3 group-hover:scale-105"
+        className={`transition-transform duration-200 group-hover:-rotate-3 group-hover:scale-105 ${stacked ? "-mt-1" : ""}`}
       />
     </Link>
   );
@@ -48,7 +54,7 @@ export async function SiteHeader() {
     <>
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border/70 bg-white/82 px-5 py-7 backdrop-blur-xl lg:flex">
         <div className="flex justify-center">
-          <Logo belt={user.belt} stripes={beltStripes} />
+          <Logo belt={user.belt} stripes={beltStripes} stacked />
         </div>
 
         <SidebarNavigation role={user.role} />
