@@ -26,6 +26,7 @@ Frontend развёртывается как отдельный сервис т�
 DATABASE_URL=file:/app/data/app.db
 BACKEND_URL=http://217.114.15.222:5136
 APP_URL=http://217.114.15.222:3001
+NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=<один постоянный случайный ключ минимум 32 символа>
 ```
 
 `BACKEND_URL` используется сервером Next.js. Он не попадает в клиентский

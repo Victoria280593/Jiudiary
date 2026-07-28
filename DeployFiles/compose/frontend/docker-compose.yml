@@ -9,6 +9,7 @@ services:
       DATABASE_URL: "file:/app/data/app.db"
       BACKEND_URL: "${FRONTEND_BACKEND_URL:-http://217.114.15.222:5136}"
       APP_URL: "${FRONTEND_APP_URL:-http://217.114.15.222:3001}"
+      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: "${FRONTEND_SERVER_ACTIONS_ENCRYPTION_KEY:?Set a stable random key for Next.js Server Actions}"
     ports:
       - "${FRONTEND_HOST_PORT:-3001}:3000"
     volumes:
