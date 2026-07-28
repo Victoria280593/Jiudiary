@@ -44,7 +44,6 @@ function toDateInputValue(date: Date | null): string {
 
 export function AthleteProfileForm({
   countries,
-  countryCode,
   birthDate,
   belt,
   stripes,
@@ -68,7 +67,6 @@ export function AthleteProfileForm({
 
   const [birthDateValue, setBirthDateValue] = useState(toDateInputValue(birthDate));
   const [selectedBelt, setSelectedBelt] = useState<Belt | "">(belt ?? "");
-  const [selectedCountryCode, setSelectedCountryCode] = useState(countryCode ?? "");
 
   useEffect(() => {
     let cancelled = false;
@@ -82,11 +80,6 @@ export function AthleteProfileForm({
 
         if (cancelled) return;
 
-        const normalizedCountry = clientInfo.country?.normalize("NFC").trim().toLocaleLowerCase("ru-RU");
-        const selectedCountry = countries.find(
-          (country) => country.name.normalize("NFC").trim().toLocaleLowerCase("ru-RU") === normalizedCountry
-        );
-        setSelectedCountryCode(selectedCountry?.code ?? countryCode ?? "");
         setBirthDateValue(clientInfo.birthDate ?? "");
         setSelectedBelt(BELT_BY_ID[clientInfo.beltId ?? 0] ?? belt ?? "");
       } catch {
@@ -98,7 +91,7 @@ export function AthleteProfileForm({
     return () => {
       cancelled = true;
     };
-  }, [countries, countryCode, belt]);
+  }, [belt]);
 
   useEffect(() => {
     if (!state?.success) return;
