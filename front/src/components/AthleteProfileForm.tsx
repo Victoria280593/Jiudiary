@@ -8,6 +8,35 @@ import { errorClass, inputClass, labelClass } from "@/lib/ui";
 import type { Belt } from "@prisma/client";
 import type { Country } from "@/lib/countries";
 
+type ClientInfoResponse = {
+  country: string | null;
+  birthDate: string | null;
+  beltId: number | null;
+  beltName: string | null;
+};
+
+const BELT_BY_ID: Record<number, Belt> = {
+  1: "WHITE",
+  2: "GREY_WHITE",
+  3: "GREY",
+  4: "GREY_BLACK",
+  5: "YELLOW_WHITE",
+  6: "YELLOW",
+  7: "YELLOW_BLACK",
+  8: "ORANGE_WHITE",
+  9: "ORANGE",
+  10: "ORANGE_BLACK",
+  11: "GREEN_WHITE",
+  12: "GREEN",
+  13: "GREEN_BLACK",
+  14: "BLUE",
+  15: "PURPLE",
+  16: "BROWN",
+  17: "BLACK",
+  18: "BLACK_RED",
+  19: "RED",
+};
+
 function toDateInputValue(date: Date | null): string {
   if (!date) return "";
   return date.toISOString().slice(0, 10);
@@ -49,12 +78,7 @@ export function AthleteProfileForm({
         const response = await fetch("/api/client-info", { cache: "no-store" });
         if (!response.ok) return;
 
-        const clientInfo: {
-          country: string | null;
-          birthDate: string | null;
-          beltId: number | null;
-          beltName: string | null;
-        } = await response.json();
+        const clientInfo: ClientInfoResponse = await response.json();
 
         if (cancelled) return;
 
@@ -62,31 +86,9 @@ export function AthleteProfileForm({
         const selectedCountry = countries.find(
           (country) => country.name.normalize("NFC").trim().toLocaleLowerCase("ru-RU") === normalizedCountry
         );
-        const beltById: Record<number, Belt> = {
-          1: "WHITE",
-          2: "GREY_WHITE",
-          3: "GREY",
-          4: "GREY_BLACK",
-          5: "YELLOW_WHITE",
-          6: "YELLOW",
-          7: "YELLOW_BLACK",
-          8: "ORANGE_WHITE",
-          9: "ORANGE",
-          10: "ORANGE_BLACK",
-          11: "GREEN_WHITE",
-          12: "GREEN",
-          13: "GREEN_BLACK",
-          14: "BLUE",
-          15: "PURPLE",
-          16: "BROWN",
-          17: "BLACK",
-          18: "BLACK_RED",
-          19: "RED",
-        };
-
         setSelectedCountryCode(selectedCountry?.code ?? countryCode ?? "");
         setBirthDateValue(clientInfo.birthDate ?? "");
-        setSelectedBelt(beltById[clientInfo.beltId ?? 0] ?? belt ?? "");
+        setSelectedBelt(BELT_BY_ID[clientInfo.beltId ?? 0] ?? belt ?? "");
       } catch {
         // Server-rendered values remain visible if the API is temporarily unavailable.
       }
@@ -99,10 +101,32 @@ export function AthleteProfileForm({
   }, [countries, countryCode, belt]);
 
   useEffect(() => {
-    if (state?.success && state.belt) {
-      setSelectedBelt(state.belt);
+    if (!state?.success) return;
+
+    let cancelled = false;
+
+    async function reloadClientInfo() {
+      try {
+        const response = await fetch(`/api/client-info?refresh=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) return;
+
+        const clientInfo: ClientInfoResponse = await response.json();
+        if (cancelled) return;
+
+        setBirthDateValue(clientInfo.birthDate ?? "");
+        setSelectedBelt(BELT_BY_ID[clientInfo.beltId ?? 0] ?? state?.belt ?? belt ?? "");
+      } catch {
+        if (!cancelled && state?.belt) {
+          setSelectedBelt(state.belt);
+        }
+      }
     }
-  }, [state]);
+
+    void reloadClientInfo();
+    return () => {
+      cancelled = true;
+    };
+  }, [state, belt]);
 
   const availableBelts = useMemo(() => {
     if (!birthDateValue) return null; // возраст неизвестен — не ограничиваем выбор
