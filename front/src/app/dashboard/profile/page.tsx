@@ -1,16 +1,12 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { AvatarUploadForm } from "@/components/AvatarUploadForm";
 import { AthleteCard } from "@/components/AthleteCard";
 import { AthleteProfileForm } from "@/components/AthleteProfileForm";
-import { AchievementForm } from "@/components/AchievementForm";
 import { Card } from "@/components/Card";
 import { PersonalDataForm } from "@/components/PersonalDataForm";
-import { deleteAchievementAction } from "@/app/actions/achievement";
 import { calculateAge } from "@/lib/belt";
 import { flagEmoji, getCountryList, getCountryName } from "@/lib/countries";
-import { formatDate } from "@/lib/format";
 import type { Role } from "@prisma/client";
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -23,16 +19,6 @@ const ROLE_LABELS: Record<Role, string> = {
 export default async function ProfilePage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-
-  const achievements = await prisma.achievement.findMany({ where: { userId: user.id } });
-  // Достижения с указанной датой турнира — сверху, от новых к старым.
-  // Без даты — в конце списка (не подменяем дату турнира датой добавления записи).
-  achievements.sort((a, b) => {
-    if (a.date && b.date) return b.date.getTime() - a.date.getTime();
-    if (a.date) return -1;
-    if (b.date) return 1;
-    return b.createdAt.getTime() - a.createdAt.getTime();
-  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -72,34 +58,6 @@ export default async function ProfilePage() {
           blackBeltAwardedAt={user.blackBeltAwardedAt}
           blackBeltProfessor={user.blackBeltProfessor}
         />
-      </Card>
-
-      <Card title="Спортивные достижения">
-        <AchievementForm />
-
-        {achievements.length > 0 && (
-          <ul className="mt-4 flex flex-col divide-y divide-border">
-            {achievements.map((a) => (
-              <li key={a.id} className="flex items-start justify-between gap-3 py-3">
-                <div>
-                  <p className="text-sm text-foreground">{a.description}</p>
-                  {a.date && (
-                    <p className="mt-0.5 text-xs text-muted">{formatDate(a.date)}</p>
-                  )}
-                </div>
-                <form action={deleteAchievementAction}>
-                  <input type="hidden" name="id" value={a.id} />
-                  <button
-                    type="submit"
-                    className="shrink-0 text-xs text-muted hover:text-danger"
-                  >
-                    Удалить
-                  </button>
-                </form>
-              </li>
-            ))}
-          </ul>
-        )}
       </Card>
 
       <Card title="Личные данные">
