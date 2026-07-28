@@ -1,4 +1,4 @@
-import { TiedBeltIcon } from "@/components/TiedBeltIcon";
+import { Belt as BeltIcon } from "@/components/Belt";
 import { BELT_COLORS, BELT_LABELS } from "@/lib/belt";
 import type { Belt } from "@prisma/client";
 
@@ -21,12 +21,12 @@ export function BeltBadge({
         background: `linear-gradient(135deg, ${colors.main}16, ${accent}0D)`,
       }}
     >
-      <TiedBeltIcon belt={belt} stripes={stripes} className="h-9 w-16 shrink-0" />
+      <BeltIcon belt={belt} stripes={stripes} size="xs" className="!h-9 !w-12 shrink-0" />
       <span
         className="whitespace-nowrap text-xs font-semibold"
         style={{ color: labelColor }}
       >
-        {BELT_LABELS[belt].toLocaleLowerCase("ru-RU")} пояс
+        {BELT_LABELS[belt]} пояс
       </span>
     </div>
   );

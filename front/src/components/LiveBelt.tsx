@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TiedBeltIcon } from "@/components/TiedBeltIcon";
+import { Belt } from "@/components/Belt";
 import type { Belt as BeltType } from "@prisma/client";
 
 const BELT_UPDATED_EVENT = "jiudiary:belt-updated";
@@ -52,9 +52,10 @@ export function LiveBelt({
   const liveBelt = useLiveBelt(belt, stripes);
 
   return (
-    <TiedBeltIcon
+    <Belt
       belt={liveBelt.belt ?? belt}
       stripes={liveBelt.stripes}
+      size={size}
       className={`${size === "xs" ? "h-8 w-14" : "h-12 w-24"} ${className ?? ""}`}
     />
   );

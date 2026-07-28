@@ -1,4 +1,4 @@
-import { BELT_COLORS } from "@/lib/belt";
+import { BELT_COLORS, BELT_LABELS } from "@/lib/belt";
 import type { Belt as BeltType } from "@prisma/client";
 
 const SIZES = {
@@ -34,7 +34,7 @@ export function Belt({
       height={height}
       className={`shrink-0 ${className}`}
       role="img"
-      aria-label="пояс"
+      aria-label={`${BELT_LABELS[belt]} пояс`}
     >
       {/* Замкнутая часть пояса — как пояс вокруг талии. */}
       <ellipse

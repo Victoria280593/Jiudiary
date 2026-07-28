@@ -30,7 +30,7 @@ function Logo({
         belt={belt ?? "WHITE"}
         stripes={stripes ?? 0}
         size="xs"
-        className="!h-6 !w-10 shrink-0"
+        className="!h-8 !w-11 shrink-0"
       />
       <span className="font-brand text-[1.35rem] font-bold tracking-[-0.045em] text-foreground">
         JiuDiary
@@ -51,7 +51,7 @@ export async function SiteHeader() {
   return (
     <>
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border/70 bg-white/82 px-5 py-7 backdrop-blur-xl lg:flex">
-        <div className="flex">
+        <div className="flex justify-center">
           <Logo belt={user.belt} stripes={beltStripes} />
         </div>
 

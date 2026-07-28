@@ -60,11 +60,6 @@ export function PersonalDataForm({ name, email }: { name: string; email: string 
           />
         </div>
       </div>
-
-      <div className="rounded-xl bg-accent-soft px-4 py-3 text-sm text-accent-foreground">
-        <p className="font-medium">Мы заботимся о вашей безопасности</p>
-        <p className="mt-0.5 text-xs opacity-80">Ваши данные защищены и не передаются третьим лицам.</p>
-      </div>
     </form>
   );
 }
