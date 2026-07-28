@@ -94,24 +94,35 @@ export function AthleteProfileForm({
   }, [belt]);
 
   useEffect(() => {
-    if (!state?.success) return;
+    if (!state?.success || !state.belt) return;
 
     let cancelled = false;
+    const savedBelt = state.belt;
 
     async function reloadClientInfo() {
-      try {
-        const response = await fetch(`/api/client-info?refresh=${Date.now()}`, { cache: "no-store" });
-        if (!response.ok) return;
+      await Promise.resolve();
+      if (cancelled) return;
 
-        const clientInfo: ClientInfoResponse = await response.json();
-        if (cancelled) return;
+      setSelectedBelt(savedBelt);
 
-        setBirthDateValue(clientInfo.birthDate ?? "");
-        setSelectedBelt(BELT_BY_ID[clientInfo.beltId ?? 0] ?? state?.belt ?? belt ?? "");
-      } catch {
-        if (!cancelled && state?.belt) {
-          setSelectedBelt(state.belt);
+      for (let attempt = 0; attempt < 5 && !cancelled; attempt += 1) {
+        try {
+          const response = await fetch(`/api/client-info?refresh=${Date.now()}`, { cache: "no-store" });
+          if (response.ok) {
+            const clientInfo: ClientInfoResponse = await response.json();
+            const loadedBelt = BELT_BY_ID[clientInfo.beltId ?? 0];
+
+            if (loadedBelt === savedBelt) {
+              setBirthDateValue(clientInfo.birthDate ?? "");
+              setSelectedBelt(loadedBelt);
+              return;
+            }
+          }
+        } catch {
+          // Keep the successfully saved value visible and retry the GET request.
         }
+
+        await new Promise((resolve) => setTimeout(resolve, 300 * (attempt + 1)));
       }
     }
 
@@ -119,7 +130,7 @@ export function AthleteProfileForm({
     return () => {
       cancelled = true;
     };
-  }, [state, belt]);
+  }, [state]);
 
   const availableBelts = useMemo(() => {
     if (!birthDateValue) return null; // возраст неизвестен — не ограничиваем выбор
