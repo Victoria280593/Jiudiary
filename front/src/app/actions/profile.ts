@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import { updateBackendClientInfo } from "@/lib/backend-auth";
 import {
@@ -126,6 +125,5 @@ export async function updateAthleteProfileAction(
     return { error: "Не удалось сохранить спортивные данные на сервере" };
   }
 
-  revalidatePath("/dashboard", "layout");
   return { success: true, belt };
 }
