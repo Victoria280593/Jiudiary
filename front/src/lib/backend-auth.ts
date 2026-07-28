@@ -197,7 +197,7 @@ export async function updateBackendClientInfo(
     beltId: number | null;
     stripesCount: number;
   }
-): Promise<boolean> {
+): Promise<BackendClientInfo | null> {
   try {
     const response = await fetch(`${backendUrl}/api/client-info`, {
       method: "PUT",
@@ -210,9 +210,10 @@ export async function updateBackendClientInfo(
       signal: AbortSignal.timeout(5_000),
     });
 
-    return response.ok;
+    if (!response.ok) return null;
+    return (await response.json()) as BackendClientInfo;
   } catch {
-    return false;
+    return null;
   }
 }
 

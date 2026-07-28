@@ -1,8 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
-import { updateAthleteProfileAction, type FormState } from "@/app/actions/profile";
-import { SubmitButton } from "@/components/SubmitButton";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { BELT_LABELS, MAX_BLACK_BELT_DEGREE, MAX_STRIPES, beltsForAge, calculateAge } from "@/lib/belt";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
 import type { Belt } from "@prisma/client";
@@ -37,6 +35,10 @@ const BELT_BY_ID: Record<number, Belt> = {
   19: "RED",
 };
 
+const BELT_ID_BY_NAME = Object.fromEntries(
+  Object.entries(BELT_BY_ID).map(([id, name]) => [name, Number(id)])
+) as Record<Belt, number>;
+
 function toDateInputValue(date: Date | null): string {
   if (!date) return "";
   return date.toISOString().slice(0, 10);
@@ -60,11 +62,8 @@ export function AthleteProfileForm({
   blackBeltAwardedAt: Date | null;
   blackBeltProfessor: string | null;
 }) {
-  const [state, formAction] = useActionState<FormState, FormData>(
-    updateAthleteProfileAction,
-    undefined
-  );
-
+  const [state, setState] = useState<{ error?: string; success?: boolean }>();
+  const [isSaving, setIsSaving] = useState(false);
   const [birthDateValue, setBirthDateValue] = useState(toDateInputValue(birthDate));
   const [selectedBelt, setSelectedBelt] = useState<Belt | "">(belt ?? "");
 
@@ -93,45 +92,6 @@ export function AthleteProfileForm({
     };
   }, [belt]);
 
-  useEffect(() => {
-    if (!state?.success || !state.belt) return;
-
-    let cancelled = false;
-    const savedBelt = state.belt;
-
-    async function reloadClientInfo() {
-      await Promise.resolve();
-      if (cancelled) return;
-
-      setSelectedBelt(savedBelt);
-
-      for (let attempt = 0; attempt < 5 && !cancelled; attempt += 1) {
-        try {
-          const response = await fetch(`/api/client-info?refresh=${Date.now()}`, { cache: "no-store" });
-          if (response.ok) {
-            const clientInfo: ClientInfoResponse = await response.json();
-            const loadedBelt = BELT_BY_ID[clientInfo.beltId ?? 0];
-
-            if (loadedBelt === savedBelt) {
-              setBirthDateValue(clientInfo.birthDate ?? "");
-              setSelectedBelt(loadedBelt);
-              return;
-            }
-          }
-        } catch {
-          // Keep the successfully saved value visible and retry the GET request.
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 300 * (attempt + 1)));
-      }
-    }
-
-    void reloadClientInfo();
-    return () => {
-      cancelled = true;
-    };
-  }, [state]);
-
   const availableBelts = useMemo(() => {
     if (!birthDateValue) return null; // возраст неизвестен — не ограничиваем выбор
     const parsed = new Date(birthDateValue);
@@ -141,8 +101,67 @@ export function AthleteProfileForm({
 
   const beltOptions = availableBelts ?? (Object.keys(BELT_LABELS) as Belt[]);
 
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedBelt) return;
+
+    const formData = new FormData(event.currentTarget);
+    const stripes = selectedBelt === "BLACK" || selectedBelt === "BLACK_RED" || selectedBelt === "RED"
+      ? 0
+      : Number(formData.get("stripes"));
+
+    if (!Number.isInteger(stripes) || stripes < 0 || stripes > MAX_STRIPES) {
+      setState({ error: `Количество страйпов — число от 0 до ${MAX_STRIPES}` });
+      return;
+    }
+
+    setIsSaving(true);
+    setState(undefined);
+
+    try {
+      const response = await fetch("/api/client-info", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          country: "Российская Федерация",
+          birthDate: birthDateValue || null,
+          beltId: BELT_ID_BY_NAME[selectedBelt],
+          stripesCount: stripes,
+        }),
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        const error = (await response.json().catch(() => null)) as { error?: string } | null;
+        setState({ error: error?.error ?? "Не удалось сохранить спортивные данные" });
+        return;
+      }
+
+      const savedClientInfo: ClientInfoResponse = await response.json();
+      const savedBelt = BELT_BY_ID[savedClientInfo.beltId ?? 0] ?? selectedBelt;
+      setBirthDateValue(savedClientInfo.birthDate ?? "");
+      setSelectedBelt(savedBelt);
+
+      const refreshedResponse = await fetch(`/api/client-info?refresh=${Date.now()}`, { cache: "no-store" });
+      if (refreshedResponse.ok) {
+        const refreshedClientInfo: ClientInfoResponse = await refreshedResponse.json();
+        const refreshedBelt = BELT_BY_ID[refreshedClientInfo.beltId ?? 0];
+        if (refreshedBelt === savedBelt) {
+          setBirthDateValue(refreshedClientInfo.birthDate ?? "");
+          setSelectedBelt(refreshedBelt);
+        }
+      }
+
+      setState({ success: true });
+    } catch {
+      setState({ error: "Не удалось сохранить спортивные данные" });
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {state?.error && <p className={errorClass}>{state.error}</p>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -274,7 +293,13 @@ export function AthleteProfileForm({
         </div>
       )}
 
-      <SubmitButton>Сохранить</SubmitButton>
+      <button
+        type="submit"
+        disabled={isSaving}
+        className="w-full rounded-md bg-accent px-4 py-2 font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {isSaving ? "Подождите…" : "Сохранить"}
+      </button>
     </form>
   );
 }
