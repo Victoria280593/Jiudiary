@@ -35,6 +35,7 @@ function Logo({
         belt={belt ?? "WHITE"}
         stripes={stripes ?? 0}
         size="xs"
+        stretch={stacked}
         className={
           stacked
             ? "!h-7 !w-[6.25rem]"

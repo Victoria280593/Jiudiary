@@ -5,10 +5,12 @@ export function TiedBeltIcon({
   belt,
   stripes = 0,
   className = "",
+  stretch = false,
 }: {
   belt: Belt;
   stripes?: number;
   className?: string;
+  stretch?: boolean;
 }) {
   const colors = BELT_COLORS[belt];
   const secondary = colors.accent ?? colors.main;
@@ -19,6 +21,7 @@ export function TiedBeltIcon({
   return (
     <svg
       viewBox="0 0 120 64"
+      preserveAspectRatio={stretch ? "none" : "xMidYMid meet"}
       className={className}
       role="img"
       aria-label={`${BELT_LABELS[belt]} пояс`}
