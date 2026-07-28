@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { BELT_LABELS, MAX_BLACK_BELT_DEGREE, MAX_STRIPES, beltsForAge, calculateAge } from "@/lib/belt";
+import { notifyBeltUpdated } from "@/components/LiveBelt";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
 import type { Belt } from "@prisma/client";
 import type { Country } from "@/lib/countries";
@@ -12,6 +12,7 @@ type ClientInfoResponse = {
   birthDate: string | null;
   beltId: number | null;
   beltName: string | null;
+  stripesCount: number;
 };
 
 const BELT_BY_ID: Record<number, Belt> = {
@@ -63,7 +64,6 @@ export function AthleteProfileForm({
   blackBeltAwardedAt: Date | null;
   blackBeltProfessor: string | null;
 }) {
-  const router = useRouter();
   const [state, setState] = useState<{ error?: string; success?: boolean }>();
   const [isSaving, setIsSaving] = useState(false);
   const [birthDateValue, setBirthDateValue] = useState(toDateInputValue(birthDate));
@@ -143,8 +143,8 @@ export function AthleteProfileForm({
       const savedBelt = BELT_BY_ID[savedClientInfo.beltId ?? 0] ?? selectedBelt;
       setBirthDateValue(savedClientInfo.birthDate ?? "");
       setSelectedBelt(savedBelt);
+      notifyBeltUpdated(savedBelt, savedClientInfo.stripesCount);
 
-      let confirmed = false;
       for (let attempt = 0; attempt < 6; attempt += 1) {
         const refreshedResponse = await fetch(`/api/client-info?refresh=${Date.now()}`, { cache: "no-store" });
         if (refreshedResponse.ok) {
@@ -153,7 +153,7 @@ export function AthleteProfileForm({
           if (refreshedBelt === savedBelt) {
             setBirthDateValue(refreshedClientInfo.birthDate ?? "");
             setSelectedBelt(refreshedBelt);
-            confirmed = true;
+            notifyBeltUpdated(refreshedBelt, refreshedClientInfo.stripesCount);
             break;
           }
         }
@@ -161,13 +161,7 @@ export function AthleteProfileForm({
         await new Promise((resolve) => setTimeout(resolve, 200 * (attempt + 1)));
       }
 
-      if (!confirmed) {
-        setState({ error: "Данные сохранены, но профиль пока не удалось обновить" });
-        return;
-      }
-
       setState({ success: true });
-      router.refresh();
     } catch {
       setState({ error: "Не удалось сохранить спортивные данные" });
     } finally {

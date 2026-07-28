@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Role } from "@prisma/client";
 import { logoutAction } from "@/app/actions/auth";
 import { Avatar } from "@/components/Avatar";
-import { Belt } from "@/components/Belt";
+import { LiveBelt } from "@/components/LiveBelt";
 import { MobileNavigation, SidebarNavigation } from "@/components/SidebarNavigation";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -25,7 +25,7 @@ function Logo({
       <span className="font-brand text-[1.55rem] font-bold tracking-[-0.045em] text-foreground">
         JiuDiary
       </span>
-      <Belt
+      <LiveBelt
         belt={belt ?? "WHITE"}
         stripes={stripes ?? 0}
         size="xs"

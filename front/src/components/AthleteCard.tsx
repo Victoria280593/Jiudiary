@@ -1,6 +1,9 @@
+"use client";
+
 import { Avatar } from "@/components/Avatar";
 import { Belt } from "@/components/Belt";
 import { Card } from "@/components/Card";
+import { useLiveBelt } from "@/components/LiveBelt";
 import { BELT_LABELS } from "@/lib/belt";
 import type { Belt as BeltType } from "@prisma/client";
 
@@ -24,6 +27,9 @@ export function AthleteCard({
   blackBeltDegree: number | null;
 }) {
   const beltStripeCount = belt === "BLACK" ? blackBeltDegree ?? 0 : stripes ?? 0;
+  const liveBelt = useLiveBelt(belt, beltStripeCount);
+  const currentBelt = liveBelt.belt;
+  const currentStripes = liveBelt.stripes;
 
   return (
     <Card className="flex flex-col items-center gap-3 text-center">
@@ -44,15 +50,17 @@ export function AthleteCard({
         </p>
       </div>
 
-      {belt && (
+      {currentBelt && (
         <div className="flex flex-col items-center gap-1">
-          <Belt belt={belt} stripes={beltStripeCount} size="lg" />
+          <Belt belt={currentBelt} stripes={currentStripes} size="lg" />
           <p className="text-sm font-medium text-foreground/80">
-            {BELT_LABELS[belt]} пояс по джиу-джитсу
-            {belt === "BLACK" && blackBeltDegree
+            {BELT_LABELS[currentBelt]} пояс по джиу-джитсу
+            {currentBelt === "BLACK" && blackBeltDegree
               ? ` · ${blackBeltDegree}-я степень`
               : ""}
-            {belt !== "BLACK" && stripes ? ` · ${stripes} ${pluralStripes(stripes)}` : ""}
+            {currentBelt !== "BLACK" && currentStripes
+              ? ` · ${currentStripes} ${pluralStripes(currentStripes)}`
+              : ""}
           </p>
         </div>
       )}
