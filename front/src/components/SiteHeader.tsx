@@ -25,17 +25,21 @@ function Logo({
   return (
     <Link
       href="/"
-      className={`group flex ${stacked ? "flex-col items-center gap-0.5" : "items-center gap-2.5"}`}
+      className={`group flex ${stacked ? "flex-col items-center gap-1" : "items-center gap-2.5"}`}
       aria-label="Jiu Diary — на главную"
     >
-      <span className="font-brand text-[1.55rem] font-bold tracking-[-0.045em] text-foreground">
+      <span className={`font-brand text-[1.55rem] font-bold tracking-[-0.045em] text-foreground ${stacked ? "leading-none" : ""}`}>
         JiuDiary
       </span>
       <LiveBelt
         belt={belt ?? "WHITE"}
         stripes={stripes ?? 0}
         size="xs"
-        className={`transition-transform duration-200 group-hover:-rotate-3 group-hover:scale-105 ${stacked ? "-mt-1" : ""}`}
+        className={
+          stacked
+            ? "!h-7 !w-[6.25rem]"
+            : "transition-transform duration-200 group-hover:-rotate-3 group-hover:scale-105"
+        }
       />
     </Link>
   );
