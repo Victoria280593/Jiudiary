@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { BELT_LABELS, MAX_BLACK_BELT_DEGREE, beltsForAge, calculateAge } from "@/lib/belt";
+import { BELT_LABELS, beltsForAge, calculateAge } from "@/lib/belt";
 import { notifyBeltUpdated } from "@/components/LiveBelt";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
 import type { Belt } from "@prisma/client";
@@ -49,17 +49,11 @@ export function AthleteProfileForm({
   countries,
   birthDate,
   belt,
-  blackBeltDegree,
-  blackBeltAwardedAt,
-  blackBeltProfessor,
 }: {
   countries: Country[];
   countryCode: string | null;
   birthDate: Date | null;
   belt: Belt | null;
-  blackBeltDegree: number | null;
-  blackBeltAwardedAt: Date | null;
-  blackBeltProfessor: string | null;
 }) {
   const [state, setState] = useState<{ error?: string; success?: boolean }>();
   const [isSaving, setIsSaving] = useState(false);
@@ -224,53 +218,6 @@ export function AthleteProfileForm({
           </p>
         )}
       </div>
-
-      {selectedBelt === "BLACK" ? (
-        <div className="flex flex-col gap-4 rounded-md bg-surface-muted p-3">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1">
-              <label htmlFor="blackBeltDegree" className={labelClass}>
-                Степень (0–{MAX_BLACK_BELT_DEGREE})
-              </label>
-              <input
-                id="blackBeltDegree"
-                name="blackBeltDegree"
-                type="number"
-                min={0}
-                max={MAX_BLACK_BELT_DEGREE}
-                defaultValue={blackBeltDegree ?? 0}
-                required
-                className={inputClass}
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label htmlFor="blackBeltAwardedAt" className={labelClass}>
-                Дата присвоения
-              </label>
-              <input
-                id="blackBeltAwardedAt"
-                name="blackBeltAwardedAt"
-                type="date"
-                defaultValue={toDateInputValue(blackBeltAwardedAt)}
-                max={toDateInputValue(new Date())}
-                className={inputClass}
-              />
-            </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="blackBeltProfessor" className={labelClass}>
-              Профессор, присвоивший пояс
-            </label>
-            <input
-              id="blackBeltProfessor"
-              name="blackBeltProfessor"
-              type="text"
-              defaultValue={blackBeltProfessor ?? ""}
-              className={inputClass}
-            />
-          </div>
-        </div>
-      ) : null}
 
       <button
         type="submit"

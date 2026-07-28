@@ -46,9 +46,6 @@ export default async function ProfilePage() {
           countryCode={user.countryCode}
           birthDate={user.birthDate}
           belt={user.belt}
-          blackBeltDegree={user.blackBeltDegree}
-          blackBeltAwardedAt={user.blackBeltAwardedAt}
-          blackBeltProfessor={user.blackBeltProfessor}
         />
       </Card>
 
