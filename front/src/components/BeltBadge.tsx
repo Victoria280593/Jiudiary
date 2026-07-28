@@ -4,10 +4,8 @@ import type { Belt } from "@prisma/client";
 
 export function BeltBadge({
   belt,
-  stripes,
 }: {
   belt: Belt;
-  stripes: number;
 }) {
   const colors = BELT_COLORS[belt];
   const labelColor = belt === "WHITE" ? "#475569" : colors.main;
@@ -21,7 +19,7 @@ export function BeltBadge({
         background: `linear-gradient(135deg, ${colors.main}16, ${accent}0D)`,
       }}
     >
-      <TiedBeltIcon belt={belt} stripes={stripes} className="h-8 w-14 shrink-0" />
+      <TiedBeltIcon belt={belt} className="h-8 w-14 shrink-0" />
       <span
         className="whitespace-nowrap text-sm font-semibold"
         style={{ color: labelColor }}

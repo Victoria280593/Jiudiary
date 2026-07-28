@@ -29,15 +29,11 @@ export async function PUT(request: Request) {
     country: string | null;
     birthDate: string | null;
     beltId: number | null;
-    stripesCount: number;
   };
 
   if (
     input.beltId === null ||
-    !Number.isInteger(input.beltId) ||
-    !Number.isInteger(input.stripesCount) ||
-    input.stripesCount < 0 ||
-    input.stripesCount > 4
+    !Number.isInteger(input.beltId)
   ) {
     return NextResponse.json({ error: "Некорректные спортивные данные" }, { status: 400 });
   }

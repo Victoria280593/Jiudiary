@@ -56,7 +56,6 @@ export default async function StudentsPage() {
                 <div className="flex shrink-0 flex-col items-center">
                   <Belt
                     belt={student.belt ?? "WHITE"}
-                    stripes={student.belt === "BLACK" ? student.blackBeltDegree ?? 0 : student.stripes ?? 0}
                     size="xs"
                   />
                   <span className="mt-0.5 text-[10px] text-muted">

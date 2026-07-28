@@ -26,9 +26,8 @@ export type BeltColors = {
   main: string;
   accent?: string;
   textOnMain: string;
-  // "stripe" — тонкая полоса посередине (детские двухцветные пояса);
   // "split" — пояс поровну разделён на два цвета (чёрно-красный)
-  pattern?: "stripe" | "split";
+  pattern?: "split";
 };
 
 export const BELT_COLORS: Record<Belt, BeltColors> = {
@@ -85,7 +84,6 @@ export const ADULT_BELTS: Belt[] = [
 ];
 
 export const ADULT_MIN_AGE = 16;
-export const MAX_STRIPES = 4;
 export const MAX_BLACK_BELT_DEGREE = 6;
 
 export function calculateAge(birthDate: Date, at: Date = new Date()): number {

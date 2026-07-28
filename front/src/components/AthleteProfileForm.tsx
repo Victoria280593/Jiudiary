@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { BELT_LABELS, MAX_BLACK_BELT_DEGREE, MAX_STRIPES, beltsForAge, calculateAge } from "@/lib/belt";
+import { BELT_LABELS, MAX_BLACK_BELT_DEGREE, beltsForAge, calculateAge } from "@/lib/belt";
 import { notifyBeltUpdated } from "@/components/LiveBelt";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
 import type { Belt } from "@prisma/client";
@@ -12,7 +12,6 @@ type ClientInfoResponse = {
   birthDate: string | null;
   beltId: number | null;
   beltName: string | null;
-  stripesCount: number;
 };
 
 const BELT_BY_ID: Record<number, Belt> = {
@@ -50,7 +49,6 @@ export function AthleteProfileForm({
   countries,
   birthDate,
   belt,
-  stripes,
   blackBeltDegree,
   blackBeltAwardedAt,
   blackBeltProfessor,
@@ -59,7 +57,6 @@ export function AthleteProfileForm({
   countryCode: string | null;
   birthDate: Date | null;
   belt: Belt | null;
-  stripes: number | null;
   blackBeltDegree: number | null;
   blackBeltAwardedAt: Date | null;
   blackBeltProfessor: string | null;
@@ -107,16 +104,6 @@ export function AthleteProfileForm({
     event.preventDefault();
     if (!selectedBelt) return;
 
-    const formData = new FormData(event.currentTarget);
-    const stripes = selectedBelt === "BLACK" || selectedBelt === "BLACK_RED" || selectedBelt === "RED"
-      ? 0
-      : Number(formData.get("stripes"));
-
-    if (!Number.isInteger(stripes) || stripes < 0 || stripes > MAX_STRIPES) {
-      setState({ error: `Количество страйпов — число от 0 до ${MAX_STRIPES}` });
-      return;
-    }
-
     setIsSaving(true);
     setState(undefined);
 
@@ -128,7 +115,6 @@ export function AthleteProfileForm({
           country: "Российская Федерация",
           birthDate: birthDateValue || null,
           beltId: BELT_ID_BY_NAME[selectedBelt],
-          stripesCount: stripes,
         }),
         cache: "no-store",
       });
@@ -143,7 +129,7 @@ export function AthleteProfileForm({
       const savedBelt = BELT_BY_ID[savedClientInfo.beltId ?? 0] ?? selectedBelt;
       setBirthDateValue(savedClientInfo.birthDate ?? "");
       setSelectedBelt(savedBelt);
-      notifyBeltUpdated(savedBelt, savedClientInfo.stripesCount);
+      notifyBeltUpdated(savedBelt);
 
       for (let attempt = 0; attempt < 6; attempt += 1) {
         const refreshedResponse = await fetch(`/api/client-info?refresh=${Date.now()}`, { cache: "no-store" });
@@ -153,7 +139,7 @@ export function AthleteProfileForm({
           if (refreshedBelt === savedBelt) {
             setBirthDateValue(refreshedClientInfo.birthDate ?? "");
             setSelectedBelt(refreshedBelt);
-            notifyBeltUpdated(refreshedBelt, refreshedClientInfo.stripesCount);
+            notifyBeltUpdated(refreshedBelt);
             break;
           }
         }
@@ -284,23 +270,7 @@ export function AthleteProfileForm({
             />
           </div>
         </div>
-      ) : selectedBelt === "BLACK_RED" || selectedBelt === "RED" ? null : (
-        <div className="flex flex-col gap-1">
-          <label htmlFor="stripes" className={labelClass}>
-            Страйпы (0–{MAX_STRIPES})
-          </label>
-          <input
-            id="stripes"
-            name="stripes"
-            type="number"
-            min={0}
-            max={MAX_STRIPES}
-            defaultValue={stripes ?? 0}
-            required
-            className={`w-32 ${inputClass}`}
-          />
-        </div>
-      )}
+      ) : null}
 
       <button
         type="submit"

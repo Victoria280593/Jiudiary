@@ -12,8 +12,6 @@ export function ProfileHero({
   countryName,
   age,
   belt,
-  stripes,
-  blackBeltDegree,
 }: {
   name: string;
   roleLabel: string;
@@ -21,11 +19,8 @@ export function ProfileHero({
   countryName: string | null;
   age: number | null;
   belt: Belt | null;
-  stripes: number | null;
-  blackBeltDegree: number | null;
 }) {
-  const initialStripes = belt === "BLACK" ? blackBeltDegree ?? 0 : stripes ?? 0;
-  const liveBelt = useLiveBelt(belt, initialStripes);
+  const liveBelt = useLiveBelt(belt);
 
   return (
     <section className="card-shadow overflow-hidden rounded-2xl border border-border bg-surface">
@@ -49,9 +44,9 @@ export function ProfileHero({
             {age !== null && ` · Возраст: ${age}`}
           </p>
 
-          {liveBelt.belt && (
+          {liveBelt && (
             <div className="mt-4 flex justify-center sm:justify-start">
-              <BeltBadge belt={liveBelt.belt} stripes={liveBelt.stripes} />
+              <BeltBadge belt={liveBelt} />
             </div>
           )}
         </div>

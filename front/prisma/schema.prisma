@@ -50,7 +50,6 @@ model User {
   countryCode         String?
   birthDate           DateTime?
   belt                Belt?
-  stripes             Int?
   blackBeltDegree     Int?
   blackBeltAwardedAt  DateTime?
   blackBeltProfessor  String?

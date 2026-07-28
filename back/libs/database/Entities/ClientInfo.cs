@@ -48,11 +48,6 @@ public sealed class ClientInfo
     public int? BeltId { get; set; }
 
     /// <summary>
-    /// Количество страйпов на поясе.
-    /// </summary>
-    public int StripesCount { get; set; }
-
-    /// <summary>
     /// Пользователь, которому принадлежит информация.
     /// </summary>
     public User User { get; set; } = null!;

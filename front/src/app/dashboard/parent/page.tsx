@@ -59,11 +59,6 @@ export default async function ParentDashboard() {
               <span className="ml-auto flex items-center gap-2">
                 <Belt
                   belt={student.belt}
-                  stripes={
-                    student.belt === "BLACK"
-                      ? student.blackBeltDegree ?? 0
-                      : student.stripes ?? 0
-                  }
                   size="sm"
                 />
                 <span className="text-xs text-muted">{BELT_LABELS[student.belt]}</span>

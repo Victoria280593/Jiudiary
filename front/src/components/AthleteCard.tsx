@@ -15,7 +15,6 @@ export function AthleteCard({
   countryName,
   age,
   belt,
-  stripes,
   blackBeltDegree,
   showBeltBadge = false,
 }: {
@@ -25,14 +24,10 @@ export function AthleteCard({
   countryName: string | null;
   age: number | null;
   belt: BeltType | null;
-  stripes: number | null;
   blackBeltDegree: number | null;
   showBeltBadge?: boolean;
 }) {
-  const beltStripeCount = belt === "BLACK" ? blackBeltDegree ?? 0 : stripes ?? 0;
-  const liveBelt = useLiveBelt(belt, beltStripeCount);
-  const currentBelt = liveBelt.belt;
-  const currentStripes = liveBelt.stripes;
+  const currentBelt = useLiveBelt(belt);
 
   return (
     <Card className="flex flex-col items-center gap-3 text-center">
@@ -56,17 +51,14 @@ export function AthleteCard({
       {currentBelt && (
         <div className="flex flex-col items-center gap-1">
           {showBeltBadge ? (
-            <BeltBadge belt={currentBelt} stripes={currentStripes} />
+            <BeltBadge belt={currentBelt} />
           ) : (
             <>
-              <Belt belt={currentBelt} stripes={currentStripes} size="lg" />
+              <Belt belt={currentBelt} size="lg" />
               <p className="text-sm font-medium text-foreground/80">
                 {BELT_LABELS[currentBelt]} пояс по джиу-джитсу
                 {currentBelt === "BLACK" && blackBeltDegree
                   ? ` · ${blackBeltDegree}-я степень`
-                  : ""}
-                {currentBelt !== "BLACK" && currentStripes
-                  ? ` · ${currentStripes} ${pluralStripes(currentStripes)}`
                   : ""}
               </p>
             </>
@@ -83,12 +75,4 @@ function pluralYears(n: number) {
   if (mod10 === 1 && mod100 !== 11) return "год";
   if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return "года";
   return "лет";
-}
-
-function pluralStripes(n: number) {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return "страйп";
-  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return "страйпа";
-  return "страйпов";
 }

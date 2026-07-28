@@ -43,7 +43,6 @@ public sealed class ClientInfoService(JiuDiaryDbContext dbContext) : IClientInfo
         clientInfo.Country = Normalize(inputModel.Country);
         clientInfo.BirthDate = inputModel.BirthDate;
         clientInfo.BeltId = inputModel.BeltId;
-        clientInfo.StripesCount = inputModel.StripesCount;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return await GetAsync(userId, cancellationToken);
@@ -55,8 +54,7 @@ public sealed class ClientInfoService(JiuDiaryDbContext dbContext) : IClientInfo
             Country = clientInfo.Country,
             BirthDate = clientInfo.BirthDate,
             BeltId = clientInfo.BeltId,
-            BeltName = clientInfo.Belt == null ? null : clientInfo.Belt.Name,
-            StripesCount = clientInfo.StripesCount
+            BeltName = clientInfo.Belt == null ? null : clientInfo.Belt.Name
         };
 
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

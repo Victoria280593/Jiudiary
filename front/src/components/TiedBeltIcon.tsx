@@ -3,18 +3,15 @@ import type { Belt } from "@prisma/client";
 
 export function TiedBeltIcon({
   belt,
-  stripes = 0,
   className = "",
 }: {
   belt: Belt;
-  stripes?: number;
   className?: string;
 }) {
   const colors = BELT_COLORS[belt];
   const secondary = colors.accent ?? colors.main;
   const rankColor = belt === "BLACK" || belt === "BLACK_RED" ? "#DC2626" : "#111827";
   const outline = belt === "WHITE" ? "#CBD5E1" : "rgba(15, 23, 42, 0.18)";
-  const stripeCount = Math.max(0, Math.min(stripes, 4));
 
   return (
     <svg viewBox="0 0 120 64" className={className} role="img" aria-label={`${BELT_LABELS[belt]} пояс`}>
@@ -28,18 +25,6 @@ export function TiedBeltIcon({
       {colors.accent && <path d="M60 11 77 24.5 60 40Z" fill={secondary} opacity={belt === "BLACK_RED" ? 1 : 0.72} />}
       <path d="M60 11 77 24.5 60 40 43 24.5Z" fill="none" stroke="rgba(255,255,255,0.32)" strokeWidth="1" strokeLinejoin="round" />
 
-      {Array.from({ length: stripeCount }).map((_, index) => (
-        <line
-          key={index}
-          x1={39.5 + index * 2.5}
-          y1={50.2 + index * 1.25}
-          x2={46.5 + index * 2.5}
-          y2={53.7 + index * 1.25}
-          stroke="#ffffff"
-          strokeWidth="1.35"
-          strokeLinecap="round"
-        />
-      ))}
     </svg>
   );
 }

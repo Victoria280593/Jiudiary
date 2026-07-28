@@ -37,8 +37,6 @@ export default async function ProfilePage() {
         countryName={getCountryName(user.countryCode)}
         age={user.birthDate ? calculateAge(user.birthDate) : null}
         belt={user.belt}
-        stripes={user.stripes}
-        blackBeltDegree={user.blackBeltDegree}
       />
 
       <Card title="Спортивные данные">
@@ -48,7 +46,6 @@ export default async function ProfilePage() {
           countryCode={user.countryCode}
           birthDate={user.birthDate}
           belt={user.belt}
-          stripes={user.stripes}
           blackBeltDegree={user.blackBeltDegree}
           blackBeltAwardedAt={user.blackBeltAwardedAt}
           blackBeltProfessor={user.blackBeltProfessor}

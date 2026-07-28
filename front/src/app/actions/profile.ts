@@ -6,7 +6,6 @@ import {
   ADULT_BELTS,
   KIDS_BELTS,
   MAX_BLACK_BELT_DEGREE,
-  MAX_STRIPES,
   calculateAge,
   isKidsAge,
 } from "@/lib/belt";
@@ -51,7 +50,6 @@ export async function updateAthleteProfileAction(
   const countryCode = "RU";
   const birthDateStr = String(formData.get("birthDate") || "").trim();
   const belt = String(formData.get("belt") || "").trim() as Belt;
-  const stripesRaw = String(formData.get("stripes") || "").trim();
   const blackBeltDegreeRaw = String(formData.get("blackBeltDegree") || "").trim();
   const blackBeltAwardedAtStr = String(formData.get("blackBeltAwardedAt") || "").trim();
   const blackBeltProfessor = String(formData.get("blackBeltProfessor") || "").trim();
@@ -87,7 +85,6 @@ export async function updateAthleteProfileAction(
     }
   }
 
-  let stripes: number | null = null;
   let blackBeltDegree: number | null = null;
   let blackBeltAwardedAt: Date | null = null;
 
@@ -104,12 +101,6 @@ export async function updateAthleteProfileAction(
         return { error: "Некорректная дата присвоения чёрного пояса" };
       }
     }
-  } else {
-    const s = Number(stripesRaw);
-    if (!Number.isInteger(s) || s < 0 || s > MAX_STRIPES) {
-      return { error: `Количество страйпов — число от 0 до ${MAX_STRIPES}` };
-    }
-    stripes = s;
   }
 
   const countryName = "Российская Федерация";
@@ -118,7 +109,6 @@ export async function updateAthleteProfileAction(
     country: countryName,
     birthDate: birthDateStr || null,
     beltId: BELT_IDS[belt],
-    stripesCount: stripes ?? 0,
   });
 
   if (!saved) {

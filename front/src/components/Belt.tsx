@@ -10,12 +10,10 @@ const SIZES = {
 
 export function Belt({
   belt,
-  stripes = 0,
   size = "md",
   className = "",
 }: {
   belt: BeltType;
-  stripes?: number;
   size?: keyof typeof SIZES;
   className?: string;
 }) {
@@ -25,7 +23,6 @@ export function Belt({
   const outline = isWhiteBelt ? "#bcc3cf" : "rgba(255,255,255,0.9)";
   const secondaryColor =
     colors.pattern === "split" && colors.accent ? colors.accent : colors.main;
-  const tickCount = Math.max(0, Math.min(stripes, 4));
 
   return (
     <svg
@@ -94,18 +91,6 @@ export function Belt({
       <polygon points="46,75 55,78 51,86 42,82" fill="#111827" />
       <polygon points="65,78 74,75 78,82 69,86" fill="#111827" />
 
-      {Array.from({ length: tickCount }).map((_, index) => (
-        <line
-          key={index}
-          x1={45 + index * 2.2}
-          y1={78 + index * 0.7}
-          x2={52 + index * 2.2}
-          y2={80.5 + index * 0.7}
-          stroke="#ffffff"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-        />
-      ))}
     </svg>
   );
 }

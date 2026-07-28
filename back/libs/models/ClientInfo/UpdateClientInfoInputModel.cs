@@ -11,6 +11,4 @@ public sealed class UpdateClientInfoInputModel
 
     public int? BeltId { get; set; }
 
-    [Range(0, 4)]
-    public int StripesCount { get; set; }
 }

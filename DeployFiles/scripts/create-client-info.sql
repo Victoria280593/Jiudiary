@@ -17,8 +17,6 @@ CREATE TABLE dbo.ClientInfo
     City nvarchar(100) NULL,
     BirthDate date NULL,
     BeltId int NULL,
-    StripesCount int NOT NULL
-        CONSTRAINT DF_ClientInfo_StripesCount DEFAULT (0),
     CONSTRAINT PK_ClientInfo PRIMARY KEY (Id),
     CONSTRAINT UQ_ClientInfo_UserId UNIQUE (UserId),
     CONSTRAINT FK_ClientInfo_Users_UserId
@@ -26,7 +24,5 @@ CREATE TABLE dbo.ClientInfo
         ON DELETE CASCADE,
     CONSTRAINT FK_ClientInfo_Belts_BeltId
         FOREIGN KEY (BeltId) REFERENCES dbo.Belts (Id)
-        ON DELETE NO ACTION,
-    CONSTRAINT CK_ClientInfo_StripesCount
-        CHECK (StripesCount BETWEEN 0 AND 4)
+        ON DELETE NO ACTION
 );

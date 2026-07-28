@@ -24,7 +24,6 @@ export type BackendClientInfo = {
   birthDate: string | null;
   beltId: number | null;
   beltName: string | null;
-  stripesCount: number;
 };
 
 export type LoginResult =
@@ -195,7 +194,6 @@ export async function updateBackendClientInfo(
     country: string | null;
     birthDate: string | null;
     beltId: number | null;
-    stripesCount: number;
   }
 ): Promise<BackendClientInfo | null> {
   try {

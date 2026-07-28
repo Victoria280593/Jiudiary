@@ -22,7 +22,6 @@ export default async function StudentDashboard() {
         countryName={getCountryName(user.countryCode)}
         age={user.birthDate ? calculateAge(user.birthDate) : null}
         belt={user.belt}
-        stripes={user.stripes}
         blackBeltDegree={user.blackBeltDegree}
       />
     </Link>

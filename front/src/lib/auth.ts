@@ -125,7 +125,6 @@ export const getCurrentUser = cache(async () => {
         countryCode,
         birthDate: clientInfo.birthDate ? new Date(`${clientInfo.birthDate}T00:00:00`) : null,
         belt,
-        stripes: clientInfo.stripesCount,
       }
     : {};
 
@@ -142,7 +141,6 @@ export const getCurrentUser = cache(async () => {
     countryCode: null,
     birthDate: null,
     belt: null,
-    stripes: null,
     blackBeltDegree: null,
     blackBeltAwardedAt: null,
     blackBeltProfessor: null,

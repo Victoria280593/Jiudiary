@@ -102,9 +102,6 @@ export async function changeUserBeltAction(
     where: { id: userId },
     data: {
       belt,
-      stripes: belt === "BLACK" || belt === "BLACK_RED" || belt === "RED"
-        ? null
-        : target.stripes ?? 0,
       blackBeltDegree: belt === "BLACK" ? target.blackBeltDegree ?? 0 : null,
       blackBeltAwardedAt: belt === "BLACK" ? target.blackBeltAwardedAt : null,
       blackBeltProfessor: belt === "BLACK" ? target.blackBeltProfessor : null,
