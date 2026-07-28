@@ -98,6 +98,12 @@ export function AthleteProfileForm({
     };
   }, [countries, countryCode, belt]);
 
+  useEffect(() => {
+    if (state?.success && state.belt) {
+      setSelectedBelt(state.belt);
+    }
+  }, [state]);
+
   const availableBelts = useMemo(() => {
     if (!birthDateValue) return null; // возраст неизвестен — не ограничиваем выбор
     const parsed = new Date(birthDateValue);

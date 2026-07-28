@@ -14,7 +14,7 @@ import {
 import { getCountryList } from "@/lib/countries";
 import type { Belt } from "@prisma/client";
 
-export type FormState = { error?: string; success?: boolean } | undefined;
+export type FormState = { error?: string; success?: boolean; belt?: Belt } | undefined;
 
 const ALL_BELTS = new Set<Belt>([...KIDS_BELTS, ...ADULT_BELTS]);
 
@@ -127,5 +127,5 @@ export async function updateAthleteProfileAction(
   }
 
   revalidatePath("/dashboard", "layout");
-  return { success: true };
+  return { success: true, belt };
 }
