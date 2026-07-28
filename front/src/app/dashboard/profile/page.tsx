@@ -6,7 +6,7 @@ import { AthleteProfileForm } from "@/components/AthleteProfileForm";
 import { Card } from "@/components/Card";
 import { PersonalDataForm } from "@/components/PersonalDataForm";
 import { calculateAge } from "@/lib/belt";
-import { flagEmoji, getCountryList, getCountryName } from "@/lib/countries";
+import { getCountryList, getCountryName } from "@/lib/countries";
 import type { Role } from "@prisma/client";
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -34,7 +34,7 @@ export default async function ProfilePage() {
       <AthleteCard
         name={user.name}
         avatarUrl={user.avatarUrl}
-        flagEmoji={flagEmoji(user.countryCode)}
+        flagEmoji={null}
         countryName={getCountryName(user.countryCode)}
         age={user.birthDate ? calculateAge(user.birthDate) : null}
         belt={user.belt}

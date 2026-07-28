@@ -30,20 +30,20 @@ function startOfWeek(date: Date) {
 
 function weekTitle(weekStart: Date) {
   const weekEnd = addDays(weekStart, 6);
-  const monthInDate = (date: Date) =>
-    new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" })
-      .formatToParts(date)
-      .find((part) => part.type === "month")?.value ?? "";
-  const startMonth = monthInDate(weekStart);
-  const endMonth = monthInDate(weekEnd);
+  const monthName = (date: Date) =>
+    new Intl.DateTimeFormat("ru-RU", { month: "long" }).format(date);
+  const startMonth = monthName(weekStart);
+  const endMonth = monthName(weekEnd);
 
   if (weekStart.getFullYear() !== weekEnd.getFullYear()) {
-    return `${weekStart.getDate()} ${startMonth} ${weekStart.getFullYear()} — ${weekEnd.getDate()} ${endMonth} ${weekEnd.getFullYear()}`;
+    return `${startMonth} ${weekStart.getFullYear()} – ${endMonth} ${weekEnd.getFullYear()}`;
   }
+
   if (weekStart.getMonth() !== weekEnd.getMonth()) {
-    return `${weekStart.getDate()} ${startMonth} — ${weekEnd.getDate()} ${endMonth} ${weekEnd.getFullYear()}`;
+    return `${startMonth}–${endMonth} ${weekEnd.getFullYear()}`;
   }
-  return `${weekStart.getDate()}–${weekEnd.getDate()} ${endMonth} ${weekEnd.getFullYear()}`;
+
+  return `${endMonth} ${weekEnd.getFullYear()}`;
 }
 
 export function TrainingCalendar({
