@@ -30,7 +30,12 @@ export async function CoachHome({
           </div>
         </section>
 
-        <TrainingCalendar trainings={calendarTrainings} linkBase="" showGroupFilter />
+        <TrainingCalendar
+          key={calendarTrainings.map((training) => training.id).join(",")}
+          trainings={calendarTrainings}
+          linkBase=""
+          showGroupFilter
+        />
       </div>
     </main>
   );

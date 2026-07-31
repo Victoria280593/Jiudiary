@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { DaySchedulePanel } from "@/components/DaySchedulePanel";
 import { useGroups } from "@/components/GroupsProvider";
 import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, dateKey, addMonths } from "@/lib/calendar";
+import { getTrainings } from "@/lib/trainings-client";
 
 type TrainingItem = { id: string; title: string; date: string; coachName?: string };
 type CalendarView = "month" | "week";
@@ -67,10 +68,14 @@ export function TrainingCalendar({
   const [isDayPanelOpen, setIsDayPanelOpen] = useState(false);
   const { groups, status: groupsStatus, error: groupsError } = useGroups();
   const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [visibleTrainings, setVisibleTrainings] = useState(trainings);
+  const [trainingsError, setTrainingsError] = useState<string>();
+  const [trainingsAreLoading, setTrainingsAreLoading] = useState(false);
+  const latestTrainingRequestRef = useRef(0);
 
   const parsedTrainings = useMemo(
-    () => trainings.map((training) => ({ ...training, date: new Date(training.date) })),
-    [trainings]
+    () => visibleTrainings.map((training) => ({ ...training, date: new Date(training.date) })),
+    [visibleTrainings]
   );
 
   const trainingsByDay = useMemo(() => {
@@ -121,6 +126,29 @@ export function TrainingCalendar({
   const selectDay = (key: string) => {
     setSelectedDay(key);
     setIsDayPanelOpen(true);
+  };
+
+  const selectGroup = async (groupId: string) => {
+    const requestId = latestTrainingRequestRef.current + 1;
+    latestTrainingRequestRef.current = requestId;
+    setSelectedGroupId(groupId);
+    setTrainingsAreLoading(true);
+    setTrainingsError(undefined);
+
+    try {
+      const loadedTrainings = await getTrainings(groupId || undefined);
+      if (latestTrainingRequestRef.current === requestId) {
+        setVisibleTrainings(loadedTrainings);
+      }
+    } catch (error) {
+      if (latestTrainingRequestRef.current === requestId) {
+        setTrainingsError(error instanceof Error ? error.message : "Не удалось загрузить тренировки.");
+      }
+    } finally {
+      if (latestTrainingRequestRef.current === requestId) {
+        setTrainingsAreLoading(false);
+      }
+    }
   };
 
   return (
@@ -203,7 +231,7 @@ export function TrainingCalendar({
                   <>
                     <button
                       type="button"
-                      onClick={() => setSelectedGroupId("")}
+                      onClick={() => void selectGroup("")}
                       aria-pressed={selectedGroupId === ""}
                       className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition duration-200 ease-out ${
                         selectedGroupId === ""
@@ -217,7 +245,7 @@ export function TrainingCalendar({
                       <button
                         key={group.id}
                         type="button"
-                        onClick={() => setSelectedGroupId(group.id)}
+                        onClick={() => void selectGroup(group.id)}
                         aria-pressed={selectedGroupId === group.id}
                         className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition duration-200 ease-out ${
                           selectedGroupId === group.id
@@ -235,6 +263,12 @@ export function TrainingCalendar({
                       </button>
                     ))}
                   </>
+                )}
+                {trainingsAreLoading && (
+                  <span className="self-center text-xs text-muted">Обновление календаря…</span>
+                )}
+                {trainingsError && (
+                  <span className="self-center text-xs text-danger">{trainingsError}</span>
                 )}
               </div>
             )}
