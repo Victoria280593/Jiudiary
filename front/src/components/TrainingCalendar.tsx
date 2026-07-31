@@ -16,14 +16,6 @@ function ArrowIcon({ direction }: { direction: "left" | "right" }) {
   );
 }
 
-function BranchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 20V8l8-4 8 4v12M8 20v-5h8v5M8 10h.01M12 10h.01M16 10h.01" />
-    </svg>
-  );
-}
-
 function addDays(date: Date, amount: number) {
   const next = new Date(date);
   next.setDate(next.getDate() + amount);
@@ -242,7 +234,6 @@ export function TrainingCalendar({
                           : "bg-surface-muted text-muted hover:-translate-y-0.5 hover:bg-accent-soft hover:text-accent-foreground"
                       }`}
                     >
-                      <BranchIcon />
                       Все группы
                     </button>
                     {branches.map((branch) => (
@@ -257,7 +248,12 @@ export function TrainingCalendar({
                             : "bg-surface-muted text-muted hover:-translate-y-0.5 hover:bg-accent-soft hover:text-accent-foreground"
                         }`}
                       >
-                        <BranchIcon />
+                        <span
+                          className={`h-2 w-2 shrink-0 rounded-full ${
+                            selectedBranchId === branch.id ? "bg-white" : "bg-accent"
+                          }`}
+                          aria-hidden="true"
+                        />
                         {branch.name}
                       </button>
                     ))}
@@ -272,7 +268,7 @@ export function TrainingCalendar({
               <div className="overflow-hidden rounded-2xl border border-border/70 bg-white">
                 <div className="grid grid-cols-7 border-b border-border/70 text-center text-xs font-medium text-muted sm:text-sm">
                   {WEEKDAY_LABELS.map((day) => (
-                    <div key={day} className="py-3">{day}</div>
+                    <div key={day} className="border-r border-border/70 py-3 last:border-r-0">{day}</div>
                   ))}
                 </div>
 
