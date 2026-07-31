@@ -279,7 +279,7 @@ export function TrainingCalendar({
                         {dayTrainings.length > 0 && (
                           <span className="mt-3 flex max-w-full flex-wrap justify-center gap-1.5" aria-label={`Тренировок: ${dayTrainings.length}`}>
                             {dayTrainings.map((training) => (
-                              <span key={training.id} className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+                              <span key={training.id} className="h-2.5 w-2.5 rounded-full bg-accent" aria-hidden="true" />
                             ))}
                           </span>
                         )}
@@ -315,7 +315,7 @@ export function TrainingCalendar({
                         {dayTrainings.length > 0 && (
                           <span className="mt-4 flex max-w-full flex-wrap justify-center gap-2" aria-label={`Тренировок: ${dayTrainings.length}`}>
                             {dayTrainings.map((training) => (
-                              <span key={training.id} className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
+                              <span key={training.id} className="h-2.5 w-2.5 rounded-full bg-accent" aria-hidden="true" />
                             ))}
                           </span>
                         )}

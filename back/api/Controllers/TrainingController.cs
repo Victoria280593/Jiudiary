@@ -12,11 +12,11 @@ namespace JiuDiary.Api.Controllers;
 public sealed class TrainingController(TrainingService trainingService) : BaseController
 {
     [HttpGet]
-    public async Task<ActionResult<List<TrainingOutputModel>>> GetTrainings(CancellationToken cancellationToken)
+    public async Task<ActionResult<List<TrainingOutputModel>>> GetTrainings([FromQuery] Guid? groupId, CancellationToken cancellationToken)
     {
         try
         {
-            return Ok(await trainingService.GetTrainings(CurrentUser, cancellationToken));
+            return Ok(await trainingService.GetTrainings(CurrentUser, groupId, cancellationToken));
         }
         catch (UnauthorizedAccessException exception)
         {

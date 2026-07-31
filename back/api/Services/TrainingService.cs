@@ -9,13 +9,20 @@ namespace JiuDiary.Api.Services;
 
 public sealed class TrainingService(JiuDiaryDbContext dbContext)
 {
-    public async Task<List<TrainingOutputModel>> GetTrainings(AuthenticatedUser user, CancellationToken cancellationToken)
+    public async Task<List<TrainingOutputModel>> GetTrainings(AuthenticatedUser user, Guid? groupId, CancellationToken cancellationToken)
     {
         EnsureCoach(user, "Получать тренировки может только тренер.");
 
-        return await dbContext.Trainings
+        var trainings = dbContext.Trainings
             .AsNoTracking()
-            .Where(training => training.Coach.UserId == user.Id)
+            .Where(training => training.Coach.UserId == user.Id);
+
+        if (groupId.HasValue)
+        {
+            trainings = trainings.Where(training => training.GroupId == groupId.Value);
+        }
+
+        return await trainings
             .OrderBy(training => training.Time)
             .Select(training => new TrainingOutputModel
             {

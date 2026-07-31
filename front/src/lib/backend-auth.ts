@@ -351,9 +351,10 @@ export async function createBackendTraining(
   }
 }
 
-export async function getBackendTrainings(accessToken: string): Promise<BackendTraining[] | null> {
+export async function getBackendTrainings(accessToken: string, groupId?: string): Promise<BackendTraining[] | null> {
   try {
-    const response = await fetch(`${backendUrl}/api/trainings`, {
+    const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : "";
+    const response = await fetch(`${backendUrl}/api/trainings${query}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: "no-store",
       signal: AbortSignal.timeout(5_000),
