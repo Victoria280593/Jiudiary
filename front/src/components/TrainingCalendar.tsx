@@ -163,7 +163,7 @@ export function TrainingCalendar({
             : "grid-cols-1"
         }`}
       >
-        <div className="calendar-shadow min-w-0 overflow-hidden rounded-[1.85rem] bg-white/92 p-3 sm:p-5 lg:p-6">
+        <div className="calendar-shadow min-w-0 overflow-hidden rounded-[1.85rem] border border-border/80 bg-white/92 p-3 sm:p-5 lg:p-6">
           <div className="mb-5 flex flex-col gap-5 px-1">
             <div className="grid items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
               <div className="flex flex-wrap items-center gap-2">
