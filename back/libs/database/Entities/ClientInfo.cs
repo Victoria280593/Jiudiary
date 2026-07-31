@@ -53,4 +53,8 @@ public sealed class ClientInfo
     public User User { get; set; } = null!;
 
     public Belt? Belt { get; set; }
+
+    public ICollection<CoachGroup> CoachGroups { get; set; } = [];
+
+    public ICollection<Training> Trainings { get; set; } = [];
 }

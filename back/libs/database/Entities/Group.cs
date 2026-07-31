@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace JiuDiary.Database.Entities;
 
-[Table("Branches")]
-public sealed class Branch
+[Table("Groups")]
+public sealed class Group
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -17,5 +17,7 @@ public sealed class Branch
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTime CreatedAt { get; set; }
 
-    public ICollection<CoachBranch> CoachBranches { get; set; } = [];
+    public ICollection<CoachGroup> CoachGroups { get; set; } = [];
+
+    public ICollection<Training> Trainings { get; set; } = [];
 }

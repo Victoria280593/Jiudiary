@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DaySchedulePanel } from "@/components/DaySchedulePanel";
 import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, dateKey, addMonths } from "@/lib/calendar";
-import { getBranches, type Branch } from "@/lib/branches-client";
+import { getGroups, type Group } from "@/lib/groups-client";
 
 type TrainingItem = { id: string; title: string; date: string; coachName?: string };
 type CalendarView = "month" | "week";
@@ -51,12 +51,12 @@ export function TrainingCalendar({
   trainings,
   linkBase = "/dashboard/coach/trainings",
   showCreateForm = true,
-  showBranchFilter = false,
+  showGroupFilter = false,
 }: {
   trainings: TrainingItem[];
   linkBase?: string;
   showCreateForm?: boolean;
-  showBranchFilter?: boolean;
+  showGroupFilter?: boolean;
 }) {
   const today = new Date();
   const [calendarView, setCalendarView] = useState<CalendarView>("month");
@@ -65,31 +65,31 @@ export function TrainingCalendar({
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today));
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [isDayPanelOpen, setIsDayPanelOpen] = useState(false);
-  const [branches, setBranches] = useState<Branch[]>([]);
-  const [selectedBranchId, setSelectedBranchId] = useState("");
-  const [branchLoadState, setBranchLoadState] = useState<"idle" | "loading" | "error">(
-    showBranchFilter ? "loading" : "idle"
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [groupLoadState, setGroupLoadState] = useState<"idle" | "loading" | "error">(
+    showGroupFilter ? "loading" : "idle"
   );
 
   useEffect(() => {
-    if (!showBranchFilter) return;
+    if (!showGroupFilter) return;
 
     let cancelled = false;
 
-    void getBranches()
-      .then((loadedBranches) => {
+    void getGroups()
+      .then((loadedGroups) => {
         if (cancelled) return;
-        setBranches(loadedBranches);
-        setBranchLoadState("idle");
+        setGroups(loadedGroups);
+        setGroupLoadState("idle");
       })
       .catch(() => {
-        if (!cancelled) setBranchLoadState("error");
+        if (!cancelled) setGroupLoadState("error");
       });
 
     return () => {
       cancelled = true;
     };
-  }, [showBranchFilter]);
+  }, [showGroupFilter]);
 
   const parsedTrainings = useMemo(
     () => trainings.map((training) => ({ ...training, date: new Date(training.date) })),
@@ -216,45 +216,45 @@ export function TrainingCalendar({
               </div>
             </div>
 
-            {showBranchFilter && (
+            {showGroupFilter && (
               <div role="group" aria-label="Выбор группы" className="flex w-full flex-wrap items-center gap-2.5">
-                {branchLoadState === "loading" ? (
+                {groupLoadState === "loading" ? (
                   <span className="rounded-full bg-surface-muted px-4 py-2 text-sm text-muted">Загрузка групп…</span>
-                ) : branchLoadState === "error" ? (
+                ) : groupLoadState === "error" ? (
                   <span className="rounded-full bg-danger-soft px-4 py-2 text-sm text-danger">Не удалось загрузить группы</span>
                 ) : (
                   <>
                     <button
                       type="button"
-                      onClick={() => setSelectedBranchId("")}
-                      aria-pressed={selectedBranchId === ""}
+                      onClick={() => setSelectedGroupId("")}
+                      aria-pressed={selectedGroupId === ""}
                       className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition duration-200 ease-out ${
-                        selectedBranchId === ""
+                        selectedGroupId === ""
                           ? "bg-accent text-white shadow-[0_10px_24px_-16px_rgba(131,93,57,0.8)]"
                           : "bg-surface-muted text-muted hover:-translate-y-0.5 hover:bg-accent-soft hover:text-accent-foreground"
                       }`}
                     >
                       Все группы
                     </button>
-                    {branches.map((branch) => (
+                    {groups.map((group) => (
                       <button
-                        key={branch.id}
+                        key={group.id}
                         type="button"
-                        onClick={() => setSelectedBranchId(branch.id)}
-                        aria-pressed={selectedBranchId === branch.id}
+                        onClick={() => setSelectedGroupId(group.id)}
+                        aria-pressed={selectedGroupId === group.id}
                         className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition duration-200 ease-out ${
-                          selectedBranchId === branch.id
+                          selectedGroupId === group.id
                             ? "bg-accent text-white shadow-[0_10px_24px_-16px_rgba(131,93,57,0.8)]"
                             : "bg-surface-muted text-muted hover:-translate-y-0.5 hover:bg-accent-soft hover:text-accent-foreground"
                         }`}
                       >
                         <span
                           className={`h-2 w-2 shrink-0 rounded-full ${
-                            selectedBranchId === branch.id ? "bg-white" : "bg-accent"
+                            selectedGroupId === group.id ? "bg-white" : "bg-accent"
                           }`}
                           aria-hidden="true"
                         />
-                        {branch.name}
+                        {group.name}
                       </button>
                     ))}
                   </>

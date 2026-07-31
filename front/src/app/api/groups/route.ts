@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { createBackendBranch, deleteBackendBranch, getBackendBranches } from "@/lib/backend-auth";
+import { createBackendGroup, deleteBackendGroup, getBackendGroups } from "@/lib/backend-auth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -11,9 +11,9 @@ export async function GET() {
     return NextResponse.json({ error: "Пользователь не авторизован." }, { status: 401 });
   }
 
-  const branches = await getBackendBranches(session.accessToken);
-  return branches
-    ? NextResponse.json(branches, { headers: { "Cache-Control": "no-store" } })
+  const groups = await getBackendGroups(session.accessToken);
+  return groups
+    ? NextResponse.json(groups, { headers: { "Cache-Control": "no-store" } })
     : NextResponse.json({ error: "Не удалось загрузить группы." }, { status: 502 });
 }
 
@@ -29,13 +29,13 @@ export async function POST(request: Request) {
     : (await request.formData()).get("name");
 
   if (typeof name !== "string" || !name.trim()) {
-    return NextResponse.json({ error: "Необходимо указать название филиала." }, { status: 400 });
+    return NextResponse.json({ error: "Необходимо указать название группы." }, { status: 400 });
   }
 
-  const created = await createBackendBranch(session.accessToken, name.trim());
+  const created = await createBackendGroup(session.accessToken, name.trim());
   return created
     ? NextResponse.json({ success: true })
-    : NextResponse.json({ error: "Не удалось создать филиал." }, { status: 502 });
+    : NextResponse.json({ error: "Не удалось создать группу." }, { status: 502 });
 }
 
 export async function DELETE(request: Request) {
@@ -49,7 +49,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Необходимо указать идентификатор группы." }, { status: 400 });
   }
 
-  const result = await deleteBackendBranch(session.accessToken, input.id);
+  const result = await deleteBackendGroup(session.accessToken, input.id);
   return result.ok
     ? new NextResponse(null, { status: 204 })
     : NextResponse.json({ error: result.error }, { status: result.status });

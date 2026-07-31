@@ -33,7 +33,7 @@ export async function CoachHome({
           </div>
         </section>
 
-        <TrainingCalendar trainings={calendarTrainings} showBranchFilter />
+        <TrainingCalendar trainings={calendarTrainings} showGroupFilter />
       </div>
     </main>
   );

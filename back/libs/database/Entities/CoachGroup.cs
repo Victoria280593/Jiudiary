@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace JiuDiary.Database.Entities;
 
-[Table("CoachBranches")]
-[Index(nameof(CoachId), nameof(BranchId), IsUnique = true)]
-public sealed class CoachBranch
+[Table("CoachGroups")]
+[Index(nameof(CoachId), nameof(GroupId), IsUnique = true)]
+public sealed class CoachGroup
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -15,10 +15,10 @@ public sealed class CoachBranch
     [ForeignKey(nameof(Coach))]
     public Guid CoachId { get; set; }
 
-    [ForeignKey(nameof(Branch))]
-    public Guid BranchId { get; set; }
+    [ForeignKey(nameof(Group))]
+    public Guid GroupId { get; set; }
 
     public ClientInfo Coach { get; set; } = null!;
 
-    public Branch Branch { get; set; } = null!;
+    public Group Group { get; set; } = null!;
 }

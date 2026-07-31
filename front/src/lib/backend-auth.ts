@@ -26,7 +26,7 @@ export type BackendClientInfo = {
   beltName: string | null;
 };
 
-export type BackendBranch = {
+export type BackendGroup = {
   id: string;
   name: string;
 };
@@ -220,9 +220,9 @@ export async function updateBackendClientInfo(
   }
 }
 
-export async function createBackendBranch(accessToken: string, name: string): Promise<boolean> {
+export async function createBackendGroup(accessToken: string, name: string): Promise<boolean> {
   try {
-    const response = await fetch(`${backendUrl}/api/branches`, {
+    const response = await fetch(`${backendUrl}/api/groups`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -239,9 +239,9 @@ export async function createBackendBranch(accessToken: string, name: string): Pr
   }
 }
 
-export async function getBackendBranches(accessToken: string): Promise<BackendBranch[] | null> {
+export async function getBackendGroups(accessToken: string): Promise<BackendGroup[] | null> {
   try {
-    const response = await fetch(`${backendUrl}/api/branches`, {
+    const response = await fetch(`${backendUrl}/api/groups`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: "no-store",
       signal: AbortSignal.timeout(5_000),
@@ -249,30 +249,30 @@ export async function getBackendBranches(accessToken: string): Promise<BackendBr
 
     if (!response.ok) return null;
 
-    const branches: unknown = await response.json();
-    if (!Array.isArray(branches)) return null;
+    const groups: unknown = await response.json();
+    if (!Array.isArray(groups)) return null;
 
-    return branches.every(
-      (branch) =>
-        branch &&
-        typeof branch === "object" &&
-        typeof (branch as Partial<BackendBranch>).id === "string" &&
-        typeof (branch as Partial<BackendBranch>).name === "string"
+    return groups.every(
+      (group) =>
+        group &&
+        typeof group === "object" &&
+        typeof (group as Partial<BackendGroup>).id === "string" &&
+        typeof (group as Partial<BackendGroup>).name === "string"
     )
-      ? (branches as BackendBranch[])
+      ? (groups as BackendGroup[])
       : null;
   } catch {
     return null;
   }
 }
 
-export type DeleteBackendBranchResult =
+export type DeleteBackendGroupResult =
   | { ok: true }
   | { ok: false; status: number; error: string };
 
-export async function deleteBackendBranch(accessToken: string, branchId: string): Promise<DeleteBackendBranchResult> {
+export async function deleteBackendGroup(accessToken: string, groupId: string): Promise<DeleteBackendGroupResult> {
   try {
-    const response = await fetch(`${backendUrl}/api/branches/${encodeURIComponent(branchId)}`, {
+    const response = await fetch(`${backendUrl}/api/groups/${encodeURIComponent(groupId)}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: "no-store",

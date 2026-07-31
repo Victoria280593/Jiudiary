@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Card } from "@/components/Card";
-import { getBranches, type Branch as Group } from "@/lib/branches-client";
+import { getGroups, type Group } from "@/lib/groups-client";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
 
 export function CoachGroupsCard() {
@@ -20,7 +20,7 @@ export function CoachGroupsCard() {
 
     async function loadGroups() {
       try {
-        const loadedGroups = await getBranches();
+        const loadedGroups = await getGroups();
         if (!cancelled) {
           setGroups(loadedGroups);
           setLoadError(undefined);
@@ -61,7 +61,7 @@ export function CoachGroupsCard() {
     setError(undefined);
 
     try {
-      const response = await fetch("/api/branches", {
+      const response = await fetch("/api/groups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: normalizedName }),
@@ -74,7 +74,7 @@ export function CoachGroupsCard() {
       }
 
       try {
-        setGroups(await getBranches());
+        setGroups(await getGroups());
         setLoadError(undefined);
       } catch {
         setGroups((currentGroups) => [
@@ -96,7 +96,7 @@ export function CoachGroupsCard() {
     setLoadError(undefined);
 
     try {
-      const response = await fetch("/api/branches", {
+      const response = await fetch("/api/groups", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: group.id }),
@@ -109,7 +109,7 @@ export function CoachGroupsCard() {
       }
 
       try {
-        setGroups(await getBranches());
+        setGroups(await getGroups());
       } catch {
         setGroups((currentGroups) => currentGroups.filter((currentGroup) => currentGroup.id !== group.id));
       }
