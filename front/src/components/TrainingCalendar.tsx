@@ -166,7 +166,7 @@ export function TrainingCalendar({
         <div className="calendar-shadow min-w-0 overflow-hidden rounded-[1.85rem] border border-border/80 bg-white/92 p-3 sm:p-5 lg:p-6">
           <div className="mb-5 flex flex-col gap-5 px-1">
             <div className="grid items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="order-3 flex flex-wrap items-center gap-2 md:justify-self-end">
                 <button
                   type="button"
                   onClick={() => goRelative(-1)}
@@ -186,17 +186,17 @@ export function TrainingCalendar({
                 <button
                   type="button"
                   onClick={goToday}
-                  className="ml-1 min-h-11 rounded-xl bg-surface-muted px-4 text-sm font-medium text-foreground transition duration-200 ease-out hover:bg-accent-soft"
+                  className="ml-1 min-h-11 rounded-[0.8rem] border border-border bg-white px-4 text-sm font-medium text-foreground transition duration-200 ease-out hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
                 >
                   Сегодня
                 </button>
               </div>
 
-              <h2 className="order-first text-left text-lg font-semibold capitalize tracking-[-0.025em] text-foreground md:order-none md:text-center md:text-xl">
+              <h2 className="order-first text-left text-lg font-semibold capitalize tracking-[-0.025em] text-foreground md:order-2 md:text-center md:text-xl">
                 {title}
               </h2>
 
-              <div className="flex w-fit justify-self-start rounded-xl bg-surface-muted p-1 md:justify-self-end" aria-label="Вид календаря">
+              <div className="order-1 flex w-fit justify-self-start rounded-xl bg-surface-muted p-1" aria-label="Вид календаря">
                 <button
                   type="button"
                   onClick={() => setCalendarView("month")}
@@ -269,14 +269,15 @@ export function TrainingCalendar({
 
           <div className="max-w-full overflow-x-auto pb-1">
             <div className="min-w-[42rem]">
-              <div className="grid grid-cols-7 text-center text-xs font-medium text-muted sm:text-sm">
-                {WEEKDAY_LABELS.map((day) => (
-                  <div key={day} className="py-3">{day}</div>
-                ))}
-              </div>
+              <div className="overflow-hidden rounded-2xl border border-border/70 bg-white">
+                <div className="grid grid-cols-7 border-b border-border/70 text-center text-xs font-medium text-muted sm:text-sm">
+                  {WEEKDAY_LABELS.map((day) => (
+                    <div key={day} className="py-3">{day}</div>
+                  ))}
+                </div>
 
-              {calendarView === "month" ? (
-                <div className="grid grid-cols-7 gap-px overflow-hidden rounded-2xl bg-border/60">
+                {calendarView === "month" ? (
+                  <div className="grid grid-cols-7 gap-px bg-border/60">
                   {monthWeeks.flat().map((cell) => {
                     const key = dateKey(cell.date);
                     const dayTrainings = trainingsByDay.get(key) ?? [];
@@ -312,9 +313,9 @@ export function TrainingCalendar({
                       </button>
                     );
                   })}
-                </div>
-              ) : (
-                <div className="grid grid-cols-7 gap-px overflow-hidden rounded-2xl bg-border/60">
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-7 gap-px bg-border/60">
                   {weekDays.map((day) => {
                     const key = dateKey(day);
                     const dayTrainings = trainingsByDay.get(key) ?? [];
@@ -348,8 +349,9 @@ export function TrainingCalendar({
                       </button>
                     );
                   })}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
