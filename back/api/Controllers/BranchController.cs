@@ -18,6 +18,24 @@ namespace JiuDiary.Api.Controllers
             return Ok(await branchService.GetBranches(CurrentUser));
         }
 
+        [HttpDelete("{branchId:guid}")]
+        public async Task<IActionResult> DeleteBranch(Guid branchId)
+        {
+            try
+            {
+                await branchService.DeleteBranch(branchId, CurrentUser);
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException exception)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
+            }
+            catch (InvalidOperationException exception)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
+            }
+        }
+
         [HttpPost]
         public async Task CreateBranch(CreateBranchInputModel inputModel, CancellationToken cancellationToken = default)
         {

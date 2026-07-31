@@ -23,6 +23,7 @@ export function CoachGroupsCard() {
   const [loadError, setLoadError] = useState<string>();
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingGroupId, setDeletingGroupId] = useState<string>();
 
   useEffect(() => {
     let cancelled = false;
@@ -100,6 +101,35 @@ export function CoachGroupsCard() {
     }
   }
 
+  async function handleDelete(group: Group) {
+    setDeletingGroupId(group.id);
+    setLoadError(undefined);
+
+    try {
+      const response = await fetch("/api/branches", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: group.id }),
+      });
+
+      if (!response.ok) {
+        const result = (await response.json().catch(() => null)) as { error?: string } | null;
+        setLoadError(result?.error ?? "Не удалось удалить группу.");
+        return;
+      }
+
+      try {
+        setGroups(await requestGroups());
+      } catch {
+        setGroups((currentGroups) => currentGroups.filter((currentGroup) => currentGroup.id !== group.id));
+      }
+    } catch {
+      setLoadError("Не удалось подключиться к серверу.");
+    } finally {
+      setDeletingGroupId(undefined);
+    }
+  }
+
   return (
     <Card title="Группы">
       {loadError && <p className={`${errorClass} mb-4`}>{loadError}</p>}
@@ -119,6 +149,16 @@ export function CoachGroupsCard() {
                 <p className="truncate text-sm font-medium text-foreground">{group.name}</p>
                 <p className="text-xs text-muted">Группа</p>
               </div>
+              <button
+                type="button"
+                onClick={() => void handleDelete(group)}
+                disabled={deletingGroupId === group.id}
+                aria-label={`Удалить группу ${group.name}`}
+                title="Удалить группу"
+                className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted transition-colors hover:bg-danger-soft hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <TrashIcon />
+              </button>
             </div>
           ))}
         </div>
@@ -226,6 +266,14 @@ function PlusIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
       <path strokeLinecap="round" d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" />
     </svg>
   );
 }

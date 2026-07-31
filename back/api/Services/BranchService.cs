@@ -27,6 +27,34 @@ namespace JiuDiary.Api.Services
                 .ToListAsync();
         }
 
+        public async Task DeleteBranch(Guid branchId, AuthenticatedUser user)
+        {
+            if (user.Role != UserRolesEnum.Coach)
+            {
+                throw new UnauthorizedAccessException("Удалять филиалы может только тренер.");
+            }
+
+            var coachBranch = await dbContext.CoachBranches
+                .Include(x => x.Branch)
+                .SingleOrDefaultAsync(x => x.BranchId == branchId && x.Coach.UserId == user.Id);
+
+            if (coachBranch is null)
+            {
+                throw new InvalidOperationException("Филиал не принадлежит текущему тренеру.");
+            }
+
+            var belongsToAnotherCoach = await dbContext.CoachBranches
+                .AnyAsync(x => x.BranchId == branchId && x.Id != coachBranch.Id);
+
+            dbContext.CoachBranches.Remove(coachBranch);
+            if (!belongsToAnotherCoach)
+            {
+                dbContext.Branches.Remove(coachBranch.Branch);
+            }
+
+            await dbContext.SaveChangesAsync();
+        }
+
         public async Task CreateBranch(CreateBranchInputModel inputModel, AuthenticatedUser user)
         {
             if (user.Role != UserRolesEnum.Coach)

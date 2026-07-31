@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { createBackendBranch, getBackendBranches } from "@/lib/backend-auth";
+import { createBackendBranch, deleteBackendBranch, getBackendBranches } from "@/lib/backend-auth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -36,4 +36,21 @@ export async function POST(request: Request) {
   return created
     ? NextResponse.json({ success: true })
     : NextResponse.json({ error: "Не удалось создать филиал." }, { status: 502 });
+}
+
+export async function DELETE(request: Request) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Пользователь не авторизован." }, { status: 401 });
+  }
+
+  const input = (await request.json()) as { id?: unknown };
+  if (typeof input.id !== "string" || !input.id.trim()) {
+    return NextResponse.json({ error: "Необходимо указать идентификатор группы." }, { status: 400 });
+  }
+
+  const result = await deleteBackendBranch(session.accessToken, input.id);
+  return result.ok
+    ? new NextResponse(null, { status: 204 })
+    : NextResponse.json({ error: result.error }, { status: result.status });
 }

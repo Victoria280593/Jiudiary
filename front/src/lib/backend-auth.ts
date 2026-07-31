@@ -266,6 +266,32 @@ export async function getBackendBranches(accessToken: string): Promise<BackendBr
   }
 }
 
+export type DeleteBackendBranchResult =
+  | { ok: true }
+  | { ok: false; status: number; error: string };
+
+export async function deleteBackendBranch(accessToken: string, branchId: string): Promise<DeleteBackendBranchResult> {
+  try {
+    const response = await fetch(`${backendUrl}/api/branches/${encodeURIComponent(branchId)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (response.ok) return { ok: true };
+
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    return {
+      ok: false,
+      status: response.status,
+      error: result?.error ?? "Не удалось удалить группу.",
+    };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
 export async function logoutFromBackend(refreshToken: string): Promise<void> {
   try {
     await fetch(`${backendUrl}/api/auth/logout`, {
