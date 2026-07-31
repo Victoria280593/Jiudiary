@@ -1,6 +1,21 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { createBackendBranch } from "@/lib/backend-auth";
+import { createBackendBranch, getBackendBranches } from "@/lib/backend-auth";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export async function GET() {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Пользователь не авторизован." }, { status: 401 });
+  }
+
+  const branches = await getBackendBranches(session.accessToken);
+  return branches
+    ? NextResponse.json(branches, { headers: { "Cache-Control": "no-store" } })
+    : NextResponse.json({ error: "Не удалось загрузить группы." }, { status: 502 });
+}
 
 export async function POST(request: Request) {
   const session = await getSession();

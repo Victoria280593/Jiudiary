@@ -1,15 +1,51 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Card } from "@/components/Card";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
 
+type Group = {
+  id: string;
+  name: string;
+};
+
+async function requestGroups(): Promise<Group[]> {
+  const response = await fetch(`/api/branches?refresh=${Date.now()}`, { cache: "no-store" });
+  if (!response.ok) throw new Error("Не удалось загрузить группы.");
+  return (await response.json()) as Group[];
+}
+
 export function CoachGroupsCard() {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [groups, setGroups] = useState<string[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [name, setName] = useState("");
   const [error, setError] = useState<string>();
+  const [loadError, setLoadError] = useState<string>();
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadGroups() {
+      try {
+        const loadedGroups = await requestGroups();
+        if (!cancelled) {
+          setGroups(loadedGroups);
+          setLoadError(undefined);
+        }
+      } catch {
+        if (!cancelled) setLoadError("Не удалось загрузить группы.");
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    void loadGroups();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function openModal() {
     setError(undefined);
@@ -46,7 +82,15 @@ export function CoachGroupsCard() {
         return;
       }
 
-      setGroups((currentGroups) => [...currentGroups, normalizedName]);
+      try {
+        setGroups(await requestGroups());
+        setLoadError(undefined);
+      } catch {
+        setGroups((currentGroups) => [
+          ...currentGroups,
+          { id: `created-${Date.now()}`, name: normalizedName },
+        ]);
+      }
       dialogRef.current?.close();
       setName("");
     } catch {
@@ -58,15 +102,21 @@ export function CoachGroupsCard() {
 
   return (
     <Card title="Группы">
-      {groups.length > 0 ? (
+      {loadError && <p className={`${errorClass} mb-4`}>{loadError}</p>}
+
+      {isLoading ? (
+        <div className="mb-4 rounded-lg border border-border bg-surface-muted/60 px-4 py-4 text-sm text-muted">
+          Загрузка групп…
+        </div>
+      ) : groups.length > 0 ? (
         <div className="mb-4 grid gap-2 sm:grid-cols-2">
           {groups.map((group) => (
-            <div key={group} className="flex items-center gap-3 rounded-lg border border-border bg-surface-muted px-3 py-3">
+            <div key={group.id} className="flex items-center gap-3 rounded-lg border border-border bg-surface-muted px-3 py-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
                 <GroupIcon />
               </span>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">{group}</p>
+                <p className="truncate text-sm font-medium text-foreground">{group.name}</p>
                 <p className="text-xs text-muted">Группа</p>
               </div>
             </div>

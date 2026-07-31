@@ -26,6 +26,11 @@ export type BackendClientInfo = {
   beltName: string | null;
 };
 
+export type BackendBranch = {
+  id: string;
+  name: string;
+};
+
 export type LoginResult =
   | { ok: true; session: BackendSession }
   | { ok: false; error: string };
@@ -231,6 +236,33 @@ export async function createBackendBranch(accessToken: string, name: string): Pr
     return response.ok;
   } catch {
     return false;
+  }
+}
+
+export async function getBackendBranches(accessToken: string): Promise<BackendBranch[] | null> {
+  try {
+    const response = await fetch(`${backendUrl}/api/branches`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) return null;
+
+    const branches: unknown = await response.json();
+    if (!Array.isArray(branches)) return null;
+
+    return branches.every(
+      (branch) =>
+        branch &&
+        typeof branch === "object" &&
+        typeof (branch as Partial<BackendBranch>).id === "string" &&
+        typeof (branch as Partial<BackendBranch>).name === "string"
+    )
+      ? (branches as BackendBranch[])
+      : null;
+  } catch {
+    return null;
   }
 }
 
