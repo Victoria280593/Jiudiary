@@ -9,6 +9,24 @@ namespace JiuDiary.Api.Services
 {
     public sealed class BranchService(JiuDiaryDbContext dbContext)
     {
+        public async Task<List<GetBranchesOutputModel>> GetBranches(AuthenticatedUser user)
+        {
+            if (user.Role != UserRolesEnum.Coach)
+            {
+                throw new UnauthorizedAccessException("Получать список филиалов может только тренер.");
+            }
+
+            return await dbContext.CoachBranches
+                .AsNoTracking()
+                .Where(x => x.Coach.UserId == user.Id)
+                .Select(x => new GetBranchesOutputModel
+                {
+                    Id = x.Branch.Id,
+                    Name = x.Branch.Name
+                })
+                .ToListAsync();
+        }
+
         public async Task CreateBranch(CreateBranchInputModel inputModel, AuthenticatedUser user)
         {
             if (user.Role != UserRolesEnum.Coach)

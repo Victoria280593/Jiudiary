@@ -4,6 +4,7 @@ import { AthleteProfileForm } from "@/components/AthleteProfileForm";
 import { Card } from "@/components/Card";
 import { PersonalDataForm } from "@/components/PersonalDataForm";
 import { ProfileHero } from "@/components/ProfileHero";
+import { CoachGroupsCard } from "@/components/CoachGroupsCard";
 import { calculateAge } from "@/lib/belt";
 import { getCountryList, getCountryName } from "@/lib/countries";
 import type { Role } from "@prisma/client";
@@ -38,6 +39,8 @@ export default async function ProfilePage() {
         age={user.birthDate ? calculateAge(user.birthDate) : null}
         belt={user.belt}
       />
+
+      {user.role === "COACH" && <CoachGroupsCard />}
 
       <Card title="Спортивные данные">
         <AthleteProfileForm

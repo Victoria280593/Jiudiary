@@ -5,13 +5,12 @@ using System.Text;
 namespace JiuDiary.Models.Branch
 {
     /// <summary>
-    /// Входная модель для создания филиала
+    /// Выходная модель получения списка групп
     /// </summary>
-    public class CreateBranchInputModel
+    public class GetBranchesOutputModel
     {
-        /// <summary>
-        /// Название филиала
-        /// </summary>
+        public Guid Id { get; set; }
+
         public string Name { get; set; } = string.Empty;
     }
 }

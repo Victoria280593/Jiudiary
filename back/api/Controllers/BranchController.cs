@@ -12,6 +12,12 @@ namespace JiuDiary.Api.Controllers
     [Produces("application/json")]
     public sealed class BranchConroller(BranchService branchService) : BaseController
     {
+        [HttpGet]
+        public async Task<ActionResult<List<GetBranchesOutputModel>>> GetBranches()
+        {
+            return Ok(await branchService.GetBranches(CurrentUser));
+        }
+
         [HttpPost]
         public async Task CreateBranch(CreateBranchInputModel inputModel, CancellationToken cancellationToken = default)
         {
