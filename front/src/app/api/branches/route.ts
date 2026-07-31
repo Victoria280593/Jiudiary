@@ -8,12 +8,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Пользователь не авторизован." }, { status: 401 });
   }
 
-  const input = (await request.json()) as { name?: unknown };
-  if (typeof input.name !== "string" || !input.name.trim()) {
+  const contentType = request.headers.get("content-type") ?? "";
+  const name = contentType.includes("application/json")
+    ? ((await request.json()) as { name?: unknown }).name
+    : (await request.formData()).get("name");
+
+  if (typeof name !== "string" || !name.trim()) {
     return NextResponse.json({ error: "Необходимо указать название филиала." }, { status: 400 });
   }
 
-  const created = await createBackendBranch(session.accessToken, input.name.trim());
+  const created = await createBackendBranch(session.accessToken, name.trim());
   return created
     ? NextResponse.json({ success: true })
     : NextResponse.json({ error: "Не удалось создать филиал." }, { status: 502 });
