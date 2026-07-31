@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using JiuDiary.Database;
 using JiuDiary.Database.Entities;
+using JiuDiary.Database.Enums;
 using JiuDiary.Models.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -217,10 +218,10 @@ public sealed class AuthService(
     /// </summary>
     private static AuthenticatedUser ToAuthenticatedUser(User user) =>
         new(
-            user.Id.ToString(),
+            user.Id,
             user.Login,
             user.Name,
-            user.Role.Name.ToUpperInvariant());
+            (UserRolesEnum)user.RoleId);
 
     /// <summary>
     /// Преобразует внутреннюю модель пользователя в DTO ответа API.
@@ -228,10 +229,10 @@ public sealed class AuthService(
     private static UserOutputModel ToUserOutputModel(AuthenticatedUser user) =>
         new()
         {
-            Id = user.Id,
+            Id = user.Id.ToString(),
             Login = user.Login,
             Name = user.Name,
-            Role = user.Role
+            Role = user.Role.ToString().ToUpperInvariant()
         };
 
     /// <summary>

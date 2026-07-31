@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace JiuDiary.Api.Services;
 
-public sealed class ClientInfoService(JiuDiaryDbContext dbContext) : IClientInfoService
+public sealed class ClientInfoService(JiuDiaryDbContext dbContext)
 {
     public async Task<ClientInfoOutputModel> GetAsync(Guid userId, CancellationToken cancellationToken)
     {
@@ -28,7 +28,7 @@ public sealed class ClientInfoService(JiuDiaryDbContext dbContext) : IClientInfo
         if (inputModel.BeltId.HasValue &&
             !await dbContext.Belts.AnyAsync(x => x.Id == inputModel.BeltId.Value, cancellationToken))
         {
-            throw new ArgumentException("The selected belt does not exist.", nameof(inputModel.BeltId));
+            throw new ArgumentException("Выбранный пояс не существует.", nameof(inputModel.BeltId));
         }
 
         var clientInfo = await dbContext.ClientInfos

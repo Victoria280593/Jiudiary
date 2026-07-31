@@ -19,4 +19,8 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
     public DbSet<ClientInfo> ClientInfos => Set<ClientInfo>();
 
     public DbSet<Belt> Belts => Set<Belt>();
+
+    public DbSet<Branch> Branches => Set<Branch>();
+
+    public DbSet<CoachBranch> CoachBranches => Set<CoachBranch>();
 }

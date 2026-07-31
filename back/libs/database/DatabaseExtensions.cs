@@ -25,7 +25,7 @@ public static class DatabaseExtensions
         var connectionString = configuration.GetConnectionString("Default");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw new InvalidOperationException("ConnectionStrings:Default is required.");
+            throw new InvalidOperationException("Необходимо настроить строку подключения ConnectionStrings:Default.");
         }
 
         services.AddDbContext<JiuDiaryDbContext>(

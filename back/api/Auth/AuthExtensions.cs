@@ -1,9 +1,6 @@
 using System.Security.Claims;
 using System.Text;
-using JiuDiary.Database.Entities;
-using JiuDiary.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 
 namespace JiuDiary.Api.Auth;
@@ -27,9 +24,9 @@ public static class AuthExtensions
         services
             .AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
-            .Validate(options => options.SigningKey.Length >= 32, "Jwt:SigningKey must contain at least 32 characters.")
-            .Validate(options => options.AccessTokenMinutes is > 0 and <= 60, "Jwt:AccessTokenMinutes must be between 1 and 60.")
-            .Validate(options => options.RefreshTokenDays is > 0 and <= 90, "Jwt:RefreshTokenDays must be between 1 and 90.")
+            .Validate(options => options.SigningKey.Length >= 32, "Jwt:SigningKey должен содержать не менее 32 символов.")
+            .Validate(options => options.AccessTokenMinutes is > 0 and <= 60, "Jwt:AccessTokenMinutes должен быть в диапазоне от 1 до 60.")
+            .Validate(options => options.RefreshTokenDays is > 0 and <= 90, "Jwt:RefreshTokenDays должен быть в диапазоне от 1 до 90.")
             .ValidateOnStart();
 
         services
@@ -39,11 +36,6 @@ public static class AuthExtensions
         var jwtOptions = configuration
             .GetSection(JwtOptions.SectionName)
             .Get<JwtOptions>() ?? new JwtOptions();
-
-        services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IClientInfoService, ClientInfoService>();
-        services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
-        services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
         // Каждый Bearer-токен проверяется по подписи, издателю, получателю и сроку действия.
         services

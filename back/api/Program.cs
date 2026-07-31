@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using JiuDiary.Api.Auth;
+using JiuDiary.Api.Extensions;
 using JiuDiary.Database;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi;
@@ -8,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddJiuDiaryAuth(builder.Configuration);
+builder.Services.AddServices();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -69,6 +71,7 @@ app.UseCors("Frontend");
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<AuthenticatedUserMiddleware>();
 
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();

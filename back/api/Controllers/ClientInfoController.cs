@@ -9,16 +9,14 @@ namespace JiuDiary.Api.Controllers;
 [Authorize]
 [Route("api/client-info")]
 [Produces("application/json")]
-public sealed class ClientInfoController(IClientInfoService clientInfoService) : BaseController
+public sealed class ClientInfoController(ClientInfoService clientInfoService) : BaseController
 {
     [HttpGet]
     [ProducesResponseType<ClientInfoOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ClientInfoOutputModel>> Get(CancellationToken cancellationToken)
     {
-        return !Guid.TryParse(CurrentUser.Id, out var userId)
-            ? Unauthorized()
-            : Ok(await clientInfoService.GetAsync(userId, cancellationToken));
+        return Ok(await clientInfoService.GetAsync(CurrentUser.Id, cancellationToken));
     }
 
     [HttpPut]
@@ -27,14 +25,9 @@ public sealed class ClientInfoController(IClientInfoService clientInfoService) :
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ClientInfoOutputModel>> Update(UpdateClientInfoInputModel inputModel, CancellationToken cancellationToken)
     {
-        if (!Guid.TryParse(CurrentUser.Id, out var userId))
-        {
-            return Unauthorized();
-        }
-
         try
         {
-            var clientInfo = await clientInfoService.UpdateAsync(userId, inputModel, cancellationToken);
+            var clientInfo = await clientInfoService.UpdateAsync(CurrentUser.Id, inputModel, cancellationToken);
             return clientInfo is null
                 ? Unauthorized()
                 : Ok(clientInfo);

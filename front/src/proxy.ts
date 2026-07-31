@@ -83,6 +83,10 @@ function secureCookie() {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const { authed, stale, session } = await resolveSession(request);
+  const isProtectedPage =
+    pathname === "/" ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/students");
 
   if (session) {
     // Новые токены сразу заменяют старые в текущем запросе и последующем ответе.
@@ -92,7 +96,7 @@ export async function proxy(request: NextRequest) {
 
   let response: NextResponse;
 
-  if (pathname.startsWith("/dashboard") && !authed) {
+  if (isProtectedPage && !authed) {
     response = NextResponse.redirect(new URL("/login", request.url));
   } else if ((pathname === "/login" || pathname === "/register") && authed) {
     response = NextResponse.redirect(new URL("/dashboard", request.url));
@@ -129,5 +133,12 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/register"],
+  matcher: [
+    "/",
+    "/dashboard/:path*",
+    "/students/:path*",
+    "/api/client-info/:path*",
+    "/login",
+    "/register",
+  ],
 };

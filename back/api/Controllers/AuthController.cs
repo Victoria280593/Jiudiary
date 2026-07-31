@@ -35,14 +35,14 @@ public sealed class AuthController(IAuthService authService) : BaseController
         {
             return BadRequest(new
             {
-                error = "Login and name are required; password must contain from 8 to 128 characters."
+                error = "Логин и имя обязательны, пароль должен содержать от 8 до 128 символов."
             });
         }
 
         var user = await authService.RegisterAsync(request, cancellationToken);
 
         return user is null
-            ? Conflict(new { error = "A user with this login already exists." })
+            ? Conflict(new { error = "Пользователь с таким логином уже существует." })
             : StatusCode(StatusCodes.Status201Created, user);
     }
 
@@ -62,7 +62,7 @@ public sealed class AuthController(IAuthService authService) : BaseController
     {
         if (string.IsNullOrWhiteSpace(request.Login) || string.IsNullOrEmpty(request.Password))
         {
-            return BadRequest(new { error = "Login and password are required." });
+            return BadRequest(new { error = "Необходимо указать логин и пароль." });
         }
 
         var response = await authService.LoginAsync(request, cancellationToken);
@@ -83,7 +83,7 @@ public sealed class AuthController(IAuthService authService) : BaseController
     {
         if (string.IsNullOrWhiteSpace(request.RefreshToken))
         {
-            return BadRequest(new { error = "Refresh token is required." });
+            return BadRequest(new { error = "Необходимо передать refresh-токен." });
         }
 
         var response = await authService.RefreshAsync(request, cancellationToken);
@@ -101,10 +101,10 @@ public sealed class AuthController(IAuthService authService) : BaseController
     public ActionResult<UserOutputModel> Me() =>
         Ok(new UserOutputModel
         {
-            Id = CurrentUser.Id,
+            Id = CurrentUser.Id.ToString(),
             Login = CurrentUser.Login,
             Name = CurrentUser.Name,
-            Role = CurrentUser.Role
+            Role = CurrentUser.Role.ToString().ToUpperInvariant()
         });
 
     /// <summary>
