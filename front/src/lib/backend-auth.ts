@@ -31,6 +31,13 @@ export type BackendGroup = {
   name: string;
 };
 
+function isBackendGroup(value: unknown): value is BackendGroup {
+  if (!value || typeof value !== "object") return false;
+
+  const group = value as Partial<BackendGroup>;
+  return typeof group.id === "string" && typeof group.name === "string";
+}
+
 export type LoginResult =
   | { ok: true; session: BackendSession }
   | { ok: false; error: string };
@@ -220,7 +227,7 @@ export async function updateBackendClientInfo(
   }
 }
 
-export async function createBackendGroup(accessToken: string, name: string): Promise<boolean> {
+export async function createBackendGroup(accessToken: string, name: string): Promise<BackendGroup | null> {
   try {
     const response = await fetch(`${backendUrl}/api/groups`, {
       method: "POST",
@@ -233,9 +240,12 @@ export async function createBackendGroup(accessToken: string, name: string): Pro
       signal: AbortSignal.timeout(5_000),
     });
 
-    return response.ok;
+    if (!response.ok) return null;
+
+    const group: unknown = await response.json();
+    return isBackendGroup(group) ? group : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -252,13 +262,7 @@ export async function getBackendGroups(accessToken: string): Promise<BackendGrou
     const groups: unknown = await response.json();
     if (!Array.isArray(groups)) return null;
 
-    return groups.every(
-      (group) =>
-        group &&
-        typeof group === "object" &&
-        typeof (group as Partial<BackendGroup>).id === "string" &&
-        typeof (group as Partial<BackendGroup>).name === "string"
-    )
+    return groups.every(isBackendGroup)
       ? (groups as BackendGroup[])
       : null;
   } catch {

@@ -1,42 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Card } from "@/components/Card";
-import { getGroups, type Group } from "@/lib/groups-client";
+import { useGroups } from "@/components/GroupsProvider";
+import type { Group } from "@/lib/groups-client";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
 
 export function CoachGroupsCard() {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [groups, setGroups] = useState<Group[]>([]);
+  const { groups, status, error: groupsError, addGroup, removeGroup } = useGroups();
   const [name, setName] = useState("");
   const [error, setError] = useState<string>();
-  const [loadError, setLoadError] = useState<string>();
-  const [isLoading, setIsLoading] = useState(true);
+  const [mutationError, setMutationError] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingGroupId, setDeletingGroupId] = useState<string>();
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadGroups() {
-      try {
-        const loadedGroups = await getGroups();
-        if (!cancelled) {
-          setGroups(loadedGroups);
-          setLoadError(undefined);
-        }
-      } catch {
-        if (!cancelled) setLoadError("Не удалось загрузить группы.");
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    }
-
-    void loadGroups();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   function openModal() {
     setError(undefined);
@@ -73,15 +50,13 @@ export function CoachGroupsCard() {
         return;
       }
 
-      try {
-        setGroups(await getGroups());
-        setLoadError(undefined);
-      } catch {
-        setGroups((currentGroups) => [
-          ...currentGroups,
-          { id: `created-${Date.now()}`, name: normalizedName },
-        ]);
+      const createdGroup = (await response.json()) as Partial<Group>;
+      if (typeof createdGroup.id !== "string" || typeof createdGroup.name !== "string") {
+        setError("Сервер вернул некорректные данные созданной группы.");
+        return;
       }
+
+      addGroup({ id: createdGroup.id, name: createdGroup.name });
       dialogRef.current?.close();
       setName("");
     } catch {
@@ -93,7 +68,7 @@ export function CoachGroupsCard() {
 
   async function handleDelete(group: Group) {
     setDeletingGroupId(group.id);
-    setLoadError(undefined);
+    setMutationError(undefined);
 
     try {
       const response = await fetch("/api/groups", {
@@ -104,17 +79,13 @@ export function CoachGroupsCard() {
 
       if (!response.ok) {
         const result = (await response.json().catch(() => null)) as { error?: string } | null;
-        setLoadError(result?.error ?? "Не удалось удалить группу.");
+        setMutationError(result?.error ?? "Не удалось удалить группу.");
         return;
       }
 
-      try {
-        setGroups(await getGroups());
-      } catch {
-        setGroups((currentGroups) => currentGroups.filter((currentGroup) => currentGroup.id !== group.id));
-      }
+      removeGroup(group.id);
     } catch {
-      setLoadError("Не удалось подключиться к серверу.");
+      setMutationError("Не удалось подключиться к серверу.");
     } finally {
       setDeletingGroupId(undefined);
     }
@@ -122,9 +93,11 @@ export function CoachGroupsCard() {
 
   return (
     <Card title="Группы">
-      {loadError && <p className={`${errorClass} mb-4`}>{loadError}</p>}
+      {(mutationError || groupsError) && (
+        <p className={`${errorClass} mb-4`}>{mutationError || groupsError}</p>
+      )}
 
-      {isLoading ? (
+      {status === "idle" || status === "loading" ? (
         <div className="mb-4 rounded-lg border border-border bg-surface-muted/60 px-4 py-4 text-sm text-muted">
           Загрузка групп…
         </div>

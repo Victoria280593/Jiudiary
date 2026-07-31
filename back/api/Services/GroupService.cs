@@ -55,7 +55,7 @@ public sealed class GroupService(JiuDiaryDbContext dbContext)
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task CreateGroup(CreateGroupInputModel inputModel, AuthenticatedUser user)
+    public async Task<CreateGroupOutputModel> CreateGroup(CreateGroupInputModel inputModel, AuthenticatedUser user)
     {
         if (user.Role != UserRolesEnum.Coach)
         {
@@ -88,5 +88,11 @@ public sealed class GroupService(JiuDiaryDbContext dbContext)
         });
 
         await dbContext.SaveChangesAsync();
+
+        return new CreateGroupOutputModel
+        {
+            Id = group.Id,
+            Name = group.Name
+        };
     }
 }

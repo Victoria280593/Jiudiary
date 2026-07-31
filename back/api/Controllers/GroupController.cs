@@ -36,8 +36,8 @@ public sealed class GroupController(GroupService groupService) : BaseController
     }
 
     [HttpPost]
-    public async Task CreateGroup(CreateGroupInputModel inputModel)
+    public async Task<ActionResult<CreateGroupOutputModel>> CreateGroup(CreateGroupInputModel inputModel)
     {
-        await groupService.CreateGroup(inputModel, CurrentUser);
+        return Ok(await groupService.CreateGroup(inputModel, CurrentUser));
     }
 }

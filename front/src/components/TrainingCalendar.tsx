@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { DaySchedulePanel } from "@/components/DaySchedulePanel";
+import { useGroups } from "@/components/GroupsProvider";
 import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, dateKey, addMonths } from "@/lib/calendar";
-import { getGroups, type Group } from "@/lib/groups-client";
 
 type TrainingItem = { id: string; title: string; date: string; coachName?: string };
 type CalendarView = "month" | "week";
@@ -65,31 +65,8 @@ export function TrainingCalendar({
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today));
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [isDayPanelOpen, setIsDayPanelOpen] = useState(false);
-  const [groups, setGroups] = useState<Group[]>([]);
+  const { groups, status: groupsStatus, error: groupsError } = useGroups();
   const [selectedGroupId, setSelectedGroupId] = useState("");
-  const [groupLoadState, setGroupLoadState] = useState<"idle" | "loading" | "error">(
-    showGroupFilter ? "loading" : "idle"
-  );
-
-  useEffect(() => {
-    if (!showGroupFilter) return;
-
-    let cancelled = false;
-
-    void getGroups()
-      .then((loadedGroups) => {
-        if (cancelled) return;
-        setGroups(loadedGroups);
-        setGroupLoadState("idle");
-      })
-      .catch(() => {
-        if (!cancelled) setGroupLoadState("error");
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [showGroupFilter]);
 
   const parsedTrainings = useMemo(
     () => trainings.map((training) => ({ ...training, date: new Date(training.date) })),
@@ -218,10 +195,10 @@ export function TrainingCalendar({
 
             {showGroupFilter && (
               <div role="group" aria-label="Выбор группы" className="flex w-full flex-wrap items-center gap-2.5">
-                {groupLoadState === "loading" ? (
+                {groupsStatus === "idle" || groupsStatus === "loading" ? (
                   <span className="rounded-full bg-surface-muted px-4 py-2 text-sm text-muted">Загрузка групп…</span>
-                ) : groupLoadState === "error" ? (
-                  <span className="rounded-full bg-danger-soft px-4 py-2 text-sm text-danger">Не удалось загрузить группы</span>
+                ) : groupsStatus === "error" ? (
+                  <span className="rounded-full bg-danger-soft px-4 py-2 text-sm text-danger">{groupsError}</span>
                 ) : (
                   <>
                     <button

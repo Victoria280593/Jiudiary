@@ -34,7 +34,7 @@ export async function POST(request: Request) {
 
   const created = await createBackendGroup(session.accessToken, name.trim());
   return created
-    ? NextResponse.json({ success: true })
+    ? NextResponse.json(created)
     : NextResponse.json({ error: "Не удалось создать группу." }, { status: 502 });
 }
 
