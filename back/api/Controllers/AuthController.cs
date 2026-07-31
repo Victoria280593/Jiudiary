@@ -24,6 +24,7 @@ public sealed class AuthController(IAuthService authService) : BaseController
     [ProducesResponseType<UserOutputModel>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<UserOutputModel>> Register(RegisterInputModel request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Login) ||
@@ -39,7 +40,15 @@ public sealed class AuthController(IAuthService authService) : BaseController
             });
         }
 
-        var user = await authService.RegisterAsync(request, cancellationToken);
+        UserOutputModel? user;
+        try
+        {
+            user = await authService.RegisterAsync(request, cancellationToken);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { error = exception.Message });
+        }
 
         return user is null
             ? Conflict(new { error = "Пользователь с таким логином уже существует." })

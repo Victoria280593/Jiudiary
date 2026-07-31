@@ -23,6 +23,8 @@ public sealed class AuthService(
 {
     private const int CoachRoleId = 2;
     private const string CoachRoleName = "Coach";
+    private const string DefaultCountry = "Российская Федерация";
+    private const string DefaultBeltName = "Белый";
     private readonly JwtOptions _jwtOptions = jwtOptions.Value;
     private readonly AuthBootstrapOptions _bootstrapOptions = bootstrapOptions.Value;
 
@@ -52,6 +54,16 @@ public sealed class AuthService(
             dbContext.Roles.Add(role);
         }
 
+        var defaultBeltId = await dbContext.Belts
+            .Where(belt => belt.Name == DefaultBeltName)
+            .Select(belt => (int?)belt.Id)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (!defaultBeltId.HasValue)
+        {
+            throw new InvalidOperationException("В базе данных не найден белый пояс для создания профиля пользователя.");
+        }
+
         var user = new User
         {
             Id = Guid.NewGuid(),
@@ -66,6 +78,13 @@ public sealed class AuthService(
         user.PasswordHash = passwordHasher.HashPassword(user, inputModel.Password!);
 
         dbContext.Users.Add(user);
+        dbContext.ClientInfos.Add(new ClientInfo
+        {
+            UserId = user.Id,
+            Country = DefaultCountry,
+            BirthDate = null,
+            BeltId = defaultBeltId.Value
+        });
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return ToUserOutputModel(ToAuthenticatedUser(user));
