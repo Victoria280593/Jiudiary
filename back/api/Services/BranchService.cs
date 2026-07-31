@@ -39,14 +39,13 @@ namespace JiuDiary.Api.Services
                 throw new ArgumentException("Необходимо указать название филиала.", nameof(inputModel.Name));
             }
 
-            var coachId = await dbContext.ClientInfos
-                .Where(x => x.UserId == user.Id)
-                .Select(x => x.Id)
-                .SingleOrDefaultAsync();
+            var coach = await dbContext.ClientInfos
+                .SingleOrDefaultAsync(x => x.UserId == user.Id);
 
-            if (coachId == Guid.Empty)
+            if (coach is null)
             {
-                throw new InvalidOperationException("Информация о тренере не найдена.");
+                coach = new ClientInfo { UserId = user.Id };
+                dbContext.ClientInfos.Add(coach);
             }
 
             var branch = new Branch
@@ -57,7 +56,7 @@ namespace JiuDiary.Api.Services
             dbContext.Branches.Add(branch);
             dbContext.CoachBranches.Add(new CoachBranch
             {
-                CoachId = coachId,
+                Coach = coach,
                 Branch = branch
             });
 
