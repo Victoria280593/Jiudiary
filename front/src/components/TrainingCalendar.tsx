@@ -70,7 +70,6 @@ export function TrainingCalendar({
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [visibleTrainings, setVisibleTrainings] = useState(trainings);
   const [trainingsError, setTrainingsError] = useState<string>();
-  const [trainingsAreLoading, setTrainingsAreLoading] = useState(false);
   const latestTrainingRequestRef = useRef(0);
 
   const parsedTrainings = useMemo(
@@ -132,7 +131,6 @@ export function TrainingCalendar({
     const requestId = latestTrainingRequestRef.current + 1;
     latestTrainingRequestRef.current = requestId;
     setSelectedGroupId(groupId);
-    setTrainingsAreLoading(true);
     setTrainingsError(undefined);
 
     try {
@@ -143,10 +141,6 @@ export function TrainingCalendar({
     } catch (error) {
       if (latestTrainingRequestRef.current === requestId) {
         setTrainingsError(error instanceof Error ? error.message : "Не удалось загрузить тренировки.");
-      }
-    } finally {
-      if (latestTrainingRequestRef.current === requestId) {
-        setTrainingsAreLoading(false);
       }
     }
   };
@@ -263,9 +257,6 @@ export function TrainingCalendar({
                       </button>
                     ))}
                   </>
-                )}
-                {trainingsAreLoading && (
-                  <span className="self-center text-xs text-muted">Обновление календаря…</span>
                 )}
                 {trainingsError && (
                   <span className="self-center text-xs text-danger">{trainingsError}</span>
