@@ -2,18 +2,8 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Card } from "@/components/Card";
+import { getBranches, type Branch as Group } from "@/lib/branches-client";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
-
-type Group = {
-  id: string;
-  name: string;
-};
-
-async function requestGroups(): Promise<Group[]> {
-  const response = await fetch(`/api/branches?refresh=${Date.now()}`, { cache: "no-store" });
-  if (!response.ok) throw new Error("Не удалось загрузить группы.");
-  return (await response.json()) as Group[];
-}
 
 export function CoachGroupsCard() {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -30,7 +20,7 @@ export function CoachGroupsCard() {
 
     async function loadGroups() {
       try {
-        const loadedGroups = await requestGroups();
+        const loadedGroups = await getBranches();
         if (!cancelled) {
           setGroups(loadedGroups);
           setLoadError(undefined);
@@ -84,7 +74,7 @@ export function CoachGroupsCard() {
       }
 
       try {
-        setGroups(await requestGroups());
+        setGroups(await getBranches());
         setLoadError(undefined);
       } catch {
         setGroups((currentGroups) => [
@@ -119,7 +109,7 @@ export function CoachGroupsCard() {
       }
 
       try {
-        setGroups(await requestGroups());
+        setGroups(await getBranches());
       } catch {
         setGroups((currentGroups) => currentGroups.filter((currentGroup) => currentGroup.id !== group.id));
       }
@@ -155,7 +145,7 @@ export function CoachGroupsCard() {
                 disabled={deletingGroupId === group.id}
                 aria-label={`Удалить группу ${group.name}`}
                 title="Удалить группу"
-                className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted transition-colors hover:bg-danger-soft hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
+                className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-danger-soft hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <TrashIcon />
               </button>
@@ -272,7 +262,7 @@ function PlusIcon() {
 
 function TrashIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" />
     </svg>
   );

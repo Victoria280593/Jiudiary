@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DayScheduleModal } from "@/components/DayScheduleModal";
 import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, dateKey, addMonths } from "@/lib/calendar";
+import { getBranches, type Branch } from "@/lib/branches-client";
 
 type TrainingItem = { id: string; title: string; date: string; coachName?: string };
 type CalendarView = "month" | "week";
@@ -50,10 +51,12 @@ export function TrainingCalendar({
   trainings,
   linkBase = "/dashboard/coach/trainings",
   showCreateForm = true,
+  showBranchFilter = false,
 }: {
   trainings: TrainingItem[];
   linkBase?: string;
   showCreateForm?: boolean;
+  showBranchFilter?: boolean;
 }) {
   const today = new Date();
   const [calendarView, setCalendarView] = useState<CalendarView>("month");
@@ -61,6 +64,31 @@ export function TrainingCalendar({
   const [viewMonth, setViewMonth] = useState(today.getMonth() + 1);
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today));
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [selectedBranchId, setSelectedBranchId] = useState("");
+  const [branchLoadState, setBranchLoadState] = useState<"idle" | "loading" | "error">(
+    showBranchFilter ? "loading" : "idle"
+  );
+
+  useEffect(() => {
+    if (!showBranchFilter) return;
+
+    let cancelled = false;
+
+    void getBranches()
+      .then((loadedBranches) => {
+        if (cancelled) return;
+        setBranches(loadedBranches);
+        setBranchLoadState("idle");
+      })
+      .catch(() => {
+        if (!cancelled) setBranchLoadState("error");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showBranchFilter]);
 
   const parsedTrainings = useMemo(
     () => trainings.map((training) => ({ ...training, date: new Date(training.date) })),
@@ -141,31 +169,56 @@ export function TrainingCalendar({
           {title}
         </h2>
 
-        <div className="flex w-fit justify-self-start rounded-xl bg-surface-muted p-1 sm:justify-self-end" aria-label="Вид календаря">
-          <button
-            type="button"
-            onClick={() => setCalendarView("month")}
-            aria-pressed={calendarView === "month"}
-            className={`rounded-lg px-4 py-2 text-sm transition ${
-              calendarView === "month"
-                ? "bg-white font-semibold text-foreground shadow-sm"
-                : "text-muted hover:text-foreground"
-            }`}
-          >
-            Месяц
-          </button>
-          <button
-            type="button"
-            onClick={showWeek}
-            aria-pressed={calendarView === "week"}
-            className={`rounded-lg px-4 py-2 text-sm transition ${
-              calendarView === "week"
-                ? "bg-white font-semibold text-foreground shadow-sm"
-                : "text-muted hover:text-foreground"
-            }`}
-          >
-            Неделя
-          </button>
+        <div className="flex flex-wrap items-center gap-2 justify-self-start sm:justify-self-end">
+          {showBranchFilter && (
+            <select
+              aria-label="Филиал"
+              value={selectedBranchId}
+              onChange={(event) => setSelectedBranchId(event.target.value)}
+              disabled={branchLoadState === "loading"}
+              className="min-h-11 min-w-44 rounded-xl border border-border bg-white px-3 text-sm text-foreground outline-none transition hover:border-accent/35 focus:border-accent focus:ring-1 focus:ring-accent disabled:cursor-wait disabled:text-muted"
+            >
+              <option value="">
+                {branchLoadState === "loading"
+                  ? "Загрузка филиалов…"
+                  : branchLoadState === "error"
+                    ? "Не удалось загрузить"
+                    : "Все филиалы"}
+              </option>
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <div className="flex w-fit rounded-xl bg-surface-muted p-1" aria-label="Вид календаря">
+            <button
+              type="button"
+              onClick={() => setCalendarView("month")}
+              aria-pressed={calendarView === "month"}
+              className={`rounded-lg px-4 py-2 text-sm transition ${
+                calendarView === "month"
+                  ? "bg-white font-semibold text-foreground shadow-sm"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              Месяц
+            </button>
+            <button
+              type="button"
+              onClick={showWeek}
+              aria-pressed={calendarView === "week"}
+              className={`rounded-lg px-4 py-2 text-sm transition ${
+                calendarView === "week"
+                  ? "bg-white font-semibold text-foreground shadow-sm"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              Неделя
+            </button>
+          </div>
         </div>
       </div>
 

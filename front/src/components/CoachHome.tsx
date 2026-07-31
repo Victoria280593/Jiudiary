@@ -35,7 +35,7 @@ export async function CoachHome({
           <AddTrainingButton />
         </section>
 
-        <TrainingCalendar trainings={calendarTrainings} />
+        <TrainingCalendar trainings={calendarTrainings} showBranchFilter />
       </div>
     </main>
   );
