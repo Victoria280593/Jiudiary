@@ -9,16 +9,23 @@ namespace JiuDiary.Api.Services;
 
 public sealed class GroupService(JiuDiaryDbContext dbContext)
 {
-    public async Task<List<GetGroupsOutputModel>> GetGroups(AuthenticatedUser user)
+    public async Task<List<GetGroupsOutputModel>> GetGroups(AuthenticatedUser user, Guid? groupId)
     {
         if (user.Role != UserRolesEnum.Coach)
         {
             throw new UnauthorizedAccessException("Получать список групп может только тренер.");
         }
 
-        return await dbContext.CoachGroups
+        var groups = dbContext.CoachGroups
             .AsNoTracking()
-            .Where(x => x.Coach.UserId == user.Id)
+            .Where(x => x.Coach.UserId == user.Id);
+
+        if (groupId.HasValue)
+        {
+            groups = groups.Where(x => x.GroupId == groupId.Value);
+        }
+
+        return await groups
             .Select(x => new GetGroupsOutputModel
             {
                 Id = x.Group.Id,

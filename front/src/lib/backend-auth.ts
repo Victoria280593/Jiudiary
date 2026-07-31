@@ -270,9 +270,10 @@ export async function createBackendGroup(accessToken: string, name: string): Pro
   }
 }
 
-export async function getBackendGroups(accessToken: string): Promise<BackendGroup[] | null> {
+export async function getBackendGroups(accessToken: string, groupId?: string): Promise<BackendGroup[] | null> {
   try {
-    const response = await fetch(`${backendUrl}/api/groups`, {
+    const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : "";
+    const response = await fetch(`${backendUrl}/api/groups${query}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: "no-store",
       signal: AbortSignal.timeout(5_000),

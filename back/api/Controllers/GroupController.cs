@@ -12,9 +12,9 @@ namespace JiuDiary.Api.Controllers;
 public sealed class GroupController(GroupService groupService) : BaseController
 {
     [HttpGet]
-    public async Task<ActionResult<List<GetGroupsOutputModel>>> GetGroups()
+    public async Task<ActionResult<List<GetGroupsOutputModel>>> GetGroups([FromQuery] Guid? groupId)
     {
-        return Ok(await groupService.GetGroups(CurrentUser));
+        return Ok(await groupService.GetGroups(CurrentUser, groupId));
     }
 
     [HttpDelete("{groupId:guid}")]

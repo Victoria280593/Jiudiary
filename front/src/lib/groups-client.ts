@@ -3,8 +3,11 @@ export type Group = {
   name: string;
 };
 
-export async function getGroups(): Promise<Group[]> {
-  const response = await fetch(`/api/groups?refresh=${Date.now()}`, { cache: "no-store" });
+export async function getGroups(groupId?: string): Promise<Group[]> {
+  const query = new URLSearchParams({ refresh: Date.now().toString() });
+  if (groupId) query.set("groupId", groupId);
+
+  const response = await fetch(`/api/groups?${query}`, { cache: "no-store" });
   if (!response.ok) throw new Error("Не удалось загрузить группы.");
   return (await response.json()) as Group[];
 }

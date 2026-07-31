@@ -5,13 +5,14 @@ import { createBackendGroup, deleteBackendGroup, getBackendGroups } from "@/lib/
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Пользователь не авторизован." }, { status: 401 });
   }
 
-  const groups = await getBackendGroups(session.accessToken);
+  const groupId = new URL(request.url).searchParams.get("groupId") ?? undefined;
+  const groups = await getBackendGroups(session.accessToken, groupId);
   return groups
     ? NextResponse.json(groups, { headers: { "Cache-Control": "no-store" } })
     : NextResponse.json({ error: "Не удалось загрузить группы." }, { status: 502 });
