@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { DayScheduleModal } from "@/components/DayScheduleModal";
+import { DaySchedulePanel } from "@/components/DaySchedulePanel";
 import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, dateKey, addMonths } from "@/lib/calendar";
 import { getBranches, type Branch } from "@/lib/branches-client";
 
@@ -72,6 +72,7 @@ export function TrainingCalendar({
   const [viewMonth, setViewMonth] = useState(today.getMonth() + 1);
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today));
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [isDayPanelOpen, setIsDayPanelOpen] = useState(false);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState("");
   const [branchLoadState, setBranchLoadState] = useState<"idle" | "loading" | "error">(
@@ -148,210 +149,222 @@ export function TrainingCalendar({
       ? `${MONTH_LABELS[viewMonth - 1]} ${viewYear}`
       : weekTitle(weekStart);
 
+  const selectDay = (key: string) => {
+    setSelectedDay(key);
+    setIsDayPanelOpen(true);
+  };
+
   return (
-    <section id="calendar" className="calendar-shadow overflow-hidden rounded-[1.85rem] border border-white bg-white/92 p-3 sm:p-5 lg:p-6">
-      <div className="mb-5 grid items-center gap-4 px-1 sm:grid-cols-[1fr_auto_1fr]">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => goRelative(-1)}
-            aria-label={calendarView === "month" ? "Предыдущий месяц" : "Предыдущая неделя"}
-            className="calendar-control"
-          >
-            <ArrowIcon direction="left" />
-          </button>
-          <button
-            type="button"
-            onClick={() => goRelative(1)}
-            aria-label={calendarView === "month" ? "Следующий месяц" : "Следующая неделя"}
-            className="calendar-control"
-          >
-            <ArrowIcon direction="right" />
-          </button>
-          <button type="button" onClick={goToday} className="ml-1 min-h-11 rounded-xl border border-border bg-white px-4 text-sm font-medium text-foreground transition hover:border-accent/35 hover:bg-accent-soft">
-            Сегодня
-          </button>
-        </div>
+    <section id="calendar" className="w-full min-w-0">
+      <div
+        className={`grid min-w-0 items-start gap-6 transition-[grid-template-columns] duration-200 ease-out ${
+          isDayPanelOpen && selectedDay
+            ? "min-[1000px]:grid-cols-[minmax(0,1fr)_19rem] xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_24rem]"
+            : "grid-cols-1"
+        }`}
+      >
+        <div className="calendar-shadow min-w-0 overflow-hidden rounded-[1.85rem] bg-white/92 p-3 sm:p-5 lg:p-6">
+          <div className="mb-5 flex flex-col gap-5 px-1">
+            <div className="grid items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => goRelative(-1)}
+                  aria-label={calendarView === "month" ? "Предыдущий месяц" : "Предыдущая неделя"}
+                  className="calendar-control"
+                >
+                  <ArrowIcon direction="left" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goRelative(1)}
+                  aria-label={calendarView === "month" ? "Следующий месяц" : "Следующая неделя"}
+                  className="calendar-control"
+                >
+                  <ArrowIcon direction="right" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goToday}
+                  className="ml-1 min-h-11 rounded-xl bg-surface-muted px-4 text-sm font-medium text-foreground transition duration-200 ease-out hover:bg-accent-soft"
+                >
+                  Сегодня
+                </button>
+              </div>
 
-        <h2 className="text-left text-lg font-semibold capitalize tracking-[-0.025em] text-foreground sm:text-center sm:text-xl">
-          {title}
-        </h2>
+              <h2 className="order-first text-left text-lg font-semibold capitalize tracking-[-0.025em] text-foreground md:order-none md:text-center md:text-xl">
+                {title}
+              </h2>
 
-        <div className="flex flex-wrap items-center gap-2 justify-self-start sm:justify-self-end">
-          {showBranchFilter && (
-            <div
-              role="group"
-              aria-label="Выбор филиала"
-              className="flex max-w-full items-center gap-2 overflow-x-auto pb-1 sm:max-w-[42vw] lg:max-w-[34rem]"
-            >
-              {branchLoadState === "loading" ? (
-                <span className="whitespace-nowrap rounded-full border border-border bg-white px-3.5 py-2 text-sm text-muted shadow-sm">
-                  Загрузка филиалов…
-                </span>
-              ) : branchLoadState === "error" ? (
-                <span className="whitespace-nowrap rounded-full border border-danger/25 bg-danger-soft px-3.5 py-2 text-sm text-danger">
-                  Не удалось загрузить филиалы
-                </span>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedBranchId("")}
-                    aria-pressed={selectedBranchId === ""}
-                    className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium shadow-[0_8px_22px_rgba(15,23,42,0.06)] transition ${
-                      selectedBranchId === ""
-                        ? "border-accent/35 bg-accent-soft text-accent-foreground"
-                        : "border-border bg-white text-muted hover:border-accent/30 hover:text-foreground"
-                    }`}
-                  >
-                    <BranchIcon />
-                    Все филиалы
-                  </button>
-                  {branches.map((branch) => (
+              <div className="flex w-fit justify-self-start rounded-xl bg-surface-muted p-1 md:justify-self-end" aria-label="Вид календаря">
+                <button
+                  type="button"
+                  onClick={() => setCalendarView("month")}
+                  aria-pressed={calendarView === "month"}
+                  className={`rounded-lg px-4 py-2 text-sm transition duration-200 ease-out ${
+                    calendarView === "month"
+                      ? "bg-white font-semibold text-foreground shadow-sm"
+                      : "text-muted hover:text-foreground"
+                  }`}
+                >
+                  Месяц
+                </button>
+                <button
+                  type="button"
+                  onClick={showWeek}
+                  aria-pressed={calendarView === "week"}
+                  className={`rounded-lg px-4 py-2 text-sm transition duration-200 ease-out ${
+                    calendarView === "week"
+                      ? "bg-white font-semibold text-foreground shadow-sm"
+                      : "text-muted hover:text-foreground"
+                  }`}
+                >
+                  Неделя
+                </button>
+              </div>
+            </div>
+
+            {showBranchFilter && (
+              <div role="group" aria-label="Выбор группы" className="flex w-full flex-wrap items-center gap-2.5">
+                {branchLoadState === "loading" ? (
+                  <span className="rounded-full bg-surface-muted px-4 py-2 text-sm text-muted">Загрузка групп…</span>
+                ) : branchLoadState === "error" ? (
+                  <span className="rounded-full bg-danger-soft px-4 py-2 text-sm text-danger">Не удалось загрузить группы</span>
+                ) : (
+                  <>
                     <button
-                      key={branch.id}
                       type="button"
-                      onClick={() => setSelectedBranchId(branch.id)}
-                      aria-pressed={selectedBranchId === branch.id}
-                      className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium shadow-[0_8px_22px_rgba(15,23,42,0.06)] transition ${
-                        selectedBranchId === branch.id
-                          ? "border-accent/35 bg-accent-soft text-accent-foreground"
-                          : "border-border bg-white text-muted hover:border-accent/30 hover:text-foreground"
+                      onClick={() => setSelectedBranchId("")}
+                      aria-pressed={selectedBranchId === ""}
+                      className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition duration-200 ease-out ${
+                        selectedBranchId === ""
+                          ? "bg-accent text-white shadow-[0_10px_24px_-16px_rgba(131,93,57,0.8)]"
+                          : "bg-surface-muted text-muted hover:-translate-y-0.5 hover:bg-accent-soft hover:text-accent-foreground"
                       }`}
                     >
                       <BranchIcon />
-                      {branch.name}
+                      Все группы
                     </button>
-                  ))}
-                </>
+                    {branches.map((branch) => (
+                      <button
+                        key={branch.id}
+                        type="button"
+                        onClick={() => setSelectedBranchId(branch.id)}
+                        aria-pressed={selectedBranchId === branch.id}
+                        className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition duration-200 ease-out ${
+                          selectedBranchId === branch.id
+                            ? "bg-accent text-white shadow-[0_10px_24px_-16px_rgba(131,93,57,0.8)]"
+                            : "bg-surface-muted text-muted hover:-translate-y-0.5 hover:bg-accent-soft hover:text-accent-foreground"
+                        }`}
+                      >
+                        <BranchIcon />
+                        {branch.name}
+                      </button>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="max-w-full overflow-x-auto pb-1">
+            <div className="min-w-[42rem]">
+              <div className="grid grid-cols-7 text-center text-xs font-medium text-muted sm:text-sm">
+                {WEEKDAY_LABELS.map((day) => (
+                  <div key={day} className="py-3">{day}</div>
+                ))}
+              </div>
+
+              {calendarView === "month" ? (
+                <div className="grid grid-cols-7 gap-px overflow-hidden rounded-2xl bg-border/60">
+                  {monthWeeks.flat().map((cell) => {
+                    const key = dateKey(cell.date);
+                    const dayTrainings = trainingsByDay.get(key) ?? [];
+                    const isSelected = key === selectedDay;
+
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => selectDay(key)}
+                        aria-pressed={isSelected}
+                        className={`group relative flex min-h-24 flex-col items-center px-1.5 py-3 text-center transition duration-200 ease-out lg:min-h-32 xl:min-h-36 ${
+                          isSelected
+                            ? "z-[1] bg-accent-soft ring-2 ring-inset ring-accent/45"
+                            : "bg-white hover:bg-accent-soft/65"
+                        } ${cell.inMonth ? "" : "text-muted/45"}`}
+                      >
+                        <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition duration-200 ${
+                          cell.isToday
+                            ? "bg-accent text-white shadow-[0_8px_20px_-8px_rgba(131,93,57,0.78)]"
+                            : "text-foreground group-hover:bg-white"
+                        }`}>
+                          {cell.date.getDate()}
+                        </span>
+
+                        {dayTrainings.length > 0 && (
+                          <span className="mt-3 flex max-w-full flex-wrap justify-center gap-1.5" aria-label={`Тренировок: ${dayTrainings.length}`}>
+                            {dayTrainings.map((training) => (
+                              <span key={training.id} className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+                            ))}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="grid grid-cols-7 gap-px overflow-hidden rounded-2xl bg-border/60">
+                  {weekDays.map((day) => {
+                    const key = dateKey(day);
+                    const dayTrainings = trainingsByDay.get(key) ?? [];
+                    const isToday = key === dateKey(today);
+                    const isSelected = key === selectedDay;
+
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => selectDay(key)}
+                        aria-pressed={isSelected}
+                        className={`group relative flex min-h-72 flex-col items-center px-2 py-4 text-center transition duration-200 ease-out ${
+                          isSelected
+                            ? "z-[1] bg-accent-soft ring-2 ring-inset ring-accent/45"
+                            : "bg-white hover:bg-accent-soft/65"
+                        }`}
+                      >
+                        <span className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${
+                          isToday ? "bg-accent text-white" : "text-foreground group-hover:bg-white"
+                        }`}>
+                          {day.getDate()}
+                        </span>
+                        {dayTrainings.length > 0 && (
+                          <span className="mt-4 flex max-w-full flex-wrap justify-center gap-2" aria-label={`Тренировок: ${dayTrainings.length}`}>
+                            {dayTrainings.map((training) => (
+                              <span key={training.id} className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
+                            ))}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
             </div>
-          )}
-
-          <div className="flex w-fit rounded-xl bg-surface-muted p-1" aria-label="Вид календаря">
-            <button
-              type="button"
-              onClick={() => setCalendarView("month")}
-              aria-pressed={calendarView === "month"}
-              className={`rounded-lg px-4 py-2 text-sm transition ${
-                calendarView === "month"
-                  ? "bg-white font-semibold text-foreground shadow-sm"
-                  : "text-muted hover:text-foreground"
-              }`}
-            >
-              Месяц
-            </button>
-            <button
-              type="button"
-              onClick={showWeek}
-              aria-pressed={calendarView === "week"}
-              className={`rounded-lg px-4 py-2 text-sm transition ${
-                calendarView === "week"
-                  ? "bg-white font-semibold text-foreground shadow-sm"
-                  : "text-muted hover:text-foreground"
-              }`}
-            >
-              Неделя
-            </button>
           </div>
         </div>
+
+        {selectedDay && isDayPanelOpen && (
+          <DaySchedulePanel
+            key={selectedDay}
+            dateKey={selectedDay}
+            trainings={trainingsByDay.get(selectedDay) ?? []}
+            onClose={() => setIsDayPanelOpen(false)}
+            linkBase={linkBase}
+            showCreateForm={showCreateForm}
+          />
+        )}
       </div>
-
-      <div className="overflow-x-auto pb-1">
-        <div className="min-w-[650px]">
-          <div className="grid grid-cols-7 text-center text-xs font-medium text-muted sm:text-sm">
-            {WEEKDAY_LABELS.map((day) => (
-              <div key={day} className="py-3">{day}</div>
-            ))}
-          </div>
-
-          {calendarView === "month" ? (
-            <div className="grid grid-cols-7 gap-px overflow-hidden rounded-2xl border border-border bg-border/70">
-              {monthWeeks.flat().map((cell) => {
-                const key = dateKey(cell.date);
-                const dayTrainings = trainingsByDay.get(key) ?? [];
-
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setSelectedDay(key)}
-                    className={`group flex min-h-24 flex-col items-center bg-white px-1.5 py-3 text-center transition-colors hover:bg-accent-soft/65 lg:min-h-32 xl:min-h-36 ${
-                      cell.inMonth ? "" : "text-muted/45"
-                    }`}
-                  >
-                    <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition ${
-                      cell.isToday
-                        ? "bg-accent text-white shadow-[0_8px_20px_-8px_rgba(131,93,57,0.78)]"
-                        : "text-foreground group-hover:bg-white"
-                    }`}>
-                      {cell.date.getDate()}
-                    </span>
-
-                    {dayTrainings.length > 0 && (
-                      <span className="mt-2 h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
-                    )}
-                    <span className="mt-1 w-full space-y-1">
-                      {dayTrainings.slice(0, 2).map((training) => (
-                        <span key={training.id} className="block w-full truncate rounded-md bg-accent-soft px-1.5 py-0.5 text-[10px] font-medium text-accent-foreground">
-                          {training.title}
-                        </span>
-                      ))}
-                      {dayTrainings.length > 2 && (
-                        <span className="block text-[10px] text-muted">+{dayTrainings.length - 2} ещё</span>
-                      )}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="grid grid-cols-7 gap-px overflow-hidden rounded-2xl border border-border bg-border/70">
-              {weekDays.map((day) => {
-                const key = dateKey(day);
-                const dayTrainings = trainingsByDay.get(key) ?? [];
-                const isToday = key === dateKey(today);
-
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setSelectedDay(key)}
-                    className="group flex min-h-72 flex-col items-center bg-white px-2 py-4 text-center transition-colors hover:bg-accent-soft/65"
-                  >
-                    <span className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${
-                      isToday ? "bg-accent text-white" : "text-foreground group-hover:bg-white"
-                    }`}>
-                      {day.getDate()}
-                    </span>
-                    <span className="mt-4 w-full space-y-2">
-                      {dayTrainings.map((training) => (
-                        <span key={training.id} className="block w-full rounded-lg bg-accent-soft px-2 py-2 text-left text-xs font-medium text-accent-foreground">
-                          {training.date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
-                          <span className="mt-0.5 block truncate">{training.title}</span>
-                        </span>
-                      ))}
-                      {dayTrainings.length === 0 && (
-                        <span className="block pt-3 text-xs text-muted/55">Нет тренировок</span>
-                      )}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {selectedDay && (
-        <DayScheduleModal
-          dateKey={selectedDay}
-          trainings={trainingsByDay.get(selectedDay) ?? []}
-          onClose={() => setSelectedDay(null)}
-          linkBase={linkBase}
-          showCreateForm={showCreateForm}
-        />
-      )}
     </section>
   );
 }
