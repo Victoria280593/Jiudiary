@@ -215,6 +215,25 @@ export async function updateBackendClientInfo(
   }
 }
 
+export async function createBackendBranch(accessToken: string, name: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${backendUrl}/api/branches`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function logoutFromBackend(refreshToken: string): Promise<void> {
   try {
     await fetch(`${backendUrl}/api/auth/logout`, {

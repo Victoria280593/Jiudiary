@@ -138,6 +138,7 @@ export const config = {
     "/dashboard/:path*",
     "/students/:path*",
     "/api/client-info/:path*",
+    "/api/branches/:path*",
     "/login",
     "/register",
   ],
