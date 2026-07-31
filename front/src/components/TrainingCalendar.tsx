@@ -16,6 +16,14 @@ function ArrowIcon({ direction }: { direction: "left" | "right" }) {
   );
 }
 
+function BranchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 20V8l8-4 8 4v12M8 20v-5h8v5M8 10h.01M12 10h.01M16 10h.01" />
+    </svg>
+  );
+}
+
 function addDays(date: Date, amount: number) {
   const next = new Date(date);
   next.setDate(next.getDate() + amount);
@@ -171,26 +179,53 @@ export function TrainingCalendar({
 
         <div className="flex flex-wrap items-center gap-2 justify-self-start sm:justify-self-end">
           {showBranchFilter && (
-            <select
-              aria-label="Филиал"
-              value={selectedBranchId}
-              onChange={(event) => setSelectedBranchId(event.target.value)}
-              disabled={branchLoadState === "loading"}
-              className="min-h-11 min-w-44 rounded-xl border border-border bg-white px-3 text-sm text-foreground outline-none transition hover:border-accent/35 focus:border-accent focus:ring-1 focus:ring-accent disabled:cursor-wait disabled:text-muted"
+            <div
+              role="group"
+              aria-label="Выбор филиала"
+              className="flex max-w-full items-center gap-2 overflow-x-auto pb-1 sm:max-w-[42vw] lg:max-w-[34rem]"
             >
-              <option value="">
-                {branchLoadState === "loading"
-                  ? "Загрузка филиалов…"
-                  : branchLoadState === "error"
-                    ? "Не удалось загрузить"
-                    : "Все филиалы"}
-              </option>
-              {branches.map((branch) => (
-                <option key={branch.id} value={branch.id}>
-                  {branch.name}
-                </option>
-              ))}
-            </select>
+              {branchLoadState === "loading" ? (
+                <span className="whitespace-nowrap rounded-full border border-border bg-white px-3.5 py-2 text-sm text-muted shadow-sm">
+                  Загрузка филиалов…
+                </span>
+              ) : branchLoadState === "error" ? (
+                <span className="whitespace-nowrap rounded-full border border-danger/25 bg-danger-soft px-3.5 py-2 text-sm text-danger">
+                  Не удалось загрузить филиалы
+                </span>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedBranchId("")}
+                    aria-pressed={selectedBranchId === ""}
+                    className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium shadow-[0_8px_22px_rgba(15,23,42,0.06)] transition ${
+                      selectedBranchId === ""
+                        ? "border-accent/35 bg-accent-soft text-accent-foreground"
+                        : "border-border bg-white text-muted hover:border-accent/30 hover:text-foreground"
+                    }`}
+                  >
+                    <BranchIcon />
+                    Все филиалы
+                  </button>
+                  {branches.map((branch) => (
+                    <button
+                      key={branch.id}
+                      type="button"
+                      onClick={() => setSelectedBranchId(branch.id)}
+                      aria-pressed={selectedBranchId === branch.id}
+                      className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium shadow-[0_8px_22px_rgba(15,23,42,0.06)] transition ${
+                        selectedBranchId === branch.id
+                          ? "border-accent/35 bg-accent-soft text-accent-foreground"
+                          : "border-border bg-white text-muted hover:border-accent/30 hover:text-foreground"
+                      }`}
+                    >
+                      <BranchIcon />
+                      {branch.name}
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
           )}
 
           <div className="flex w-fit rounded-xl bg-surface-muted p-1" aria-label="Вид календаря">
