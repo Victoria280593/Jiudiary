@@ -31,11 +31,32 @@ export type BackendGroup = {
   name: string;
 };
 
+export type BackendTraining = {
+  id: string;
+  groupId: string;
+  groupName: string;
+  description: string | null;
+  time: string;
+};
+
 function isBackendGroup(value: unknown): value is BackendGroup {
   if (!value || typeof value !== "object") return false;
 
   const group = value as Partial<BackendGroup>;
   return typeof group.id === "string" && typeof group.name === "string";
+}
+
+function isBackendTraining(value: unknown): value is BackendTraining {
+  if (!value || typeof value !== "object") return false;
+
+  const training = value as Partial<BackendTraining>;
+  return (
+    typeof training.id === "string" &&
+    typeof training.groupId === "string" &&
+    typeof training.groupName === "string" &&
+    (training.description === null || typeof training.description === "string") &&
+    typeof training.time === "string"
+  );
 }
 
 export type LoginResult =
@@ -293,6 +314,59 @@ export async function deleteBackendGroup(accessToken: string, groupId: string): 
     };
   } catch {
     return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export type CreateBackendTrainingResult =
+  | { ok: true; training: BackendTraining }
+  | { ok: false; error: string };
+
+export async function createBackendTraining(
+  accessToken: string,
+  input: { groupId: string; description: string | null; time: string }
+): Promise<CreateBackendTrainingResult> {
+  try {
+    const response = await fetch(`${backendUrl}/api/trainings`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(input),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, error: result?.error ?? "Не удалось создать тренировку." };
+    }
+
+    const training: unknown = await response.json();
+    return isBackendTraining(training)
+      ? { ok: true, training }
+      : { ok: false, error: "Сервер вернул некорректные данные тренировки." };
+  } catch {
+    return { ok: false, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export async function getBackendTrainings(accessToken: string): Promise<BackendTraining[] | null> {
+  try {
+    const response = await fetch(`${backendUrl}/api/trainings`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) return null;
+
+    const trainings: unknown = await response.json();
+    return Array.isArray(trainings) && trainings.every(isBackendTraining)
+      ? trainings
+      : null;
+  } catch {
+    return null;
   }
 }
 

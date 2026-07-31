@@ -77,12 +77,9 @@ export function DaySchedulePanel({
       <div className="px-5 pb-5 sm:px-6 sm:pb-6">
         <div className="flex flex-col gap-3">
           {orderedTrainings.length > 0 ? (
-            orderedTrainings.map((training) => (
-              <Link
-                key={training.id}
-                href={`${linkBase}/${training.id}`}
-                className="group rounded-2xl bg-surface-muted/70 p-4 transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent-soft hover:shadow-[0_14px_32px_-24px_rgba(86,61,38,0.45)]"
-              >
+            orderedTrainings.map((training) => {
+              const content = (
+                <>
                 <time className="text-xs font-semibold text-accent" dateTime={training.date.toISOString()}>
                   {formatTime(training.date)}
                 </time>
@@ -92,8 +89,20 @@ export function DaySchedulePanel({
                 {training.coachName && (
                   <p className="mt-1 text-xs text-muted">Тренер: {training.coachName}</p>
                 )}
-              </Link>
-            ))
+                </>
+              );
+              const className = "group rounded-2xl bg-surface-muted/70 p-4 transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent-soft hover:shadow-[0_14px_32px_-24px_rgba(86,61,38,0.45)]";
+
+              return linkBase ? (
+                <Link key={training.id} href={`${linkBase}/${training.id}`} className={className}>
+                  {content}
+                </Link>
+              ) : (
+                <article key={training.id} className={className}>
+                  {content}
+                </article>
+              );
+            })
           ) : (
             <div className="rounded-2xl bg-surface-muted/55 px-4 py-6 text-center">
               <p className="text-sm font-medium text-foreground">Тренировок пока нет</p>

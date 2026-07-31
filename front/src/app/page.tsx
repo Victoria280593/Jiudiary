@@ -7,7 +7,7 @@ export default async function Home() {
   if (!user) redirect("/login");
 
   if (user.role === "COACH") {
-    return <CoachHome coachId={user.id} coachName={user.name} />;
+    return <CoachHome coachName={user.name} />;
   }
 
   redirect("/dashboard");

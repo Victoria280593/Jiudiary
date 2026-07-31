@@ -2,45 +2,49 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getSession } from "@/lib/auth";
+import { createBackendTraining, type BackendTraining } from "@/lib/backend-auth";
 
-export type FormState = { error?: string } | undefined;
+export type FormState = { error?: string; success?: boolean; training?: BackendTraining } | undefined;
 
 export async function createTrainingAction(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const user = await getCurrentUser();
-  if (!user || user.role !== "COACH") {
+  const session = await getSession();
+  if (!session || session.user.role !== "COACH") {
     return { error: "Доступ запрещён" };
   }
 
-  const title = String(formData.get("title") || "").trim();
-  const dateStr = String(formData.get("date") || "");
-  const location = String(formData.get("location") || "").trim();
-  const notes = String(formData.get("notes") || "").trim();
+  const groupId = String(formData.get("groupId") || "").trim();
+  const description = String(formData.get("description") || "").trim();
+  const date = String(formData.get("date") || "").trim();
+  const time = String(formData.get("time") || "").trim();
 
-  if (!title || !dateStr) {
-    return { error: "Укажите название и дату тренировки" };
+  if (!groupId) {
+    return { error: "Выберите группу" };
   }
 
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) {
-    return { error: "Некорректная дата" };
+  if (description.length > 300) {
+    return { error: "Описание тренировки не должно превышать 300 символов" };
   }
 
-  await prisma.training.create({
-    data: {
-      coachId: user.id,
-      title,
-      date,
-      location: location || null,
-      notes: notes || null,
-    },
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
+    return { error: "Укажите корректные дату и время тренировки" };
+  }
+
+  const result = await createBackendTraining(session.accessToken, {
+    groupId,
+    description: description || null,
+    time: `${date}T${time}:00`,
   });
 
-  revalidatePath("/dashboard/coach");
-  return undefined;
+  if (!result.ok) {
+    return { error: result.error };
+  }
+
+  revalidatePath("/");
+  return { success: true, training: result.training };
 }
 
 export async function updateAttendanceAction(formData: FormData): Promise<void> {

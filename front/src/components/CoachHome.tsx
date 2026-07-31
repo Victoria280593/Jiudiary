@@ -1,22 +1,19 @@
 import { TrainingCalendar } from "@/components/TrainingCalendar";
-import { prisma } from "@/lib/db";
+import { getSession } from "@/lib/auth";
+import { getBackendTrainings } from "@/lib/backend-auth";
 
 export async function CoachHome({
-  coachId,
   coachName,
 }: {
-  coachId: string;
   coachName: string;
 }) {
-  const trainings = await prisma.training.findMany({
-    where: { coachId },
-    orderBy: { date: "desc" },
-  });
+  const session = await getSession();
+  const trainings = session ? await getBackendTrainings(session.accessToken) : null;
 
-  const calendarTrainings = trainings.map((training) => ({
+  const calendarTrainings = (trainings ?? []).map((training) => ({
     id: training.id,
-    title: training.title,
-    date: training.date.toISOString(),
+    title: training.description || `Тренировка · ${training.groupName}`,
+    date: training.time,
   }));
 
   return (
@@ -33,7 +30,7 @@ export async function CoachHome({
           </div>
         </section>
 
-        <TrainingCalendar trainings={calendarTrainings} showGroupFilter />
+        <TrainingCalendar trainings={calendarTrainings} linkBase="" showGroupFilter />
       </div>
     </main>
   );
