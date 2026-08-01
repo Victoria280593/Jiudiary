@@ -24,7 +24,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         }
 
         var result = await trainings
-            .OrderBy(training => training.Time)
+            .OrderBy(training => training.StartTime)
             .Select(training => new TrainingOutputModel
             {
                 Id = training.Id,
@@ -33,7 +33,8 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
                 GroupColorId = training.Group.ColorId,
                 GroupColorName = training.Group.Color.Name,
                 Description = training.Description,
-                Time = training.Time
+                StartTime = training.StartTime,
+                EndTime = training.EndTime
             })
             .ToListAsync(cancellationToken);
 
@@ -60,9 +61,19 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             throw new ArgumentException("Описание тренировки не должно превышать 300 символов.", nameof(inputModel.Description));
         }
 
-        if (inputModel.Time == default)
+        if (inputModel.StartTime == default)
         {
-            throw new ArgumentException("Необходимо указать дату и время тренировки.", nameof(inputModel.Time));
+            throw new ArgumentException("Необходимо указать дату и время начала тренировки.", nameof(inputModel.StartTime));
+        }
+
+        if (inputModel.EndTime == default)
+        {
+            throw new ArgumentException("Необходимо указать дату и время окончания тренировки.", nameof(inputModel.EndTime));
+        }
+
+        if (inputModel.EndTime <= inputModel.StartTime)
+        {
+            throw new ArgumentException("Время окончания тренировки должно быть позже времени начала.", nameof(inputModel.EndTime));
         }
 
         var group = await dbContext.CoachGroups
@@ -89,7 +100,8 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             CoachId = group.CoachId,
             GroupId = group.GroupId,
             Description = description,
-            Time = DateTime.SpecifyKind(inputModel.Time, DateTimeKind.Unspecified)
+            StartTime = DateTime.SpecifyKind(inputModel.StartTime, DateTimeKind.Unspecified),
+            EndTime = DateTime.SpecifyKind(inputModel.EndTime, DateTimeKind.Unspecified)
         };
 
         dbContext.Trainings.Add(training);
@@ -104,7 +116,8 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             GroupColorId = group.ColorId,
             GroupColorName = group.ColorName,
             Description = training.Description,
-            Time = training.Time
+            StartTime = training.StartTime,
+            EndTime = training.EndTime
         };
     }
 

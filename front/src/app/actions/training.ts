@@ -19,7 +19,8 @@ export async function createTrainingAction(
   const groupId = String(formData.get("groupId") || "").trim();
   const description = String(formData.get("description") || "").trim();
   const date = String(formData.get("date") || "").trim();
-  const time = String(formData.get("time") || "").trim();
+  const startTime = String(formData.get("startTime") || "").trim();
+  const endTime = String(formData.get("endTime") || "").trim();
 
   if (!groupId) {
     return { error: "Выберите группу" };
@@ -29,14 +30,19 @@ export async function createTrainingAction(
     return { error: "Описание тренировки не должно превышать 300 символов" };
   }
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(startTime) || !/^\d{2}:\d{2}$/.test(endTime)) {
     return { error: "Укажите корректные дату и время тренировки" };
+  }
+
+  if (`${date}T${endTime}:00` <= `${date}T${startTime}:00`) {
+    return { error: "Время окончания должно быть позже времени начала" };
   }
 
   const result = await createBackendTraining(session.accessToken, {
     groupId,
     description: description || null,
-    time: `${date}T${time}:00`,
+    startTime: `${date}T${startTime}:00`,
+    endTime: `${date}T${endTime}:00`,
   });
 
   if (!result.ok) {

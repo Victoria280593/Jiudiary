@@ -13,7 +13,9 @@ export async function CoachHome({
   const calendarTrainings = (trainings ?? []).map((training) => ({
     id: training.id,
     title: training.description || `Тренировка · ${training.groupName}`,
-    date: training.time,
+    date: training.startTime,
+    endDate: training.endTime,
+    groupName: training.groupName,
     groupColorName: training.groupColorName,
   }));
 

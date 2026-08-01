@@ -7,7 +7,7 @@ import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, dateKey, addMonths } from "
 import { getGroupColorStyle } from "@/lib/group-colors";
 import { getTrainings } from "@/lib/trainings-client";
 
-type TrainingItem = { id: string; title: string; date: string; coachName?: string; groupColorName?: string };
+type TrainingItem = { id: string; title: string; date: string; endDate?: string; groupName?: string; coachName?: string; groupColorName?: string };
 type CalendarView = "month" | "week";
 
 function ArrowIcon({ direction }: { direction: "left" | "right" }) {
@@ -74,7 +74,7 @@ export function TrainingCalendar({
   const latestTrainingRequestRef = useRef(0);
 
   const parsedTrainings = useMemo(
-    () => visibleTrainings.map((training) => ({ ...training, date: new Date(training.date) })),
+    () => visibleTrainings.map((training) => ({ ...training, date: new Date(training.date), endDate: training.endDate ? new Date(training.endDate) : undefined })),
     [visibleTrainings]
   );
 

@@ -6,6 +6,15 @@ import { useGroups } from "@/components/GroupsProvider";
 import { SubmitButton } from "@/components/SubmitButton";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
 
+function addMinutes(time: string, minutes: number) {
+  const [hours = 0, currentMinutes = 0] = time.split(":").map(Number);
+  const totalMinutes = hours * 60 + currentMinutes + minutes;
+  const nextHours = Math.floor(totalMinutes / 60) % 24;
+  const nextMinutes = totalMinutes % 60;
+
+  return `${String(nextHours).padStart(2, "0")}:${String(nextMinutes).padStart(2, "0")}`;
+}
+
 export function CreateTrainingForm({
   defaultDateTime,
   idPrefix = "",
@@ -16,7 +25,8 @@ export function CreateTrainingForm({
   const [state, formAction] = useActionState<FormState, FormData>(createTrainingAction, undefined);
   const { groups, status: groupsStatus, error: groupsError } = useGroups();
   const formRef = useRef<HTMLFormElement>(null);
-  const [defaultDate = "", defaultTime = "09:00"] = defaultDateTime?.split("T") ?? [];
+  const [defaultDate = "", defaultStartTime = "09:00"] = defaultDateTime?.split("T") ?? [];
+  const defaultEndTime = defaultStartTime ? addMinutes(defaultStartTime, 90) : "10:30";
 
   useEffect(() => {
     if (!state?.success) return;
@@ -78,15 +88,28 @@ export function CreateTrainingForm({
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label htmlFor={`${idPrefix}time`} className={labelClass}>
-            Время
+          <label htmlFor={`${idPrefix}startTime`} className={labelClass}>
+            Время начала
           </label>
           <input
-            id={`${idPrefix}time`}
-            name="time"
+            id={`${idPrefix}startTime`}
+            name="startTime"
             type="time"
             required
-            defaultValue={defaultTime}
+            defaultValue={defaultStartTime}
+            className={inputClass}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={`${idPrefix}endTime`} className={labelClass}>
+            Время окончания
+          </label>
+          <input
+            id={`${idPrefix}endTime`}
+            name="endTime"
+            type="time"
+            required
+            defaultValue={defaultEndTime}
             className={inputClass}
           />
         </div>

@@ -45,7 +45,8 @@ export type BackendTraining = {
   groupColorId: number;
   groupColorName: string;
   description: string | null;
-  time: string;
+  startTime: string;
+  endTime: string;
 };
 
 function isBackendGroup(value: unknown): value is BackendGroup {
@@ -78,7 +79,8 @@ function isBackendTraining(value: unknown): value is BackendTraining {
     typeof training.groupColorId === "number" &&
     typeof training.groupColorName === "string" &&
     (training.description === null || typeof training.description === "string") &&
-    typeof training.time === "string"
+    typeof training.startTime === "string" &&
+    typeof training.endTime === "string"
   );
 }
 
@@ -401,7 +403,7 @@ export type CreateBackendTrainingResult =
 
 export async function createBackendTraining(
   accessToken: string,
-  input: { groupId: string; description: string | null; time: string }
+  input: { groupId: string; description: string | null; startTime: string; endTime: string }
 ): Promise<CreateBackendTrainingResult> {
   try {
     const response = await fetch(`${backendUrl}/api/trainings`, {

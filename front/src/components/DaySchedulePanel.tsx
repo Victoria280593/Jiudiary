@@ -4,8 +4,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CreateTrainingForm } from "@/components/CreateTrainingForm";
 import { formatTime } from "@/lib/format";
+import { getGroupColorStyle } from "@/lib/group-colors";
 
-type DayTraining = { id: string; title: string; date: Date; coachName?: string };
+type DayTraining = {
+  id: string;
+  title: string;
+  date: Date;
+  endDate?: Date;
+  groupName?: string;
+  coachName?: string;
+  groupColorName?: string;
+};
 
 export function DaySchedulePanel({
   dateKey,
@@ -78,20 +87,32 @@ export function DaySchedulePanel({
         <div className="flex flex-col gap-3">
           {orderedTrainings.length > 0 ? (
             orderedTrainings.map((training) => {
+              const colorStyle = getGroupColorStyle(training.groupColorName ?? "Brown");
+              const timeRange = training.endDate
+                ? `${formatTime(training.date)} – ${formatTime(training.endDate)}`
+                : formatTime(training.date);
               const content = (
                 <>
-                <time className="text-xs font-semibold text-accent" dateTime={training.date.toISOString()}>
-                  {formatTime(training.date)}
-                </time>
-                <h3 className="mt-1.5 text-sm font-semibold text-foreground transition-colors group-hover:text-accent-foreground">
-                  {training.title}
-                </h3>
-                {training.coachName && (
-                  <p className="mt-1 text-xs text-muted">Тренер: {training.coachName}</p>
-                )}
+                  <span className={`absolute inset-y-0 left-0 w-1.5 ${colorStyle.dot}`} aria-hidden="true" />
+                  <div className="flex items-start justify-between gap-3">
+                    <time className="text-sm font-medium text-muted" dateTime={training.date.toISOString()}>
+                      {timeRange}
+                    </time>
+                    {training.groupName && (
+                      <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold ${colorStyle.badge}`}>
+                        {training.groupName}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="mt-3 text-base font-semibold text-foreground transition-colors group-hover:text-accent-foreground">
+                    {training.title}
+                  </h3>
+                  {training.coachName && (
+                    <p className="mt-2 text-xs text-muted">Тренер: {training.coachName}</p>
+                  )}
                 </>
               );
-              const className = "group rounded-2xl bg-surface-muted/70 p-4 transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent-soft hover:shadow-[0_14px_32px_-24px_rgba(86,61,38,0.45)]";
+              const className = "group relative overflow-hidden rounded-2xl border border-border/60 bg-white px-5 py-4 shadow-[0_10px_26px_-22px_rgba(86,61,38,0.42)] transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_34px_-24px_rgba(86,61,38,0.5)]";
 
               return linkBase ? (
                 <Link key={training.id} href={`${linkBase}/${training.id}`} className={className}>

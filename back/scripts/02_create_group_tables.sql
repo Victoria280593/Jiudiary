@@ -70,7 +70,8 @@ CREATE TABLE [dbo].[Trainings]
     [CoachId] UNIQUEIDENTIFIER NOT NULL,
     [GroupId] UNIQUEIDENTIFIER NOT NULL,
     [Description] NVARCHAR(300) NULL,
-    [Time] DATETIME2 NOT NULL,
+    [StartTime] DATETIME2 NOT NULL,
+    [EndTime] DATETIME2 NOT NULL,
 
     CONSTRAINT [PK_Trainings]
         PRIMARY KEY ([Id]),

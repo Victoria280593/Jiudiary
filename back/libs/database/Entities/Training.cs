@@ -20,7 +20,10 @@ public sealed class Training
     public string? Description { get; set; }
 
     [Required]
-    public DateTime Time { get; set; }
+    public DateTime StartTime { get; set; }
+
+    [Required]
+    public DateTime EndTime { get; set; }
 
     public ClientInfo Coach { get; set; } = null!;
 

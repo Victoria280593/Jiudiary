@@ -2,6 +2,8 @@ export type CalendarTraining = {
   id: string;
   title: string;
   date: string;
+  endDate: string;
+  groupName: string;
   groupColorName: string;
 };
 
@@ -12,7 +14,8 @@ type TrainingResponse = {
   groupColorId: number;
   groupColorName: string;
   description: string | null;
-  time: string;
+  startTime: string;
+  endTime: string;
 };
 
 export async function getTrainings(groupId?: string): Promise<CalendarTraining[]> {
@@ -28,7 +31,9 @@ export async function getTrainings(groupId?: string): Promise<CalendarTraining[]
   return trainings.map((training) => ({
     id: training.id,
     title: training.description || `Тренировка · ${training.groupName}`,
-    date: training.time,
+    date: training.startTime,
+    endDate: training.endTime,
+    groupName: training.groupName,
     groupColorName: training.groupColorName,
   }));
 }
