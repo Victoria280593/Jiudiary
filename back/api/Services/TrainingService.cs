@@ -30,6 +30,8 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
                 Id = training.Id,
                 GroupId = training.GroupId,
                 GroupName = training.Group.Name,
+                GroupColorId = training.Group.ColorId,
+                GroupColorName = training.Group.Color.Name,
                 Description = training.Description,
                 Time = training.Time
             })
@@ -70,7 +72,9 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             {
                 coachGroup.CoachId,
                 coachGroup.GroupId,
-                coachGroup.Group.Name
+                coachGroup.Group.Name,
+                coachGroup.Group.ColorId,
+                ColorName = coachGroup.Group.Color.Name
             })
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -97,6 +101,8 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             Id = training.Id,
             GroupId = training.GroupId,
             GroupName = group.Name,
+            GroupColorId = group.ColorId,
+            GroupColorName = group.ColorName,
             Description = training.Description,
             Time = training.Time
         };

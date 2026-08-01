@@ -14,6 +14,7 @@ export async function CoachHome({
     id: training.id,
     title: training.description || `Тренировка · ${training.groupName}`,
     date: training.time,
+    groupColorName: training.groupColorName,
   }));
 
   return (

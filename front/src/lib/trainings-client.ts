@@ -2,12 +2,15 @@ export type CalendarTraining = {
   id: string;
   title: string;
   date: string;
+  groupColorName: string;
 };
 
 type TrainingResponse = {
   id: string;
   groupId: string;
   groupName: string;
+  groupColorId: number;
+  groupColorName: string;
   description: string | null;
   time: string;
 };
@@ -26,5 +29,6 @@ export async function getTrainings(groupId?: string): Promise<CalendarTraining[]
     id: training.id,
     title: training.description || `Тренировка · ${training.groupName}`,
     date: training.time,
+    groupColorName: training.groupColorName,
   }));
 }

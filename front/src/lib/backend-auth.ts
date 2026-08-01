@@ -42,6 +42,8 @@ export type BackendTraining = {
   id: string;
   groupId: string;
   groupName: string;
+  groupColorId: number;
+  groupColorName: string;
   description: string | null;
   time: string;
 };
@@ -73,6 +75,8 @@ function isBackendTraining(value: unknown): value is BackendTraining {
     typeof training.id === "string" &&
     typeof training.groupId === "string" &&
     typeof training.groupName === "string" &&
+    typeof training.groupColorId === "number" &&
+    typeof training.groupColorName === "string" &&
     (training.description === null || typeof training.description === "string") &&
     typeof training.time === "string"
   );

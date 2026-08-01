@@ -7,7 +7,7 @@ import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, dateKey, addMonths } from "
 import { getGroupColorStyle } from "@/lib/group-colors";
 import { getTrainings } from "@/lib/trainings-client";
 
-type TrainingItem = { id: string; title: string; date: string; coachName?: string };
+type TrainingItem = { id: string; title: string; date: string; coachName?: string; groupColorName?: string };
 type CalendarView = "month" | "week";
 
 function ArrowIcon({ direction }: { direction: "left" | "right" }) {
@@ -311,9 +311,13 @@ export function TrainingCalendar({
                         </span>
 
                         {dayTrainings.length > 0 && (
-                          <span className="mt-3 flex max-w-full flex-wrap justify-center gap-1.5" aria-label={`Тренировок: ${dayTrainings.length}`}>
+                          <span className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 flex-nowrap justify-center gap-2" aria-label={`Тренировок: ${dayTrainings.length}`}>
                             {dayTrainings.map((training) => (
-                              <span key={training.id} className="h-2.5 w-2.5 rounded-full bg-accent" aria-hidden="true" />
+                              <span
+                                key={training.id}
+                                className={`h-3.5 w-3.5 shrink-0 rounded-full shadow-sm ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
+                                aria-hidden="true"
+                              />
                             ))}
                           </span>
                         )}
@@ -347,9 +351,13 @@ export function TrainingCalendar({
                           {day.getDate()}
                         </span>
                         {dayTrainings.length > 0 && (
-                          <span className="mt-4 flex max-w-full flex-wrap justify-center gap-2" aria-label={`Тренировок: ${dayTrainings.length}`}>
+                          <span className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 flex-nowrap justify-center gap-2" aria-label={`Тренировок: ${dayTrainings.length}`}>
                             {dayTrainings.map((training) => (
-                              <span key={training.id} className="h-2.5 w-2.5 rounded-full bg-accent" aria-hidden="true" />
+                              <span
+                                key={training.id}
+                                className={`h-3.5 w-3.5 shrink-0 rounded-full shadow-sm ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
+                                aria-hidden="true"
+                              />
                             ))}
                           </span>
                         )}
