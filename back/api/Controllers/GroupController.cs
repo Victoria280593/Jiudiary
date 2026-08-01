@@ -18,11 +18,11 @@ public sealed class GroupController(GroupService groupService) : BaseController
     }
 
     [HttpDelete("{groupId:guid}")]
-    public async Task<IActionResult> DeleteGroup(Guid groupId)
+    public async Task<IActionResult> DeleteGroup(Guid groupId, CancellationToken cancellationToken)
     {
         try
         {
-            await groupService.DeleteGroup(groupId, CurrentUser);
+            await groupService.DeleteGroup(groupId, CurrentUser, cancellationToken);
             return NoContent();
         }
         catch (UnauthorizedAccessException exception)

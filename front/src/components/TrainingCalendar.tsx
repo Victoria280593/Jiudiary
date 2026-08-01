@@ -187,14 +187,20 @@ export function TrainingCalendar({
                 {title}
               </h2>
 
-              <div className="order-1 flex w-fit justify-self-start rounded-xl bg-surface-muted p-1" aria-label="Вид календаря">
+              <div className="relative order-1 grid min-w-44 grid-cols-2 justify-self-start rounded-xl bg-surface-muted p-1" aria-label="Вид календаря">
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-lg bg-white shadow-sm transition-transform duration-200 ease-out motion-reduce:transition-none ${
+                    calendarView === "week" ? "translate-x-full" : "translate-x-0"
+                  }`}
+                />
                 <button
                   type="button"
                   onClick={() => setCalendarView("month")}
                   aria-pressed={calendarView === "month"}
-                  className={`rounded-lg px-4 py-2 text-sm transition duration-200 ease-out ${
+                  className={`relative z-10 rounded-lg px-4 py-2 text-sm transition-colors duration-200 ease-out ${
                     calendarView === "month"
-                      ? "bg-white font-semibold text-foreground shadow-sm"
+                      ? "font-semibold text-foreground"
                       : "text-muted hover:text-foreground"
                   }`}
                 >
@@ -204,9 +210,9 @@ export function TrainingCalendar({
                   type="button"
                   onClick={showWeek}
                   aria-pressed={calendarView === "week"}
-                  className={`rounded-lg px-4 py-2 text-sm transition duration-200 ease-out ${
+                  className={`relative z-10 rounded-lg px-4 py-2 text-sm transition-colors duration-200 ease-out ${
                     calendarView === "week"
-                      ? "bg-white font-semibold text-foreground shadow-sm"
+                      ? "font-semibold text-foreground"
                       : "text-muted hover:text-foreground"
                   }`}
                 >

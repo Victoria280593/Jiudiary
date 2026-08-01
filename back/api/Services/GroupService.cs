@@ -34,7 +34,7 @@ public sealed class GroupService(JiuDiaryDbContext dbContext)
             .ToListAsync();
     }
 
-    public async Task DeleteGroup(Guid groupId, AuthenticatedUser user)
+    public async Task DeleteGroup(Guid groupId, AuthenticatedUser user, CancellationToken cancellationToken)
     {
         if (user.Role != UserRolesEnum.Coach)
         {
@@ -43,7 +43,7 @@ public sealed class GroupService(JiuDiaryDbContext dbContext)
 
         var coachGroup = await dbContext.CoachGroups
             .Include(x => x.Group)
-            .SingleOrDefaultAsync(x => x.GroupId == groupId && x.Coach.UserId == user.Id);
+            .SingleOrDefaultAsync(x => x.GroupId == groupId && x.Coach.UserId == user.Id, cancellationToken);
 
         if (coachGroup is null)
         {
@@ -51,15 +51,21 @@ public sealed class GroupService(JiuDiaryDbContext dbContext)
         }
 
         var belongsToAnotherCoach = await dbContext.CoachGroups
-            .AnyAsync(x => x.GroupId == groupId && x.Id != coachGroup.Id);
+            .AnyAsync(x => x.GroupId == groupId && x.Id != coachGroup.Id, cancellationToken);
 
+        var trainings = await dbContext.Trainings
+            .Where(x => x.GroupId == groupId &&
+                        (!belongsToAnotherCoach || x.CoachId == coachGroup.CoachId))
+            .ToListAsync(cancellationToken);
+
+        dbContext.Trainings.RemoveRange(trainings);
         dbContext.CoachGroups.Remove(coachGroup);
         if (!belongsToAnotherCoach)
         {
             dbContext.Groups.Remove(coachGroup.Group);
         }
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<CreateGroupOutputModel> CreateGroup(CreateGroupInputModel inputModel, AuthenticatedUser user)
