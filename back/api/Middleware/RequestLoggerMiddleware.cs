@@ -39,7 +39,7 @@ internal sealed class RequestLoggerMiddleware(RequestDelegate next)
             if (requestException is null)
             {
                 logger.LogInformation(
-                    "HTTP {Method} {Path} завершён; Status: {StatusCode}; Request Size: {RequestSizeBytes} bytes; Time: {Elapsed}",
+                    "HTTP {Method} {Path} завершён Status: {StatusCode} Request Size: {RequestSizeBytes} bytes Time: {Elapsed}",
                     context.Request.Method,
                     context.Request.Path,
                     statusCode,
@@ -50,7 +50,7 @@ internal sealed class RequestLoggerMiddleware(RequestDelegate next)
             {
                 logger.LogError(
                     requestException,
-                    "HTTP {Method} {Path} завершён с ошибкой; Status: {StatusCode}; Request Size: {RequestSizeBytes} bytes; Time: {Elapsed}",
+                    "HTTP {Method} {Path} завершён с ошибкой Status: {StatusCode} Request Size: {RequestSizeBytes} bytes Time: {Elapsed}",
                     context.Request.Method,
                     context.Request.Path,
                     statusCode,
