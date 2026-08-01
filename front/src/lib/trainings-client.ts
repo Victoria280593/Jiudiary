@@ -30,7 +30,7 @@ export async function getTrainings(groupId?: string): Promise<CalendarTraining[]
   const trainings = (await response.json()) as TrainingResponse[];
   return trainings.map((training) => ({
     id: training.id,
-    title: training.description || `Тренировка · ${training.groupName}`,
+    title: training.description ?? "",
     date: training.startTime,
     endDate: training.endTime,
     groupName: training.groupName,

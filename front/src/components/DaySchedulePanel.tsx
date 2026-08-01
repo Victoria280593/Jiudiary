@@ -148,9 +148,11 @@ export function DaySchedulePanel({
                       </button>
                     )}
                   </div>
-                  <h3 className="mt-3 whitespace-normal break-words text-base font-semibold leading-6 text-foreground transition-colors group-hover:text-accent-foreground">
-                    {training.title}
-                  </h3>
+                  {training.title && (
+                    <h3 className="mt-3 whitespace-normal break-words text-base font-semibold leading-6 text-foreground transition-colors group-hover:text-accent-foreground">
+                      {training.title}
+                    </h3>
+                  )}
                   {training.coachName && (
                     <p className="mt-2 text-xs text-muted">Тренер: {training.coachName}</p>
                   )}
