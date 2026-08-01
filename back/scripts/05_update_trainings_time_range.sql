@@ -15,10 +15,16 @@ IF COL_LENGTH(N'dbo.Trainings', N'EndTime') IS NULL
 BEGIN
     ALTER TABLE [dbo].[Trainings]
         ADD [EndTime] DATETIME2 NULL;
+END;
+GO
 
-    UPDATE [dbo].[Trainings]
+IF COL_LENGTH(N'dbo.Trainings', N'EndTime') IS NOT NULL
+BEGIN
+    EXEC sp_executesql N'
+        UPDATE [dbo].[Trainings]
         SET [EndTime] = DATEADD(MINUTE, 90, [StartTime])
         WHERE [EndTime] IS NULL;
+    ';
 
     ALTER TABLE [dbo].[Trainings]
         ALTER COLUMN [EndTime] DATETIME2 NOT NULL;

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CreateTrainingForm } from "@/components/CreateTrainingForm";
 import { formatTime } from "@/lib/format";
 import { getGroupColorStyle } from "@/lib/group-colors";
+import { deleteTraining } from "@/lib/trainings-client";
 
 type DayTraining = {
   id: string;
@@ -22,15 +23,19 @@ export function DaySchedulePanel({
   onClose,
   linkBase = "/dashboard/coach/trainings",
   showCreateForm = true,
+  onTrainingDeleted,
 }: {
   dateKey: string;
   trainings: DayTraining[];
   onClose: () => void;
   linkBase?: string;
   showCreateForm?: boolean;
+  onTrainingDeleted?: (trainingId: string) => void;
 }) {
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [deletingTrainingId, setDeletingTrainingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string>();
   const closeTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
@@ -59,6 +64,20 @@ export function DaySchedulePanel({
     [trainings]
   );
 
+  async function handleDeleteTraining(trainingId: string) {
+    setDeletingTrainingId(trainingId);
+    setDeleteError(undefined);
+
+    try {
+      await deleteTraining(trainingId);
+      onTrainingDeleted?.(trainingId);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Не удалось удалить тренировку.");
+    } finally {
+      setDeletingTrainingId(null);
+    }
+  }
+
   return (
     <aside
       aria-label={`Тренировки на ${dateTitle}`}
@@ -84,6 +103,9 @@ export function DaySchedulePanel({
       </header>
 
       <div className="px-5 pb-5 sm:px-6 sm:pb-6">
+        {deleteError && (
+          <p className="mb-3 rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger">{deleteError}</p>
+        )}
         <div className="flex flex-col gap-3">
           {orderedTrainings.length > 0 ? (
             orderedTrainings.map((training) => {
@@ -98,13 +120,35 @@ export function DaySchedulePanel({
                     <time className="text-sm font-medium text-muted" dateTime={training.date.toISOString()}>
                       {timeRange}
                     </time>
-                    {training.groupName && (
-                      <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold ${colorStyle.badge}`}>
-                        {training.groupName}
-                      </span>
-                    )}
+                    <div className="flex shrink-0 items-center gap-2">
+                      {training.groupName && (
+                        <span className={`max-w-32 truncate rounded-full border px-3 py-1 text-xs font-semibold ${colorStyle.badge}`}>
+                          {training.groupName}
+                        </span>
+                      )}
+                      {showCreateForm && (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            void handleDeleteTraining(training.id);
+                          }}
+                          disabled={deletingTrainingId === training.id}
+                          aria-label="Удалить тренировку"
+                          className="flex h-9 w-9 items-center justify-center rounded-xl text-muted transition duration-200 ease-out hover:bg-danger-soft hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 6V4h8v2" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l1 15h10l1-15" />
+                            <path strokeLinecap="round" d="M10 11v6M14 11v6" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <h3 className="mt-3 text-base font-semibold text-foreground transition-colors group-hover:text-accent-foreground">
+                  <h3 className="mt-3 whitespace-normal break-words text-base font-semibold leading-6 text-foreground transition-colors group-hover:text-accent-foreground">
                     {training.title}
                   </h3>
                   {training.coachName && (

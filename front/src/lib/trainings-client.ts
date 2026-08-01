@@ -37,3 +37,15 @@ export async function getTrainings(groupId?: string): Promise<CalendarTraining[]
     groupColorName: training.groupColorName,
   }));
 }
+
+export async function deleteTraining(trainingId: string): Promise<void> {
+  const response = await fetch(`/api/trainings?trainingId=${encodeURIComponent(trainingId)}`, {
+    method: "DELETE",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(result?.error ?? "Не удалось удалить тренировку.");
+  }
+}

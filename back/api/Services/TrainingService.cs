@@ -121,6 +121,40 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         };
     }
 
+    public async Task DeleteTraining(Guid trainingId, AuthenticatedUser user, CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Удаление тренировки. UserId: {UserId} | TrainingId: {TrainingId}", user.Id, trainingId);
+        EnsureCoach(user, "Удалять тренировки может только тренер.");
+
+        if (trainingId == Guid.Empty)
+        {
+            throw new ArgumentException("Необходимо указать тренировку.", nameof(trainingId));
+        }
+
+        var training = await dbContext.Trainings
+            .Where(training => training.Id == trainingId)
+            .Select(training => new
+            {
+                Entity = training,
+                training.Coach.UserId
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (training is null)
+        {
+            throw new InvalidOperationException("Тренировка не найдена.");
+        }
+
+        if (training.UserId != user.Id)
+        {
+            throw new UnauthorizedAccessException("Тренировка не принадлежит текущему тренеру.");
+        }
+
+        dbContext.Trainings.Remove(training.Entity);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Тренировка удалена. UserId: {UserId} | TrainingId: {TrainingId}", user.Id, trainingId);
+    }
+
     private static void EnsureCoach(AuthenticatedUser user, string message)
     {
         if (user.Role != UserRolesEnum.Coach)

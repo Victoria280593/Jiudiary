@@ -377,6 +377,9 @@ export function TrainingCalendar({
             dateKey={selectedDay}
             trainings={trainingsByDay.get(selectedDay) ?? []}
             onClose={() => setIsDayPanelOpen(false)}
+            onTrainingDeleted={(trainingId) => {
+              setVisibleTrainings((current) => current.filter((training) => training.id !== trainingId));
+            }}
             linkBase={linkBase}
             showCreateForm={showCreateForm}
           />

@@ -44,4 +44,26 @@ public sealed class TrainingController(TrainingService trainingService) : BaseCo
             return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
         }
     }
+
+    [HttpDelete("{trainingId:guid}")]
+    public async Task<ActionResult> DeleteTraining(Guid trainingId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await trainingService.DeleteTraining(trainingId, CurrentUser, cancellationToken);
+            return NoContent();
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new { error = exception.Message });
+        }
+        catch (InvalidOperationException exception)
+        {
+            return NotFound(new { error = exception.Message });
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
+        }
+    }
 }
