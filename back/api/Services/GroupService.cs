@@ -11,8 +11,6 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 {
     public async Task<List<GetGroupsOutputModel>> GetGroups(AuthenticatedUser user, Guid? groupId)
     {
-        logger.LogInformation("Получение групп тренера. UserId: {UserId} | GroupId: {GroupId}", user.Id, groupId);
-
         if (user.Role != UserRolesEnum.Coach)
         {
             throw new UnauthorizedAccessException("Получать список групп может только тренер.");
@@ -43,8 +41,6 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 
     public async Task DeleteGroup(Guid groupId, AuthenticatedUser user, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Удаление группы тренера. UserId: {UserId} | GroupId: {GroupId}", user.Id, groupId);
-
         if (user.Role != UserRolesEnum.Coach)
         {
             throw new UnauthorizedAccessException("Удалять группы может только тренер.");
@@ -80,8 +76,6 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 
     public async Task<CreateGroupOutputModel> CreateGroup(CreateGroupInputModel inputModel, AuthenticatedUser user)
     {
-        logger.LogInformation("Создание группы тренера. UserId: {UserId}", user.Id);
-
         if (user.Role != UserRolesEnum.Coach)
         {
             throw new UnauthorizedAccessException("Создавать группы может только тренер.");
@@ -155,7 +149,6 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 
     public async Task<UpdateGroupOutputModel> UpdateGroup(Guid groupId, UpdateGroupInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Редактирование группы тренера. UserId: {UserId} | GroupId: {GroupId} | ColorId: {ColorId}", user.Id, groupId, inputModel.ColorId);
         EnsureCoach(user, "Редактировать группы может только тренер.");
 
         if (string.IsNullOrWhiteSpace(inputModel.Name))

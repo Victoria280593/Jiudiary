@@ -11,7 +11,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
 {
     public async Task<List<TrainingOutputModel>> GetTrainings(AuthenticatedUser user, Guid? groupId, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Получение тренировок тренера. UserId: {UserId} | GroupId: {GroupId}", user.Id, groupId);
         EnsureCoach(user, "Получать тренировки может только тренер.");
 
         var trainings = dbContext.Trainings
@@ -44,7 +43,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
 
     public async Task<TrainingOutputModel> CreateTraining(CreateTrainingInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Создание тренировки. UserId: {UserId} | GroupId: {GroupId}", user.Id, inputModel.GroupId);
         EnsureCoach(user, "Создавать тренировки может только тренер.");
 
         if (inputModel.GroupId == Guid.Empty)
@@ -123,7 +121,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
 
     public async Task DeleteTraining(Guid trainingId, AuthenticatedUser user, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Удаление тренировки. UserId: {UserId} | TrainingId: {TrainingId}", user.Id, trainingId);
         EnsureCoach(user, "Удалять тренировки может только тренер.");
 
         if (trainingId == Guid.Empty)
