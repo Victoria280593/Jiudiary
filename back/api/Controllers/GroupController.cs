@@ -40,4 +40,31 @@ public sealed class GroupController(GroupService groupService) : BaseController
     {
         return Ok(await groupService.CreateGroup(inputModel, CurrentUser));
     }
+
+    [HttpGet("colors")]
+    public async Task<ActionResult<List<GetGroupColorsOutputModel>>> GetGroupColors(CancellationToken cancellationToken)
+    {
+        return Ok(await groupService.GetGroupColors(CurrentUser, cancellationToken));
+    }
+
+    [HttpPut("{groupId:guid}")]
+    public async Task<ActionResult<UpdateGroupOutputModel>> UpdateGroup(Guid groupId, UpdateGroupInputModel inputModel, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return Ok(await groupService.UpdateGroup(groupId, inputModel, CurrentUser, cancellationToken));
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
+        }
+        catch (InvalidOperationException exception)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new { error = exception.Message });
+        }
+    }
 }

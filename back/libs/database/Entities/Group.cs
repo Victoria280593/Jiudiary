@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel;
 
 namespace JiuDiary.Database.Entities;
 
@@ -14,8 +15,15 @@ public sealed class Group
     [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
 
+    [Required]
+    [DefaultValue(1)]
+    [ForeignKey(nameof(Color))]
+    public int ColorId { get; set; } = 1;
+
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTime CreatedAt { get; set; }
+
+    public GroupColor Color { get; set; } = null!;
 
     public ICollection<CoachGroup> CoachGroups { get; set; } = [];
 

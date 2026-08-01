@@ -29,6 +29,13 @@ export type BackendClientInfo = {
 export type BackendGroup = {
   id: string;
   name: string;
+  colorId: number;
+  colorName: string;
+};
+
+export type BackendGroupColor = {
+  id: number;
+  name: string;
 };
 
 export type BackendTraining = {
@@ -43,7 +50,19 @@ function isBackendGroup(value: unknown): value is BackendGroup {
   if (!value || typeof value !== "object") return false;
 
   const group = value as Partial<BackendGroup>;
-  return typeof group.id === "string" && typeof group.name === "string";
+  return (
+    typeof group.id === "string" &&
+    typeof group.name === "string" &&
+    typeof group.colorId === "number" &&
+    typeof group.colorName === "string"
+  );
+}
+
+function isBackendGroupColor(value: unknown): value is BackendGroupColor {
+  if (!value || typeof value !== "object") return false;
+
+  const color = value as Partial<BackendGroupColor>;
+  return typeof color.id === "number" && typeof color.name === "string";
 }
 
 function isBackendTraining(value: unknown): value is BackendTraining {
@@ -289,6 +308,60 @@ export async function getBackendGroups(accessToken: string, groupId?: string): P
       : null;
   } catch {
     return null;
+  }
+}
+
+export async function getBackendGroupColors(accessToken: string): Promise<BackendGroupColor[] | null> {
+  try {
+    const response = await fetch(`${backendUrl}/api/groups/colors`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) return null;
+
+    const colors: unknown = await response.json();
+    return Array.isArray(colors) && colors.every(isBackendGroupColor)
+      ? colors
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export type UpdateBackendGroupResult =
+  | { ok: true; group: BackendGroup }
+  | { ok: false; status: number; error: string };
+
+export async function updateBackendGroup(accessToken: string, groupId: string, name: string, colorId: number): Promise<UpdateBackendGroupResult> {
+  try {
+    const response = await fetch(`${backendUrl}/api/groups/${encodeURIComponent(groupId)}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name, colorId }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (response.ok) {
+      const group: unknown = await response.json();
+      return isBackendGroup(group)
+        ? { ok: true, group }
+        : { ok: false, status: 502, error: "Сервер вернул некорректные данные группы." };
+    }
+
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    return {
+      ok: false,
+      status: response.status,
+      error: result?.error ?? "Не удалось отредактировать группу.",
+    };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
   }
 }
 

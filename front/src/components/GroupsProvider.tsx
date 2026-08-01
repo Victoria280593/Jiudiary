@@ -19,6 +19,7 @@ type GroupsContextValue = {
   status: GroupsStatus;
   error?: string;
   addGroup: (group: Group) => void;
+  updateGroup: (group: Group) => void;
   removeGroup: (groupId: string) => void;
 };
 
@@ -63,9 +64,17 @@ export function GroupsProvider({ children, enabled }: { children: ReactNode; ena
     setError(undefined);
   }, []);
 
+  const updateGroup = useCallback((group: Group) => {
+    setGroups((currentGroups) =>
+      currentGroups.map((currentGroup) => currentGroup.id === group.id ? group : currentGroup)
+    );
+    setStatus("loaded");
+    setError(undefined);
+  }, []);
+
   const value = useMemo(
-    () => ({ groups, status, error, addGroup, removeGroup }),
-    [groups, status, error, addGroup, removeGroup]
+    () => ({ groups, status, error, addGroup, updateGroup, removeGroup }),
+    [groups, status, error, addGroup, updateGroup, removeGroup]
   );
 
   return <GroupsContext.Provider value={value}>{children}</GroupsContext.Provider>;

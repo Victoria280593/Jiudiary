@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { createBackendGroup, deleteBackendGroup, getBackendGroups } from "@/lib/backend-auth";
+import { createBackendGroup, deleteBackendGroup, getBackendGroups, updateBackendGroup } from "@/lib/backend-auth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -53,5 +53,28 @@ export async function DELETE(request: Request) {
   const result = await deleteBackendGroup(session.accessToken, input.id);
   return result.ok
     ? new NextResponse(null, { status: 204 })
+    : NextResponse.json({ error: result.error }, { status: result.status });
+}
+
+export async function PUT(request: Request) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Пользователь не авторизован." }, { status: 401 });
+  }
+
+  const input = (await request.json()) as { id?: unknown; name?: unknown; colorId?: unknown };
+  if (typeof input.id !== "string" || !input.id.trim()) {
+    return NextResponse.json({ error: "Необходимо указать идентификатор группы." }, { status: 400 });
+  }
+  if (typeof input.name !== "string" || !input.name.trim()) {
+    return NextResponse.json({ error: "Необходимо указать название группы." }, { status: 400 });
+  }
+  if (typeof input.colorId !== "number" || !Number.isInteger(input.colorId)) {
+    return NextResponse.json({ error: "Необходимо выбрать цвет группы." }, { status: 400 });
+  }
+
+  const result = await updateBackendGroup(session.accessToken, input.id, input.name.trim(), input.colorId);
+  return result.ok
+    ? NextResponse.json(result.group)
     : NextResponse.json({ error: result.error }, { status: result.status });
 }

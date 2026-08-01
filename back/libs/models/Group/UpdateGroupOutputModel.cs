@@ -1,9 +1,9 @@
 namespace JiuDiary.Models.Group;
 
 /// <summary>
-/// Выходная модель созданной группы.
+/// Выходная модель отредактированной группы тренера.
 /// </summary>
-public class CreateGroupOutputModel
+public class UpdateGroupOutputModel
 {
     public Guid Id { get; set; }
 

@@ -31,7 +31,9 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
             .Select(x => new GetGroupsOutputModel
             {
                 Id = x.Group.Id,
-                Name = x.Group.Name
+                Name = x.Group.Name,
+                ColorId = x.Group.ColorId,
+                ColorName = x.Group.Color.Name
             })
             .ToListAsync();
 
@@ -100,7 +102,8 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 
         var group = new Group
         {
-            Name = inputModel.Name.Trim()
+            Name = inputModel.Name.Trim(),
+            ColorId = 1
         };
 
         dbContext.Groups.Add(group);
@@ -116,7 +119,78 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
         return new CreateGroupOutputModel
         {
             Id = group.Id,
-            Name = group.Name
+            Name = group.Name,
+            ColorId = group.ColorId,
+            ColorName = "Red"
         };
+    }
+
+    public async Task<List<GetGroupColorsOutputModel>> GetGroupColors(AuthenticatedUser user, CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Получение цветов групп. UserId: {UserId}", user.Id);
+        EnsureCoach(user, "Получать цвета групп может только тренер.");
+
+        var result = await dbContext.Colors
+            .AsNoTracking()
+            .OrderBy(color => color.Id)
+            .Select(color => new GetGroupColorsOutputModel
+            {
+                Id = color.Id,
+                Name = color.Name
+            })
+            .ToListAsync(cancellationToken);
+
+        logger.LogInformation("Цвета групп получены. UserId: {UserId} | Count: {Count}", user.Id, result.Count);
+        return result;
+    }
+
+    public async Task<UpdateGroupOutputModel> UpdateGroup(Guid groupId, UpdateGroupInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Редактирование группы тренера. UserId: {UserId} | GroupId: {GroupId} | ColorId: {ColorId}", user.Id, groupId, inputModel.ColorId);
+        EnsureCoach(user, "Редактировать группы может только тренер.");
+
+        if (string.IsNullOrWhiteSpace(inputModel.Name))
+        {
+            throw new ArgumentException("Необходимо указать название группы.", nameof(inputModel.Name));
+        }
+
+        var coachGroup = await dbContext.CoachGroups
+            .Include(coachGroup => coachGroup.Group)
+            .SingleOrDefaultAsync(coachGroup => coachGroup.GroupId == groupId && coachGroup.Coach.UserId == user.Id, cancellationToken);
+
+        if (coachGroup is null)
+        {
+            throw new InvalidOperationException("Группа не принадлежит текущему тренеру.");
+        }
+
+        var color = await dbContext.Colors
+            .AsNoTracking()
+            .SingleOrDefaultAsync(color => color.Id == inputModel.ColorId, cancellationToken);
+
+        if (color is null)
+        {
+            throw new ArgumentException("Выбранный цвет группы не существует.", nameof(inputModel.ColorId));
+        }
+
+        coachGroup.Group.Name = inputModel.Name.Trim();
+        coachGroup.Group.ColorId = color.Id;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation("Группа тренера отредактирована. UserId: {UserId} | GroupId: {GroupId} | ColorId: {ColorId}", user.Id, groupId, color.Id);
+        return new UpdateGroupOutputModel
+        {
+            Id = coachGroup.Group.Id,
+            Name = coachGroup.Group.Name,
+            ColorId = color.Id,
+            ColorName = color.Name
+        };
+    }
+
+    private static void EnsureCoach(AuthenticatedUser user, string message)
+    {
+        if (user.Role != UserRolesEnum.Coach)
+        {
+            throw new UnauthorizedAccessException(message);
+        }
     }
 }

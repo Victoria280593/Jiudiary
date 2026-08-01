@@ -22,6 +22,8 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
 
     public DbSet<Group> Groups => Set<Group>();
 
+    public DbSet<GroupColor> Colors => Set<GroupColor>();
+
     public DbSet<CoachGroup> CoachGroups => Set<CoachGroup>();
 
     public DbSet<Training> Trainings => Set<Training>();

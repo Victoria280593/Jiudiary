@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { DaySchedulePanel } from "@/components/DaySchedulePanel";
 import { useGroups } from "@/components/GroupsProvider";
 import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, dateKey, addMonths } from "@/lib/calendar";
+import { getGroupColorStyle } from "@/lib/group-colors";
 import { getTrainings } from "@/lib/trainings-client";
 
 type TrainingItem = { id: string; title: string; date: string; coachName?: string };
@@ -241,27 +242,29 @@ export function TrainingCalendar({
                     >
                       Все группы
                     </button>
-                    {groups.map((group) => (
-                      <button
-                        key={group.id}
-                        type="button"
-                        onClick={() => void selectGroup(group.id)}
-                        aria-pressed={selectedGroupId === group.id}
-                        className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition duration-200 ease-out ${
-                          selectedGroupId === group.id
-                            ? "bg-accent text-white shadow-[0_10px_24px_-16px_rgba(131,93,57,0.8)]"
-                            : "bg-surface-muted text-muted hover:-translate-y-0.5 hover:bg-accent-soft hover:text-accent-foreground"
-                        }`}
-                      >
-                        <span
-                          className={`h-2 w-2 shrink-0 rounded-full ${
-                            selectedGroupId === group.id ? "bg-white" : "bg-accent"
+                    {groups.map((group) => {
+                      const selected = selectedGroupId === group.id;
+                      const colorStyle = getGroupColorStyle(group.colorName);
+                      return (
+                        <button
+                          key={group.id}
+                          type="button"
+                          onClick={() => void selectGroup(group.id)}
+                          aria-pressed={selected}
+                          className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition duration-200 ease-out hover:-translate-y-0.5 ${
+                            selected
+                              ? `${colorStyle.activeBadge} shadow-[0_10px_24px_-16px_rgba(15,23,42,0.45)]`
+                              : colorStyle.badge
                           }`}
-                          aria-hidden="true"
-                        />
-                        {group.name}
-                      </button>
-                    ))}
+                        >
+                          <span
+                            className={`h-2 w-2 shrink-0 rounded-full ${selected ? "bg-white" : colorStyle.dot}`}
+                            aria-hidden="true"
+                          />
+                          {group.name}
+                        </button>
+                      );
+                    })}
                   </>
                 )}
                 {trainingsError && (
