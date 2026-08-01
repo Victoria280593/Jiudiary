@@ -116,9 +116,9 @@ export function DaySchedulePanel({
               const content = (
                 <>
                   <span className={`absolute inset-y-0 left-0 w-1.5 ${colorStyle.dot}`} aria-hidden="true" />
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex min-w-0 flex-col items-start pl-1.5">
-                      <time className="block text-sm font-medium text-muted" dateTime={training.date.toISOString()}>
+                  <div className="pr-10">
+                    <div className="flex min-w-0 flex-col items-start">
+                      <time className="ml-1.5 block text-sm font-medium text-muted" dateTime={training.date.toISOString()}>
                         {timeRange}
                       </time>
                       {training.groupName && (
@@ -137,7 +137,7 @@ export function DaySchedulePanel({
                         }}
                         disabled={deletingTrainingId === training.id}
                         aria-label="Удалить тренировку"
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted transition duration-200 ease-out hover:bg-danger-soft hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
+                        className="absolute right-4 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-muted transition duration-200 ease-out hover:bg-danger-soft hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18" />
