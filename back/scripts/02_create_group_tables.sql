@@ -14,7 +14,8 @@ VALUES
     (2, N'Blue'),
     (3, N'Green'),
     (4, N'Yellow'),
-    (5, N'Purple');
+    (5, N'Purple'),
+    (6, N'Brown');
 GO
 
 CREATE TABLE [dbo].[Groups]
@@ -26,7 +27,7 @@ CREATE TABLE [dbo].[Groups]
     [Name] NVARCHAR(200) NOT NULL,
 
     [ColorId] INT NOT NULL
-        CONSTRAINT [DF_Groups_ColorId] DEFAULT (1),
+        CONSTRAINT [DF_Groups_ColorId] DEFAULT (6),
 
     [CreatedAt] DATETIME2(0) NOT NULL
         CONSTRAINT [DF_Groups_CreatedAt] DEFAULT SYSDATETIME(),

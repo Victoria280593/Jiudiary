@@ -16,9 +16,9 @@ public sealed class Group
     public string Name { get; set; } = string.Empty;
 
     [Required]
-    [DefaultValue(1)]
+    [DefaultValue(6)]
     [ForeignKey(nameof(Color))]
-    public int ColorId { get; set; } = 1;
+    public int ColorId { get; set; } = 6;
 
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTime CreatedAt { get; set; }

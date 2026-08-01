@@ -267,7 +267,7 @@ export async function updateBackendClientInfo(
   }
 }
 
-export async function createBackendGroup(accessToken: string, name: string): Promise<BackendGroup | null> {
+export async function createBackendGroup(accessToken: string, name: string, colorId: number): Promise<BackendGroup | null> {
   try {
     const response = await fetch(`${backendUrl}/api/groups`, {
       method: "POST",
@@ -275,7 +275,7 @@ export async function createBackendGroup(accessToken: string, name: string): Pro
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, colorId }),
       cache: "no-store",
       signal: AbortSignal.timeout(5_000),
     });

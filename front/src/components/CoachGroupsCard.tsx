@@ -13,6 +13,7 @@ const colorLabels: Record<string, string> = {
   Green: "Зелёный",
   Yellow: "Жёлтый",
   Purple: "Фиолетовый",
+  Brown: "Коричневый",
 };
 
 export function CoachGroupsCard() {
@@ -20,6 +21,7 @@ export function CoachGroupsCard() {
   const editDialogRef = useRef<HTMLDialogElement>(null);
   const { groups, status, error: groupsError, addGroup, updateGroup, removeGroup } = useGroups();
   const [name, setName] = useState("");
+  const [createColorId, setCreateColorId] = useState(6);
   const [error, setError] = useState<string>();
   const [mutationError, setMutationError] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,7 +36,16 @@ export function CoachGroupsCard() {
   function openModal() {
     setError(undefined);
     setName("");
+    setCreateColorId(6);
     dialogRef.current?.showModal();
+
+    if (colors.length === 0) {
+      void getGroupColors()
+        .then(setColors)
+        .catch((loadError: unknown) => {
+          setError(loadError instanceof Error ? loadError.message : "Не удалось загрузить цвета групп.");
+        });
+    }
   }
 
   function closeModal() {
@@ -77,7 +88,7 @@ export function CoachGroupsCard() {
       const response = await fetch("/api/groups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: normalizedName }),
+        body: JSON.stringify({ name: normalizedName, colorId: createColorId }),
       });
 
       if (!response.ok) {
@@ -298,6 +309,34 @@ export function CoachGroupsCard() {
             />
           </div>
 
+          <fieldset className="flex flex-col gap-2.5">
+            <legend className={labelClass}>Цвет группы</legend>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {colors.length === 0 && !error ? (
+                <span className="text-sm text-muted">Загрузка цветов…</span>
+              ) : (
+                colors.map((color) => {
+                  const style = getGroupColorStyle(color.name);
+                  const selected = createColorId === color.id;
+                  return (
+                    <button
+                      key={color.id}
+                      type="button"
+                      onClick={() => setCreateColorId(color.id)}
+                      aria-pressed={selected}
+                      className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition duration-200 ${
+                        selected ? `${style.activeBadge} shadow-sm` : style.badge
+                      }`}
+                    >
+                      <span className={`h-2.5 w-2.5 rounded-full ${style.dot}`} aria-hidden="true" />
+                      {colorLabels[color.name] ?? color.name}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </fieldset>
+
           <div className="flex justify-end gap-2 border-t border-border pt-4">
             <button
               type="button"
@@ -309,7 +348,7 @@ export function CoachGroupsCard() {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || colors.length === 0}
               className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? "Создание…" : "Создать"}
@@ -378,7 +417,7 @@ export function CoachGroupsCard() {
                         selected ? `${style.activeBadge} shadow-sm` : style.badge
                       }`}
                     >
-                      <span className={`h-2.5 w-2.5 rounded-full ${selected ? "bg-white" : style.dot}`} aria-hidden="true" />
+                      <span className={`h-2.5 w-2.5 rounded-full ${style.dot}`} aria-hidden="true" />
                       {colorLabels[color.name] ?? color.name}
                     </button>
                   );

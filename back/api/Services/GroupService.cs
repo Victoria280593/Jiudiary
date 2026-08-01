@@ -92,6 +92,15 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
             throw new ArgumentException("Необходимо указать название группы.", nameof(inputModel.Name));
         }
 
+        var color = await dbContext.Colors
+            .AsNoTracking()
+            .SingleOrDefaultAsync(color => color.Id == inputModel.ColorId);
+
+        if (color is null)
+        {
+            throw new ArgumentException("Выбранный цвет группы не существует.", nameof(inputModel.ColorId));
+        }
+
         var coach = await dbContext.ClientInfos.SingleOrDefaultAsync(x => x.UserId == user.Id);
 
         if (coach is null)
@@ -103,7 +112,7 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
         var group = new Group
         {
             Name = inputModel.Name.Trim(),
-            ColorId = 1
+            ColorId = color.Id
         };
 
         dbContext.Groups.Add(group);
@@ -121,7 +130,7 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
             Id = group.Id,
             Name = group.Name,
             ColorId = group.ColorId,
-            ColorName = "Red"
+            ColorName = color.Name
         };
     }
 

@@ -258,7 +258,7 @@ export function TrainingCalendar({
                           }`}
                         >
                           <span
-                            className={`h-2 w-2 shrink-0 rounded-full ${selected ? "bg-white" : colorStyle.dot}`}
+                            className={`h-2 w-2 shrink-0 rounded-full ${colorStyle.dot}`}
                             aria-hidden="true"
                           />
                           {group.name}

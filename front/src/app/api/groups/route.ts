@@ -25,15 +25,21 @@ export async function POST(request: Request) {
   }
 
   const contentType = request.headers.get("content-type") ?? "";
-  const name = contentType.includes("application/json")
-    ? ((await request.json()) as { name?: unknown }).name
-    : (await request.formData()).get("name");
+  const input = contentType.includes("application/json")
+    ? ((await request.json()) as { name?: unknown; colorId?: unknown })
+    : Object.fromEntries((await request.formData()).entries());
+  const name = input.name;
 
   if (typeof name !== "string" || !name.trim()) {
     return NextResponse.json({ error: "Необходимо указать название группы." }, { status: 400 });
   }
 
-  const created = await createBackendGroup(session.accessToken, name.trim());
+  const colorId = typeof input.colorId === "string" ? Number(input.colorId) : input.colorId;
+  if (typeof colorId !== "number" || !Number.isInteger(colorId)) {
+    return NextResponse.json({ error: "Необходимо выбрать цвет группы." }, { status: 400 });
+  }
+
+  const created = await createBackendGroup(session.accessToken, name.trim(), colorId);
   return created
     ? NextResponse.json(created)
     : NextResponse.json({ error: "Не удалось создать группу." }, { status: 502 });

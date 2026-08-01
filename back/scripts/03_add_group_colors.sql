@@ -14,12 +14,13 @@ VALUES
     (2, N'Blue'),
     (3, N'Green'),
     (4, N'Yellow'),
-    (5, N'Purple');
+    (5, N'Purple'),
+    (6, N'Brown');
 GO
 
 ALTER TABLE [dbo].[Groups]
 ADD [ColorId] INT NOT NULL
-    CONSTRAINT [DF_Groups_ColorId] DEFAULT (1);
+    CONSTRAINT [DF_Groups_ColorId] DEFAULT (6);
 GO
 
 ALTER TABLE [dbo].[Groups]

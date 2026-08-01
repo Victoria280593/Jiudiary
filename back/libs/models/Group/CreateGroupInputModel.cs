@@ -9,4 +9,9 @@ public class CreateGroupInputModel
     /// Название группы.
     /// </summary>
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Идентификатор цвета группы. По умолчанию используется Brown.
+    /// </summary>
+    public int ColorId { get; set; } = 6;
 }
