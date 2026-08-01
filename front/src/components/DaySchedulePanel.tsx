@@ -116,8 +116,8 @@ export function DaySchedulePanel({
               const content = (
                 <>
                   <span className={`absolute inset-y-0 left-0 w-1.5 ${colorStyle.dot}`} aria-hidden="true" />
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 flex-col items-start">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 flex-col items-start pl-1.5">
                       <time className="block text-sm font-medium text-muted" dateTime={training.date.toISOString()}>
                         {timeRange}
                       </time>
