@@ -9,6 +9,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_HTTP_PORTS: "8080"
       TZ: Europe/Moscow
+      JIUDIARY_LOG_DIRECTORY: "/logs/jiuDiary"
       ConnectionStrings__Default: "${API_MSSQL_CONNECTION_STRING:?Set API_MSSQL_CONNECTION_STRING in .env}"
       Jwt__Issuer: "${API_JWT_ISSUER:-JiuDiary}"
       Jwt__Audience: "${API_JWT_AUDIENCE:-JiuDiary.Api}"
@@ -19,3 +20,5 @@ services:
       Cors__FrontendOrigins__0: "${FRONTEND_APP_URL:-http://localhost:3000}"
     ports:
       - "${API_HOST_PORT:-5136}:8080"
+    volumes:
+      - "${API_LOGS_HOST_PATH:-/logs/jiuDiary}:/logs/jiuDiary"

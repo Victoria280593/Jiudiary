@@ -28,8 +28,8 @@ EXPOSE 8080
 
 COPY --from=build /app/publish .
 
-RUN mkdir -p /app/logs \
-    && chown -R $APP_UID:$APP_UID /app/logs
+RUN mkdir -p /app/logs /logs/jiuDiary \
+    && chown -R $APP_UID:$APP_UID /app/logs /logs/jiuDiary
 
 USER $APP_UID
 ENTRYPOINT ["dotnet", "JiuDiary.Api.dll"]

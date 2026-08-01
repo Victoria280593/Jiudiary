@@ -23,6 +23,7 @@ Backend развёртывается как отдельный сервис ти
 ```dotenv
 ASPNETCORE_ENVIRONMENT=Production
 ASPNETCORE_HTTP_PORTS=8080
+JIUDIARY_LOG_DIRECTORY=/logs/jiuDiary
 ConnectionStrings__Default=Server=217.114.15.222,1433;Database=JiuDiary;User Id=sa;Password=CHANGE_ME;Encrypt=True;TrustServerCertificate=True
 Jwt__Issuer=JiuDiary
 Jwt__Audience=JiuDiary.Api
@@ -34,6 +35,23 @@ AuthBootstrap__Login=admin@jiudiary.local
 AuthBootstrap__Password=CHANGE_ME
 Cors__FrontendOrigins__0=http://217.114.15.222:3001
 ```
+
+## Логи на сервере
+
+Перед первым деплоем создайте каталог на сервере и выдайте его пользователю контейнера:
+
+```bash
+sudo install -d -m 0775 -o 1654 -g 1654 /logs/jiuDiary
+```
+
+В Dokploy добавьте bind mount:
+
+| Поле | Значение |
+|---|---|
+| Host Path | `/logs/jiuDiary` |
+| Mount Path | `/logs/jiuDiary` |
+
+Файлы создаются в формате `/logs/jiuDiary/YYYY-MM-DD.log`.
 
 JWT-ключ и пароли нельзя коммитить в Git. Сгенерировать JWT-ключ на сервере:
 
