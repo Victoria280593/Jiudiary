@@ -22,7 +22,7 @@ internal sealed class RequestLoggerMiddleware(RequestDelegate next)
         });
 
         logger.LogInformation(
-            "Start HTTP {Method} {Path}; Request Size: {RequestSizeBytes} bytes",
+            "Start HTTP {Method} {Path} | Request Size: {RequestSizeBytes} bytes",
             context.Request.Method,
             context.Request.Path,
             requestSize);
@@ -51,7 +51,7 @@ internal sealed class RequestLoggerMiddleware(RequestDelegate next)
             if (requestException is null)
             {
                 logger.LogInformation(
-                    "End HTTP {Method} {Path}; Status: {StatusCode}; Response Size: {ResponseSizeBytes} bytes; Time: {Elapsed}",
+                    "End HTTP {Method} {Path} | Status: {StatusCode} | Response Size: {ResponseSizeBytes} bytes | Time: {Elapsed}",
                     context.Request.Method,
                     context.Request.Path,
                     statusCode,
@@ -62,7 +62,7 @@ internal sealed class RequestLoggerMiddleware(RequestDelegate next)
             {
                 logger.LogError(
                     requestException,
-                    "End HTTP {Method} {Path} с ошибкой; Status: {StatusCode}; Response Size: {ResponseSizeBytes} bytes; Time: {Elapsed}",
+                    "End HTTP {Method} {Path} с ошибкой | Status: {StatusCode} | Response Size: {ResponseSizeBytes} bytes | Time: {Elapsed}",
                     context.Request.Method,
                     context.Request.Path,
                     statusCode,

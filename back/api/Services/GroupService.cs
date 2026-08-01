@@ -7,10 +7,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace JiuDiary.Api.Services;
 
-public sealed class GroupService(JiuDiaryDbContext dbContext)
+public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupService> logger)
 {
     public async Task<List<GetGroupsOutputModel>> GetGroups(AuthenticatedUser user, Guid? groupId)
     {
+        logger.LogInformation("Получение групп тренера. UserId: {UserId} | GroupId: {GroupId}", user.Id, groupId);
+
         if (user.Role != UserRolesEnum.Coach)
         {
             throw new UnauthorizedAccessException("Получать список групп может только тренер.");
@@ -25,17 +27,22 @@ public sealed class GroupService(JiuDiaryDbContext dbContext)
             groups = groups.Where(x => x.GroupId == groupId.Value);
         }
 
-        return await groups
+        var result = await groups
             .Select(x => new GetGroupsOutputModel
             {
                 Id = x.Group.Id,
                 Name = x.Group.Name
             })
             .ToListAsync();
+
+        logger.LogInformation("Группы тренера получены. UserId: {UserId} | Count: {Count}", user.Id, result.Count);
+        return result;
     }
 
     public async Task DeleteGroup(Guid groupId, AuthenticatedUser user, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Удаление группы тренера. UserId: {UserId} | GroupId: {GroupId}", user.Id, groupId);
+
         if (user.Role != UserRolesEnum.Coach)
         {
             throw new UnauthorizedAccessException("Удалять группы может только тренер.");
@@ -66,10 +73,13 @@ public sealed class GroupService(JiuDiaryDbContext dbContext)
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Группа тренера удалена. UserId: {UserId} | GroupId: {GroupId} | TrainingsDeleted: {TrainingsDeleted}", user.Id, groupId, trainings.Count);
     }
 
     public async Task<CreateGroupOutputModel> CreateGroup(CreateGroupInputModel inputModel, AuthenticatedUser user)
     {
+        logger.LogInformation("Создание группы тренера. UserId: {UserId}", user.Id);
+
         if (user.Role != UserRolesEnum.Coach)
         {
             throw new UnauthorizedAccessException("Создавать группы может только тренер.");
@@ -101,6 +111,7 @@ public sealed class GroupService(JiuDiaryDbContext dbContext)
         });
 
         await dbContext.SaveChangesAsync();
+        logger.LogInformation("Группа тренера создана. UserId: {UserId} | GroupId: {GroupId}", user.Id, group.Id);
 
         return new CreateGroupOutputModel
         {

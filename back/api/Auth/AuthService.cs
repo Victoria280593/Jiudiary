@@ -19,7 +19,8 @@ public sealed class AuthService(
     IPasswordHasher<User> passwordHasher,
     IJwtTokenService jwtTokenService,
     IOptions<JwtOptions> jwtOptions,
-    IOptions<AuthBootstrapOptions> bootstrapOptions) : IAuthService
+    IOptions<AuthBootstrapOptions> bootstrapOptions,
+    ILogger<AuthService> logger) : IAuthService
 {
     private const int CoachRoleId = 2;
     private const string CoachRoleName = "Coach";
@@ -33,6 +34,7 @@ public sealed class AuthService(
     /// </summary>
     public async Task<UserOutputModel?> RegisterAsync(RegisterInputModel inputModel, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Начата регистрация пользователя");
         var normalizedLogin = inputModel.Login?.Trim() ?? string.Empty;
 
         // Логин уникален: повторная регистрация возвращает Conflict через контроллер.
@@ -40,6 +42,7 @@ public sealed class AuthService(
                 user => user.Login == normalizedLogin,
                 cancellationToken))
         {
+            logger.LogInformation("Регистрация пользователя не выполнена: логин уже зарегистрирован");
             return null;
         }
 
@@ -52,6 +55,7 @@ public sealed class AuthService(
         {
             role = new Role { Id = CoachRoleId, Name = CoachRoleName };
             dbContext.Roles.Add(role);
+            logger.LogInformation("Создана роль по умолчанию. RoleId: {RoleId} | RoleName: {RoleName}", role.Id, role.Name);
         }
 
         var defaultBeltId = await dbContext.Belts
@@ -87,6 +91,7 @@ public sealed class AuthService(
         });
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        logger.LogInformation("Пользователь зарегистрирован. UserId: {UserId} | RoleId: {RoleId}", user.Id, user.RoleId);
         return ToUserOutputModel(ToAuthenticatedUser(user));
     }
 
@@ -95,6 +100,8 @@ public sealed class AuthService(
     /// </summary>
     public async Task<LoginOutputModel?> LoginAsync(LoginInputModel inputModel, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Начата авторизация пользователя");
+
         // Роль загружается вместе с пользователем, чтобы поместить её в claims JWT.
         var normalizedLogin = inputModel.Login ?? string.Empty;
         var user = await dbContext.Users
@@ -103,6 +110,7 @@ public sealed class AuthService(
 
         if (user is null || !user.IsActive)
         {
+            logger.LogInformation("Авторизация пользователя не выполнена");
             return null;
         }
 
@@ -111,11 +119,13 @@ public sealed class AuthService(
         {
             if (!CanBootstrap(user.Login, inputModel.Password!))
             {
+                logger.LogInformation("Авторизация пользователя не выполнена. UserId: {UserId}", user.Id);
                 return null;
             }
 
             user.PasswordHash = passwordHasher.HashPassword(user, inputModel.Password!);
             await dbContext.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("Для пользователя создан первоначальный хеш пароля. UserId: {UserId}", user.Id);
         }
 
         // PasswordHasher сам извлекает salt из PasswordHash и безопасно сравнивает пароль.
@@ -124,9 +134,15 @@ public sealed class AuthService(
             user.PasswordHash,
             inputModel.Password!);
 
-        return verification == PasswordVerificationResult.Failed
-            ? null
-            : await CreateSessionAsync(user, cancellationToken);
+        if (verification == PasswordVerificationResult.Failed)
+        {
+            logger.LogInformation("Авторизация пользователя не выполнена. UserId: {UserId}", user.Id);
+            return null;
+        }
+
+        var result = await CreateSessionAsync(user, cancellationToken);
+        logger.LogInformation("Пользователь авторизован. UserId: {UserId}", user.Id);
+        return result;
     }
 
     /// <summary>
@@ -134,6 +150,8 @@ public sealed class AuthService(
     /// </summary>
     public async Task<LoginOutputModel?> RefreshAsync(RefreshInputModel inputModel, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Начато обновление сессии авторизации");
+
         // В БД ищется SHA-256-хеш: исходный refresh-токен хранится только у клиента.
         var tokenHash = HashToken(inputModel.RefreshToken!);
 
@@ -153,6 +171,7 @@ public sealed class AuthService(
             !session.User.IsActive)
         {
             await transaction.RollbackAsync(cancellationToken);
+            logger.LogInformation("Сессия авторизации не обновлена");
             return null;
         }
 
@@ -163,6 +182,7 @@ public sealed class AuthService(
         // Создаётся новая серверная сессия, новый refresh-токен и новый access JWT.
         var response = await CreateSessionAsync(session.User, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+        logger.LogInformation("Сессия авторизации обновлена. UserId: {UserId}", session.UserId);
         return response;
     }
 
@@ -171,6 +191,8 @@ public sealed class AuthService(
     /// </summary>
     public async Task LogoutAsync(LogoutInputModel inputModel, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Начато завершение сессии авторизации");
+
         // Клиент присылает исходный токен, а сравнение выполняется по его хешу.
         var tokenHash = HashToken(inputModel.RefreshToken!);
         var session = await dbContext.AuthSessions
@@ -178,11 +200,13 @@ public sealed class AuthService(
 
         if (session is null || session.RevokedAt is not null)
         {
+            logger.LogInformation("Активная сессия для завершения не найдена");
             return;
         }
 
         session.RevokedAt = DateTime.Now;
         await dbContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Сессия авторизации завершена. UserId: {UserId} | SessionId: {SessionId}", session.UserId, session.Id);
     }
 
     /// <summary>

@@ -5,23 +5,29 @@ using Microsoft.EntityFrameworkCore;
 
 namespace JiuDiary.Api.Services;
 
-public sealed class ClientInfoService(JiuDiaryDbContext dbContext)
+public sealed class ClientInfoService(JiuDiaryDbContext dbContext, ILogger<ClientInfoService> logger)
 {
     public async Task<ClientInfoOutputModel> GetAsync(Guid userId, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Получение информации клиента. UserId: {UserId}", userId);
+
         var clientInfo = await dbContext.ClientInfos
             .AsNoTracking()
             .Where(x => x.UserId == userId)
             .Select(ToOutputModelExpression())
             .ToListAsync(cancellationToken);
 
+        logger.LogInformation("Информация клиента получена. UserId: {UserId} | Found: {Found}", userId, clientInfo.Count > 0);
         return clientInfo.SingleOrDefault() ?? new ClientInfoOutputModel();
     }
 
     public async Task<ClientInfoOutputModel?> UpdateAsync(Guid userId, UpdateClientInfoInputModel inputModel, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Обновление информации клиента. UserId: {UserId}", userId);
+
         if (!await dbContext.Users.AnyAsync(x => x.Id == userId, cancellationToken))
         {
+            logger.LogInformation("Информация клиента не обновлена: пользователь не найден. UserId: {UserId}", userId);
             return null;
         }
 
@@ -45,6 +51,7 @@ public sealed class ClientInfoService(JiuDiaryDbContext dbContext)
         clientInfo.BeltId = inputModel.BeltId;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Информация клиента обновлена. UserId: {UserId}", userId);
         return await GetAsync(userId, cancellationToken);
     }
 

@@ -7,10 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace JiuDiary.Api.Services;
 
-public sealed class TrainingService(JiuDiaryDbContext dbContext)
+public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<TrainingService> logger)
 {
     public async Task<List<TrainingOutputModel>> GetTrainings(AuthenticatedUser user, Guid? groupId, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Получение тренировок тренера. UserId: {UserId} | GroupId: {GroupId}", user.Id, groupId);
         EnsureCoach(user, "Получать тренировки может только тренер.");
 
         var trainings = dbContext.Trainings
@@ -22,7 +23,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext)
             trainings = trainings.Where(training => training.GroupId == groupId.Value);
         }
 
-        return await trainings
+        var result = await trainings
             .OrderBy(training => training.Time)
             .Select(training => new TrainingOutputModel
             {
@@ -33,10 +34,14 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext)
                 Time = training.Time
             })
             .ToListAsync(cancellationToken);
+
+        logger.LogInformation("Тренировки тренера получены. UserId: {UserId} | Count: {Count}", user.Id, result.Count);
+        return result;
     }
 
     public async Task<TrainingOutputModel> CreateTraining(CreateTrainingInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Создание тренировки. UserId: {UserId} | GroupId: {GroupId}", user.Id, inputModel.GroupId);
         EnsureCoach(user, "Создавать тренировки может только тренер.");
 
         if (inputModel.GroupId == Guid.Empty)
@@ -85,6 +90,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext)
 
         dbContext.Trainings.Add(training);
         await dbContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Тренировка создана. UserId: {UserId} | GroupId: {GroupId} | TrainingId: {TrainingId}", user.Id, training.GroupId, training.Id);
 
         return new TrainingOutputModel
         {

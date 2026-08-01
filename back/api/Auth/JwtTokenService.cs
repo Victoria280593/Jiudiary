@@ -9,7 +9,7 @@ namespace JiuDiary.Api.Auth;
 /// <summary>
 /// Выпускает JWT, подписанные симметричным ключом HMAC-SHA256.
 /// </summary>
-public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenService
+public sealed class JwtTokenService(IOptions<JwtOptions> options, ILogger<JwtTokenService> logger) : IJwtTokenService
 {
     private readonly JwtOptions _options = options.Value;
 
@@ -20,6 +20,8 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
     /// <returns>JWT и время его окончания; сам access-токен в БД не сохраняется.</returns>
     public IssuedAccessToken Issue(AuthenticatedUser user)
     {
+        logger.LogInformation("Выпуск access-токена. UserId: {UserId}", user.Id);
+
         var now = DateTimeOffset.Now;
         var expiresAt = now.AddMinutes(_options.AccessTokenMinutes);
 
@@ -48,8 +50,11 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
             signingCredentials: credentials);
 
         // JWT сериализуется в строку и возвращается клиенту; сервер хранит только ключ подписи.
-        return new IssuedAccessToken(
+        var issuedToken = new IssuedAccessToken(
             new JwtSecurityTokenHandler().WriteToken(token),
             expiresAt);
+
+        logger.LogInformation("Access-токен выпущен. UserId: {UserId} | ExpiresAt: {ExpiresAt}", user.Id, expiresAt);
+        return issuedToken;
     }
 }
