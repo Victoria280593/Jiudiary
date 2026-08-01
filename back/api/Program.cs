@@ -1,11 +1,14 @@
 using System.Threading.RateLimiting;
 using JiuDiary.Api.Auth;
 using JiuDiary.Api.Extensions;
+using JiuDiary.Api.Middleware;
 using JiuDiary.Database;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi;
+using NLog.Web;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseNLog();
 
 builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddJiuDiaryAuth(builder.Configuration);
@@ -70,6 +73,7 @@ app.UseSwaggerUI(options =>
 app.UseCors("Frontend");
 app.UseRateLimiter();
 app.UseAuthentication();
+app.UseMiddleware<RequestLoggerMiddleware>();
 app.UseAuthorization();
 app.UseMiddleware<AuthenticatedUserMiddleware>();
 

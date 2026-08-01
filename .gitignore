@@ -25,6 +25,7 @@
 **/bin/
 **/obj/
 .vs/
+**/logs/
 
 # misc
 .DS_Store
