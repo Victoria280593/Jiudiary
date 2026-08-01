@@ -289,7 +289,7 @@ export function TrainingCalendar({
                     const isCurrentWeek = week.some((cell) => cell.isToday);
 
                     return (
-                      <div key={dateKey(week[0].date)} className={`grid grid-cols-7 gap-px ${isCurrentWeek ? "bg-slate-100/30" : ""}`}>
+                      <div key={dateKey(week[0].date)} className={`grid grid-cols-7 gap-px ${isCurrentWeek ? "bg-slate-100/15" : ""}`}>
                         {week.map((cell) => {
                           const key = dateKey(cell.date);
                           const dayTrainings = trainingsByDay.get(key) ?? [];
@@ -305,7 +305,7 @@ export function TrainingCalendar({
                                 isSelected
                                   ? "z-[1] bg-accent-soft ring-2 ring-inset ring-accent/45"
                                   : isCurrentWeek
-                                    ? "bg-slate-50/35 hover:bg-accent-soft/65"
+                                    ? "bg-slate-50/15 hover:bg-accent-soft/65"
                                     : "bg-white hover:bg-accent-soft/65"
                               } ${cell.inMonth ? "" : "text-muted/45"}`}
                             >
