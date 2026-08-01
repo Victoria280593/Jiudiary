@@ -285,11 +285,8 @@ export function TrainingCalendar({
 
                 {calendarView === "month" ? (
                   <div className="flex flex-col gap-px bg-border/60">
-                  {monthWeeks.map((week) => {
-                    const isCurrentWeek = week.some((cell) => cell.isToday);
-
-                    return (
-                      <div key={dateKey(week[0].date)} className={`grid grid-cols-7 gap-px ${isCurrentWeek ? "bg-slate-100/15" : ""}`}>
+                  {monthWeeks.map((week) => (
+                      <div key={dateKey(week[0].date)} className="grid grid-cols-7 gap-px">
                         {week.map((cell) => {
                           const key = dateKey(cell.date);
                           const dayTrainings = trainingsByDay.get(key) ?? [];
@@ -304,9 +301,7 @@ export function TrainingCalendar({
                               className={`group relative flex min-h-24 flex-col items-center px-1.5 py-3 text-center transition duration-200 ease-out lg:min-h-32 xl:min-h-36 ${
                                 isSelected
                                   ? "z-[1] bg-accent-soft ring-2 ring-inset ring-accent/45"
-                                  : isCurrentWeek
-                                    ? "bg-slate-50/15 hover:bg-accent-soft/65"
-                                    : "bg-white hover:bg-accent-soft/65"
+                                  : "bg-white hover:bg-accent-soft/65"
                               } ${cell.inMonth ? "" : "text-muted/45"}`}
                             >
                               <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition duration-200 ${
@@ -332,8 +327,7 @@ export function TrainingCalendar({
                           );
                         })}
                       </div>
-                    );
-                  })}
+                  ))}
                   </div>
                 ) : (
                   <div className="grid grid-cols-7 gap-px bg-border/60">
