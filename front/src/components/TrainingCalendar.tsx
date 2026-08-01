@@ -284,44 +284,54 @@ export function TrainingCalendar({
                 </div>
 
                 {calendarView === "month" ? (
-                  <div className="grid grid-cols-7 gap-px bg-border/60">
-                  {monthWeeks.flat().map((cell) => {
-                    const key = dateKey(cell.date);
-                    const dayTrainings = trainingsByDay.get(key) ?? [];
-                    const isSelected = key === selectedDay;
+                  <div className="flex flex-col gap-px bg-border/60">
+                  {monthWeeks.map((week) => {
+                    const isCurrentWeek = week.some((cell) => cell.isToday);
 
                     return (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => selectDay(key)}
-                        aria-pressed={isSelected}
-                        className={`group relative flex min-h-24 flex-col items-center px-1.5 py-3 text-center transition duration-200 ease-out lg:min-h-32 xl:min-h-36 ${
-                          isSelected
-                            ? "z-[1] bg-accent-soft ring-2 ring-inset ring-accent/45"
-                            : "bg-white hover:bg-accent-soft/65"
-                        } ${cell.inMonth ? "" : "text-muted/45"}`}
-                      >
-                        <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition duration-200 ${
-                          cell.isToday
-                            ? "bg-accent text-white shadow-[0_8px_20px_-8px_rgba(131,93,57,0.78)]"
-                            : "text-foreground group-hover:bg-white"
-                        }`}>
-                          {cell.date.getDate()}
-                        </span>
+                      <div key={dateKey(week[0].date)} className={`grid grid-cols-7 gap-px ${isCurrentWeek ? "bg-slate-100/70" : ""}`}>
+                        {week.map((cell) => {
+                          const key = dateKey(cell.date);
+                          const dayTrainings = trainingsByDay.get(key) ?? [];
+                          const isSelected = key === selectedDay;
 
-                        {dayTrainings.length > 0 && (
-                          <span className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 flex-nowrap justify-center gap-2" aria-label={`Тренировок: ${dayTrainings.length}`}>
-                            {dayTrainings.map((training) => (
-                              <span
-                                key={training.id}
-                                className={`h-3.5 w-3.5 shrink-0 rounded-full shadow-sm ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
-                                aria-hidden="true"
-                              />
-                            ))}
-                          </span>
-                        )}
-                      </button>
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => selectDay(key)}
+                              aria-pressed={isSelected}
+                              className={`group relative flex min-h-24 flex-col items-center px-1.5 py-3 text-center transition duration-200 ease-out lg:min-h-32 xl:min-h-36 ${
+                                isSelected
+                                  ? "z-[1] bg-accent-soft ring-2 ring-inset ring-accent/45"
+                                  : isCurrentWeek
+                                    ? "bg-slate-50/80 hover:bg-accent-soft/65"
+                                    : "bg-white hover:bg-accent-soft/65"
+                              } ${cell.inMonth ? "" : "text-muted/45"}`}
+                            >
+                              <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition duration-200 ${
+                                cell.isToday
+                                  ? "bg-accent text-white shadow-[0_8px_20px_-8px_rgba(131,93,57,0.78)]"
+                                  : "text-foreground group-hover:bg-white"
+                              }`}>
+                                {cell.date.getDate()}
+                              </span>
+
+                              {dayTrainings.length > 0 && (
+                                <span className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 flex-nowrap justify-center gap-2" aria-label={`Тренировок: ${dayTrainings.length}`}>
+                                  {dayTrainings.map((training) => (
+                                    <span
+                                      key={training.id}
+                                      className={`h-3.5 w-3.5 shrink-0 rounded-full shadow-sm ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
+                                      aria-hidden="true"
+                                    />
+                                  ))}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
                     );
                   })}
                   </div>
