@@ -32,6 +32,7 @@ export function CoachGroupsCard() {
   const [colors, setColors] = useState<GroupColor[]>([]);
   const [editError, setEditError] = useState<string>();
   const [isEditing, setIsEditing] = useState(false);
+  const [openMenuGroupId, setOpenMenuGroupId] = useState<string>();
 
   function openModal() {
     setError(undefined);
@@ -53,6 +54,7 @@ export function CoachGroupsCard() {
   }
 
   function openEditModal(group: Group) {
+    setOpenMenuGroupId(undefined);
     setEditingGroup(group);
     setEditName(group.name);
     setEditColorId(group.colorId);
@@ -175,6 +177,7 @@ export function CoachGroupsCard() {
   }
 
   async function handleDelete(group: Group) {
+    setOpenMenuGroupId(undefined);
     setDeletingGroupId(group.id);
     setMutationError(undefined);
 
@@ -210,37 +213,59 @@ export function CoachGroupsCard() {
           Загрузка групп…
         </div>
       ) : groups.length > 0 ? (
-        <div className="mb-4 grid gap-2 sm:grid-cols-2">
-          {groups.map((group) => (
-            <div key={group.id} className="flex items-center gap-3 rounded-lg border border-border bg-surface-muted px-3 py-3">
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white ${getGroupColorStyle(group.colorName).dot}`}>
-                <GroupIcon />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">{group.name}</p>
-                <p className="text-xs text-muted">{colorLabels[group.colorName] ?? group.colorName}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => openEditModal(group)}
-                aria-label={`Редактировать группу ${group.name}`}
-                title="Редактировать группу"
-                className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-accent-soft hover:text-accent"
-              >
-                <PencilIcon />
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleDelete(group)}
-                disabled={deletingGroupId === group.id}
-                aria-label={`Удалить группу ${group.name}`}
-                title="Удалить группу"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-danger-soft hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <TrashIcon />
-              </button>
-            </div>
-          ))}
+        <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {groups.map((group) => {
+            const colorStyle = getGroupColorStyle(group.colorName);
+            const menuIsOpen = openMenuGroupId === group.id;
+
+            return (
+              <article key={group.id} className="relative overflow-visible rounded-2xl border border-border/70 bg-white p-5 pl-6 shadow-[0_12px_30px_-24px_rgba(86,61,38,0.48)]">
+                <span className={`absolute inset-y-0 left-0 w-1.5 rounded-l-2xl ${colorStyle.dot}`} aria-hidden="true" />
+                <div className="flex items-start justify-between gap-3">
+                  <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${colorStyle.badge}`}>
+                    <GroupIcon />
+                  </span>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setOpenMenuGroupId(menuIsOpen ? undefined : group.id)}
+                      aria-expanded={menuIsOpen}
+                      aria-label={`Действия с группой ${group.name}`}
+                      className="flex h-9 w-9 items-center justify-center rounded-xl text-muted transition duration-200 hover:bg-surface-muted hover:text-foreground"
+                    >
+                      <DotsIcon />
+                    </button>
+                    {menuIsOpen && (
+                      <div className="absolute right-0 top-11 z-20 w-48 overflow-hidden rounded-xl border border-border bg-white py-1 shadow-[0_18px_42px_-20px_rgba(86,61,38,0.45)]">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(group)}
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-foreground transition hover:bg-accent-soft hover:text-accent"
+                        >
+                          <PencilIcon />
+                          Редактировать
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleDelete(group)}
+                          disabled={deletingGroupId === group.id}
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-danger transition hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <TrashIcon />
+                          Удалить
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <h3 className="mt-4 whitespace-normal break-words text-lg font-semibold leading-6 text-foreground">{group.name}</h3>
+                <span className={`mt-3 inline-flex max-w-full items-center gap-2 truncate rounded-full border px-3 py-1 text-xs font-semibold ${colorStyle.badge}`}>
+                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${colorStyle.dot}`} aria-hidden="true" />
+                  {colorLabels[group.colorName] ?? group.colorName}
+                </span>
+              </article>
+            );
+          })}
         </div>
       ) : (
         <div className="mb-4 flex items-center gap-3 rounded-lg border border-dashed border-border bg-surface-muted/60 px-4 py-4">
@@ -448,7 +473,6 @@ export function CoachGroupsCard() {
     </Card>
   );
 }
-
 function GroupIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true">
@@ -480,6 +504,16 @@ function PencilIcon() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="m4 20 4.2-1 10.6-10.6a2 2 0 0 0-2.8-2.8L5.4 16.2 4 20Z" />
       <path strokeLinecap="round" d="m14.5 7.1 2.8 2.8" />
+    </svg>
+  );
+}
+
+function DotsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5" aria-hidden="true">
+      <circle cx="12" cy="5" r="1.8" />
+      <circle cx="12" cy="12" r="1.8" />
+      <circle cx="12" cy="19" r="1.8" />
     </svg>
   );
 }
