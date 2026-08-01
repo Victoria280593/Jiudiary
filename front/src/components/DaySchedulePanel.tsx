@@ -117,36 +117,36 @@ export function DaySchedulePanel({
                 <>
                   <span className={`absolute inset-y-0 left-0 w-1.5 ${colorStyle.dot}`} aria-hidden="true" />
                   <div className="flex items-start justify-between gap-3">
-                    <time className="text-sm font-medium text-muted" dateTime={training.date.toISOString()}>
-                      {timeRange}
-                    </time>
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="min-w-0">
+                      <time className="text-sm font-medium text-muted" dateTime={training.date.toISOString()}>
+                        {timeRange}
+                      </time>
                       {training.groupName && (
-                        <span className={`max-w-32 truncate rounded-full border px-3 py-1 text-xs font-semibold ${colorStyle.badge}`}>
+                        <span className={`mt-2 inline-flex max-w-full rounded-full border px-3 py-1 text-xs font-semibold ${colorStyle.badge}`}>
                           {training.groupName}
                         </span>
                       )}
-                      {showCreateForm && (
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            void handleDeleteTraining(training.id);
-                          }}
-                          disabled={deletingTrainingId === training.id}
-                          aria-label="Удалить тренировку"
-                          className="flex h-9 w-9 items-center justify-center rounded-xl text-muted transition duration-200 ease-out hover:bg-danger-soft hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 6V4h8v2" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l1 15h10l1-15" />
-                            <path strokeLinecap="round" d="M10 11v6M14 11v6" />
-                          </svg>
-                        </button>
-                      )}
                     </div>
+                    {showCreateForm && (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          void handleDeleteTraining(training.id);
+                        }}
+                        disabled={deletingTrainingId === training.id}
+                        aria-label="Удалить тренировку"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted transition duration-200 ease-out hover:bg-danger-soft hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 6V4h8v2" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l1 15h10l1-15" />
+                          <path strokeLinecap="round" d="M10 11v6M14 11v6" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                   <h3 className="mt-3 whitespace-normal break-words text-base font-semibold leading-6 text-foreground transition-colors group-hover:text-accent-foreground">
                     {training.title}
