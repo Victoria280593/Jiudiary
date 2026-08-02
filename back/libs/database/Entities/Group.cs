@@ -20,6 +20,12 @@ public sealed class Group
     [ForeignKey(nameof(Color))]
     public int ColorId { get; set; } = 6;
 
+    [Required]
+    public TimeSpan? DefaultStartTime { get; set; }
+
+    [Required]
+    public TimeSpan? DefaultEndTime { get; set; }
+
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTime CreatedAt { get; set; }
 

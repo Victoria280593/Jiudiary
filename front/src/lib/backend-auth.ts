@@ -31,6 +31,8 @@ export type BackendGroup = {
   name: string;
   colorId: number;
   colorName: string;
+  defaultStartTime: string;
+  defaultEndTime: string;
 };
 
 export type BackendGroupColor = {
@@ -57,7 +59,9 @@ function isBackendGroup(value: unknown): value is BackendGroup {
     typeof group.id === "string" &&
     typeof group.name === "string" &&
     typeof group.colorId === "number" &&
-    typeof group.colorName === "string"
+    typeof group.colorName === "string" &&
+    typeof group.defaultStartTime === "string" &&
+    typeof group.defaultEndTime === "string"
   );
 }
 
@@ -273,7 +277,7 @@ export async function updateBackendClientInfo(
   }
 }
 
-export async function createBackendGroup(accessToken: string, name: string, colorId: number): Promise<BackendGroup | null> {
+export async function createBackendGroup(accessToken: string, name: string, colorId: number, defaultStartTime: string | null, defaultEndTime: string | null): Promise<BackendGroup | null> {
   try {
     const response = await fetch(`${backendUrl}/api/groups`, {
       method: "POST",
@@ -281,7 +285,7 @@ export async function createBackendGroup(accessToken: string, name: string, colo
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name, colorId }),
+      body: JSON.stringify({ name, colorId, defaultStartTime, defaultEndTime }),
       cache: "no-store",
       signal: AbortSignal.timeout(5_000),
     });
@@ -340,7 +344,7 @@ export type UpdateBackendGroupResult =
   | { ok: true; group: BackendGroup }
   | { ok: false; status: number; error: string };
 
-export async function updateBackendGroup(accessToken: string, groupId: string, name: string, colorId: number): Promise<UpdateBackendGroupResult> {
+export async function updateBackendGroup(accessToken: string, groupId: string, name: string, colorId: number, defaultStartTime: string | null, defaultEndTime: string | null): Promise<UpdateBackendGroupResult> {
   try {
     const response = await fetch(`${backendUrl}/api/groups/${encodeURIComponent(groupId)}`, {
       method: "PUT",
@@ -348,7 +352,7 @@ export async function updateBackendGroup(accessToken: string, groupId: string, n
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name, colorId }),
+      body: JSON.stringify({ name, colorId, defaultStartTime, defaultEndTime }),
       cache: "no-store",
       signal: AbortSignal.timeout(5_000),
     });

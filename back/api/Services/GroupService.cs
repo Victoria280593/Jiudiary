@@ -31,7 +31,9 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
                 Id = x.Group.Id,
                 Name = x.Group.Name,
                 ColorId = x.Group.ColorId,
-                ColorName = x.Group.Color.Name
+                ColorName = x.Group.Color.Name,
+                DefaultStartTime = x.Group.DefaultStartTime,
+                DefaultEndTime = x.Group.DefaultEndTime
             })
             .ToListAsync();
 
@@ -95,6 +97,8 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
             throw new ArgumentException("Выбранный цвет группы не существует.", nameof(inputModel.ColorId));
         }
 
+        ValidateDefaultTrainingTime(inputModel.DefaultStartTime, inputModel.DefaultEndTime);
+
         var coach = await dbContext.ClientInfos.SingleOrDefaultAsync(x => x.UserId == user.Id);
 
         if (coach is null)
@@ -106,7 +110,9 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
         var group = new Group
         {
             Name = inputModel.Name.Trim(),
-            ColorId = color.Id
+            ColorId = color.Id,
+            DefaultStartTime = inputModel.DefaultStartTime,
+            DefaultEndTime = inputModel.DefaultEndTime
         };
 
         dbContext.Groups.Add(group);
@@ -124,7 +130,9 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
             Id = group.Id,
             Name = group.Name,
             ColorId = group.ColorId,
-            ColorName = color.Name
+            ColorName = color.Name,
+            DefaultStartTime = group.DefaultStartTime,
+            DefaultEndTime = group.DefaultEndTime
         };
     }
 
@@ -174,8 +182,12 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
             throw new ArgumentException("Выбранный цвет группы не существует.", nameof(inputModel.ColorId));
         }
 
+        ValidateDefaultTrainingTime(inputModel.DefaultStartTime, inputModel.DefaultEndTime);
+
         coachGroup.Group.Name = inputModel.Name.Trim();
         coachGroup.Group.ColorId = color.Id;
+        coachGroup.Group.DefaultStartTime = inputModel.DefaultStartTime;
+        coachGroup.Group.DefaultEndTime = inputModel.DefaultEndTime;
         await dbContext.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("Группа тренера отредактирована. UserId: {UserId} | GroupId: {GroupId} | ColorId: {ColorId}", user.Id, groupId, color.Id);
@@ -184,10 +196,34 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
             Id = coachGroup.Group.Id,
             Name = coachGroup.Group.Name,
             ColorId = color.Id,
-            ColorName = color.Name
+            ColorName = color.Name,
+            DefaultStartTime = coachGroup.Group.DefaultStartTime,
+            DefaultEndTime = coachGroup.Group.DefaultEndTime
         };
     }
 
+    private static void ValidateDefaultTrainingTime(TimeSpan? defaultStartTime, TimeSpan? defaultEndTime)
+    {
+        if (!defaultStartTime.HasValue && !defaultEndTime.HasValue)
+        {
+            return;
+        }
+
+        if (!defaultStartTime.HasValue)
+        {
+            throw new ArgumentException("Необходимо указать время начала тренировки.", nameof(defaultStartTime));
+        }
+
+        if (!defaultEndTime.HasValue)
+        {
+            throw new ArgumentException("Необходимо указать время окончания тренировки.", nameof(defaultEndTime));
+        }
+
+        if (defaultEndTime.Value <= defaultStartTime.Value)
+        {
+            throw new ArgumentException("Время окончания тренировки должно быть позже времени начала.", nameof(defaultEndTime));
+        }
+    }
     private static void EnsureCoach(AuthenticatedUser user, string message)
     {
         if (user.Role != UserRolesEnum.Coach)

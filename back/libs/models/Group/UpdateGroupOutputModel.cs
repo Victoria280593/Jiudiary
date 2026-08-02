@@ -12,4 +12,8 @@ public class UpdateGroupOutputModel
     public int ColorId { get; set; }
 
     public string ColorName { get; set; } = string.Empty;
+
+    public TimeSpan? DefaultStartTime { get; set; }
+
+    public TimeSpan? DefaultEndTime { get; set; }
 }
