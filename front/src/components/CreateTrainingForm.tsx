@@ -89,20 +89,9 @@ export function CreateTrainingForm({
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor={`${idPrefix}date`} className={labelClass}>
-            Дата
-          </label>
-          <input
-            id={`${idPrefix}date`}
-            name="date"
-            type="date"
-            required
-            defaultValue={defaultDate}
-            className={inputClass}
-          />
-        </div>
+      <input type="hidden" name="date" defaultValue={defaultDate} />
+
+      <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <label htmlFor={`${idPrefix}startTime`} className={labelClass}>
             Время начала
@@ -151,5 +140,4 @@ export function CreateTrainingForm({
     </form>
   );
 }
-
 
