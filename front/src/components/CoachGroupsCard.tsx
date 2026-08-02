@@ -380,7 +380,7 @@ export function CoachGroupsCard() {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="groupDefaultStartTime" className={labelClass}>
+              <label htmlFor="groupDefaultStartTime" className={`${labelClass} sm:min-h-10`}>
                 Время начала тренировки
               </label>
               <input
@@ -392,7 +392,7 @@ export function CoachGroupsCard() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="groupDefaultEndTime" className={labelClass}>
+              <label htmlFor="groupDefaultEndTime" className={`${labelClass} sm:min-h-10`}>
                 Время окончания тренировки
               </label>
               <input
@@ -497,7 +497,7 @@ export function CoachGroupsCard() {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="editGroupDefaultStartTime" className={labelClass}>
+              <label htmlFor="editGroupDefaultStartTime" className={`${labelClass} sm:min-h-10`}>
                 Время начала тренировки
               </label>
               <input
@@ -509,7 +509,7 @@ export function CoachGroupsCard() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="editGroupDefaultEndTime" className={labelClass}>
+              <label htmlFor="editGroupDefaultEndTime" className={`${labelClass} sm:min-h-10`}>
                 Время окончания тренировки
               </label>
               <input
@@ -520,7 +520,9 @@ export function CoachGroupsCard() {
                 className={inputClass}
               />
             </div>
-          </div>          <fieldset className="flex flex-col gap-2.5">
+          </div>
+
+          <fieldset className="flex flex-col gap-2.5">
             <legend className={labelClass}>Цвет группы</legend>
             <div className="mt-1 flex flex-wrap gap-2">
               {colors.length === 0 && !editError ? (
@@ -614,5 +616,6 @@ function DotsIcon() {
     </svg>
   );
 }
+
 
 
