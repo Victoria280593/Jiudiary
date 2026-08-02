@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Card } from "@/components/Card";
 import { useGroups } from "@/components/GroupsProvider";
 import { getGroupColors, type Group, type GroupColor } from "@/lib/groups-client";
@@ -33,6 +33,21 @@ export function CoachGroupsCard() {
   const [editError, setEditError] = useState<string>();
   const [isEditing, setIsEditing] = useState(false);
   const [openMenuGroupId, setOpenMenuGroupId] = useState<string>();
+
+  useEffect(() => {
+    if (!openMenuGroupId) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest('[data-group-actions-menu="true"]')) return;
+
+      setOpenMenuGroupId(undefined);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [openMenuGroupId]);
 
   function openModal() {
     setError(undefined);
@@ -225,7 +240,7 @@ export function CoachGroupsCard() {
                   <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${colorStyle.badge}`}>
                     <GroupIcon />
                   </span>
-                  <div className="relative">
+                  <div className="relative" data-group-actions-menu="true">
                     <button
                       type="button"
                       onClick={() => setOpenMenuGroupId(menuIsOpen ? undefined : group.id)}
