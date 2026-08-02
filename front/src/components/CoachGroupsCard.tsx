@@ -148,6 +148,8 @@ export function CoachGroupsCard() {
         name: createdGroup.name,
         colorId: createdGroup.colorId,
         colorName: createdGroup.colorName,
+        defaultStartTime: createdGroup.defaultStartTime ?? null,
+        defaultEndTime: createdGroup.defaultEndTime ?? null,
       });
       dialogRef.current?.close();
       setName("");
@@ -204,6 +206,8 @@ export function CoachGroupsCard() {
         name: updated.name,
         colorId: updated.colorId,
         colorName: updated.colorName,
+        defaultStartTime: updated.defaultStartTime ?? null,
+        defaultEndTime: updated.defaultEndTime ?? null,
       });
       editDialogRef.current?.close();
     } catch {
@@ -610,4 +614,5 @@ function DotsIcon() {
     </svg>
   );
 }
+
 
