@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Card } from "@/components/Card";
@@ -6,6 +6,14 @@ import { useGroups } from "@/components/GroupsProvider";
 import { getGroupColors, type Group, type GroupColor } from "@/lib/groups-client";
 import { getGroupColorStyle } from "@/lib/group-colors";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
+
+function toTimeInputValue(value: string | null | undefined) {
+  return value ? value.slice(0, 5) : "";
+}
+
+function toApiTime(value: string) {
+  return value ? `${value}:00` : null;
+}
 
 const colorLabels: Record<string, string> = {
   Red: "Красный",
@@ -22,6 +30,8 @@ export function CoachGroupsCard() {
   const { groups, status, error: groupsError, addGroup, updateGroup, removeGroup } = useGroups();
   const [name, setName] = useState("");
   const [createColorId, setCreateColorId] = useState(6);
+  const [createDefaultStartTime, setCreateDefaultStartTime] = useState("");
+  const [createDefaultEndTime, setCreateDefaultEndTime] = useState("");
   const [error, setError] = useState<string>();
   const [mutationError, setMutationError] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,6 +39,8 @@ export function CoachGroupsCard() {
   const [editingGroup, setEditingGroup] = useState<Group>();
   const [editName, setEditName] = useState("");
   const [editColorId, setEditColorId] = useState(1);
+  const [editDefaultStartTime, setEditDefaultStartTime] = useState("");
+  const [editDefaultEndTime, setEditDefaultEndTime] = useState("");
   const [colors, setColors] = useState<GroupColor[]>([]);
   const [editError, setEditError] = useState<string>();
   const [isEditing, setIsEditing] = useState(false);
@@ -53,6 +65,8 @@ export function CoachGroupsCard() {
     setError(undefined);
     setName("");
     setCreateColorId(6);
+    setCreateDefaultStartTime("");
+    setCreateDefaultEndTime("");
     dialogRef.current?.showModal();
 
     if (colors.length === 0) {
@@ -73,6 +87,8 @@ export function CoachGroupsCard() {
     setEditingGroup(group);
     setEditName(group.name);
     setEditColorId(group.colorId);
+    setEditDefaultStartTime(toTimeInputValue(group.defaultStartTime));
+    setEditDefaultEndTime(toTimeInputValue(group.defaultEndTime));
     setEditError(undefined);
     editDialogRef.current?.showModal();
 
@@ -105,7 +121,7 @@ export function CoachGroupsCard() {
       const response = await fetch("/api/groups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: normalizedName, colorId: createColorId }),
+        body: JSON.stringify({ name: normalizedName, colorId: createColorId, defaultStartTime: toApiTime(createDefaultStartTime), defaultEndTime: toApiTime(createDefaultEndTime) }),
       });
 
       if (!response.ok) {
@@ -119,7 +135,9 @@ export function CoachGroupsCard() {
         typeof createdGroup.id !== "string" ||
         typeof createdGroup.name !== "string" ||
         typeof createdGroup.colorId !== "number" ||
-        typeof createdGroup.colorName !== "string"
+        typeof createdGroup.colorName !== "string" ||
+        (createdGroup.defaultStartTime !== null && typeof createdGroup.defaultStartTime !== "string") ||
+        (createdGroup.defaultEndTime !== null && typeof createdGroup.defaultEndTime !== "string")
       ) {
         setError("Сервер вернул некорректные данные созданной группы.");
         return;
@@ -133,6 +151,8 @@ export function CoachGroupsCard() {
       });
       dialogRef.current?.close();
       setName("");
+      setCreateDefaultStartTime("");
+      setCreateDefaultEndTime("");
     } catch {
       setError("Не удалось подключиться к серверу.");
     } finally {
@@ -157,7 +177,7 @@ export function CoachGroupsCard() {
       const response = await fetch("/api/groups", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: editingGroup.id, name: normalizedName, colorId: editColorId }),
+        body: JSON.stringify({ id: editingGroup.id, name: normalizedName, colorId: editColorId, defaultStartTime: toApiTime(editDefaultStartTime), defaultEndTime: toApiTime(editDefaultEndTime) }),
       });
 
       if (!response.ok) {
@@ -171,7 +191,9 @@ export function CoachGroupsCard() {
         typeof updated.id !== "string" ||
         typeof updated.name !== "string" ||
         typeof updated.colorId !== "number" ||
-        typeof updated.colorName !== "string"
+        typeof updated.colorName !== "string" ||
+        (updated.defaultStartTime !== null && typeof updated.defaultStartTime !== "string") ||
+        (updated.defaultEndTime !== null && typeof updated.defaultEndTime !== "string")
       ) {
         setEditError("Сервер вернул некорректные данные группы.");
         return;
@@ -308,6 +330,8 @@ export function CoachGroupsCard() {
         onClose={() => {
           setError(undefined);
           setName("");
+      setCreateDefaultStartTime("");
+      setCreateDefaultEndTime("");
         }}
         onClick={(event) => {
           if (event.target === dialogRef.current) closeModal();
@@ -347,6 +371,34 @@ export function CoachGroupsCard() {
               placeholder="Например, Взрослая группа"
               className={inputClass}
             />
+          </div>
+
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="groupDefaultStartTime" className={labelClass}>
+                Время начала тренировки
+              </label>
+              <input
+                id="groupDefaultStartTime"
+                type="time"
+                value={createDefaultStartTime}
+                onChange={(event) => setCreateDefaultStartTime(event.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="groupDefaultEndTime" className={labelClass}>
+                Время окончания тренировки
+              </label>
+              <input
+                id="groupDefaultEndTime"
+                type="time"
+                value={createDefaultEndTime}
+                onChange={(event) => setCreateDefaultEndTime(event.target.value)}
+                className={inputClass}
+              />
+            </div>
           </div>
 
           <fieldset className="flex flex-col gap-2.5">
@@ -438,7 +490,33 @@ export function CoachGroupsCard() {
             />
           </div>
 
-          <fieldset className="flex flex-col gap-2.5">
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="editGroupDefaultStartTime" className={labelClass}>
+                Время начала тренировки
+              </label>
+              <input
+                id="editGroupDefaultStartTime"
+                type="time"
+                value={editDefaultStartTime}
+                onChange={(event) => setEditDefaultStartTime(event.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="editGroupDefaultEndTime" className={labelClass}>
+                Время окончания тренировки
+              </label>
+              <input
+                id="editGroupDefaultEndTime"
+                type="time"
+                value={editDefaultEndTime}
+                onChange={(event) => setEditDefaultEndTime(event.target.value)}
+                className={inputClass}
+              />
+            </div>
+          </div>          <fieldset className="flex flex-col gap-2.5">
             <legend className={labelClass}>Цвет группы</legend>
             <div className="mt-1 flex flex-wrap gap-2">
               {colors.length === 0 && !editError ? (
@@ -532,3 +610,4 @@ function DotsIcon() {
     </svg>
   );
 }
+

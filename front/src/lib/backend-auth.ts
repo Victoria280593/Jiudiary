@@ -31,8 +31,8 @@ export type BackendGroup = {
   name: string;
   colorId: number;
   colorName: string;
-  defaultStartTime: string;
-  defaultEndTime: string;
+  defaultStartTime: string | null;
+  defaultEndTime: string | null;
 };
 
 export type BackendGroupColor = {
@@ -60,8 +60,8 @@ function isBackendGroup(value: unknown): value is BackendGroup {
     typeof group.name === "string" &&
     typeof group.colorId === "number" &&
     typeof group.colorName === "string" &&
-    typeof group.defaultStartTime === "string" &&
-    typeof group.defaultEndTime === "string"
+    (group.defaultStartTime === null || typeof group.defaultStartTime === "string") &&
+    (group.defaultEndTime === null || typeof group.defaultEndTime === "string")
   );
 }
 

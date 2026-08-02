@@ -5,6 +5,15 @@ import { createBackendGroup, deleteBackendGroup, getBackendGroups, updateBackend
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+function normalizeOptionalTime(value: unknown): string | null | undefined {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value !== "string") return undefined;
+  if (/^\d{2}:\d{2}$/.test(value)) return `${value}:00`;
+  if (/^\d{2}:\d{2}:\d{2}$/.test(value)) return value;
+
+  return undefined;
+}
+
 export async function GET(request: Request) {
   const session = await getSession();
   if (!session) {
@@ -26,7 +35,7 @@ export async function POST(request: Request) {
 
   const contentType = request.headers.get("content-type") ?? "";
   const input = contentType.includes("application/json")
-    ? ((await request.json()) as { name?: unknown; colorId?: unknown })
+    ? ((await request.json()) as { name?: unknown; colorId?: unknown; defaultStartTime?: unknown; defaultEndTime?: unknown })
     : Object.fromEntries((await request.formData()).entries());
   const name = input.name;
 
@@ -39,7 +48,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Необходимо выбрать цвет группы." }, { status: 400 });
   }
 
-  const created = await createBackendGroup(session.accessToken, name.trim(), colorId);
+  const defaultStartTime = normalizeOptionalTime(input.defaultStartTime);
+  const defaultEndTime = normalizeOptionalTime(input.defaultEndTime);
+  if (defaultStartTime === undefined || defaultEndTime === undefined) {
+    return NextResponse.json({ error: "Укажите корректное время тренировки." }, { status: 400 });
+  }
+
+  const created = await createBackendGroup(session.accessToken, name.trim(), colorId, defaultStartTime, defaultEndTime);
   return created
     ? NextResponse.json(created)
     : NextResponse.json({ error: "Не удалось создать группу." }, { status: 502 });
@@ -68,7 +83,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Пользователь не авторизован." }, { status: 401 });
   }
 
-  const input = (await request.json()) as { id?: unknown; name?: unknown; colorId?: unknown };
+  const input = (await request.json()) as { id?: unknown; name?: unknown; colorId?: unknown; defaultStartTime?: unknown; defaultEndTime?: unknown };
   if (typeof input.id !== "string" || !input.id.trim()) {
     return NextResponse.json({ error: "Необходимо указать идентификатор группы." }, { status: 400 });
   }
@@ -79,7 +94,13 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Необходимо выбрать цвет группы." }, { status: 400 });
   }
 
-  const result = await updateBackendGroup(session.accessToken, input.id, input.name.trim(), input.colorId);
+  const defaultStartTime = normalizeOptionalTime(input.defaultStartTime);
+  const defaultEndTime = normalizeOptionalTime(input.defaultEndTime);
+  if (defaultStartTime === undefined || defaultEndTime === undefined) {
+    return NextResponse.json({ error: "Укажите корректное время тренировки." }, { status: 400 });
+  }
+
+  const result = await updateBackendGroup(session.accessToken, input.id, input.name.trim(), input.colorId, defaultStartTime, defaultEndTime);
   return result.ok
     ? NextResponse.json(result.group)
     : NextResponse.json({ error: result.error }, { status: result.status });

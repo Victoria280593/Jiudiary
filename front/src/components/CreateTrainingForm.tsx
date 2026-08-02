@@ -1,10 +1,14 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useEffect, useRef } from "react";
 import { createTrainingAction, type FormState } from "@/app/actions/training";
 import { useGroups } from "@/components/GroupsProvider";
 import { SubmitButton } from "@/components/SubmitButton";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
+
+function toTimeInputValue(value: string | null | undefined) {
+  return value ? value.slice(0, 5) : "";
+}
 
 function addMinutes(time: string, minutes: number) {
   const [hours = 0, currentMinutes = 0] = time.split(":").map(Number);
@@ -25,6 +29,8 @@ export function CreateTrainingForm({
   const [state, formAction] = useActionState<FormState, FormData>(createTrainingAction, undefined);
   const { groups, status: groupsStatus, error: groupsError } = useGroups();
   const formRef = useRef<HTMLFormElement>(null);
+  const startTimeInputRef = useRef<HTMLInputElement>(null);
+  const endTimeInputRef = useRef<HTMLInputElement>(null);
   const [defaultDate = "", defaultStartTime = "09:00"] = defaultDateTime?.split("T") ?? [];
   const defaultEndTime = defaultStartTime ? addMinutes(defaultStartTime, 90) : "10:30";
 
@@ -57,6 +63,16 @@ export function CreateTrainingForm({
           required
           disabled={groupsAreLoading || groupsStatus === "error"}
           defaultValue=""
+          onChange={(event) => {
+            const selectedGroup = groups.find((group) => group.id === event.target.value);
+            const groupStartTime = toTimeInputValue(selectedGroup?.defaultStartTime);
+            const groupEndTime = toTimeInputValue(selectedGroup?.defaultEndTime);
+
+            if (!groupStartTime || !groupEndTime) return;
+
+            if (startTimeInputRef.current) startTimeInputRef.current.value = groupStartTime;
+            if (endTimeInputRef.current) endTimeInputRef.current.value = groupEndTime;
+          }}
           className={inputClass}
         >
           <option value="" disabled>
@@ -89,9 +105,10 @@ export function CreateTrainingForm({
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor={`${idPrefix}startTime`} className={labelClass}>
-            Время начала
+            Время начала тренировки
           </label>
           <input
+            ref={startTimeInputRef}
             id={`${idPrefix}startTime`}
             name="startTime"
             type="time"
@@ -102,9 +119,10 @@ export function CreateTrainingForm({
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor={`${idPrefix}endTime`} className={labelClass}>
-            Время окончания
+            Время окончания тренировки
           </label>
           <input
+            ref={endTimeInputRef}
             id={`${idPrefix}endTime`}
             name="endTime"
             type="time"
@@ -133,3 +151,4 @@ export function CreateTrainingForm({
     </form>
   );
 }
+

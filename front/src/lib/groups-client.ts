@@ -3,8 +3,8 @@ export type Group = {
   name: string;
   colorId: number;
   colorName: string;
-  defaultStartTime: string;
-  defaultEndTime: string;
+  defaultStartTime: string | null;
+  defaultEndTime: string | null;
 };
 
 export type GroupColor = {
