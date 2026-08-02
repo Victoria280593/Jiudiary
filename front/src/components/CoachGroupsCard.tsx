@@ -380,8 +380,8 @@ export function CoachGroupsCard() {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="groupDefaultStartTime" className={`${labelClass} sm:min-h-10`}>
-                Время начала тренировки
+              <label htmlFor="groupDefaultStartTime" className={labelClass}>
+                Время начала
               </label>
               <input
                 id="groupDefaultStartTime"
@@ -392,8 +392,8 @@ export function CoachGroupsCard() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="groupDefaultEndTime" className={`${labelClass} sm:min-h-10`}>
-                Время окончания тренировки
+              <label htmlFor="groupDefaultEndTime" className={labelClass}>
+                Время окончания
               </label>
               <input
                 id="groupDefaultEndTime"
@@ -497,8 +497,8 @@ export function CoachGroupsCard() {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="editGroupDefaultStartTime" className={`${labelClass} sm:min-h-10`}>
-                Время начала тренировки
+              <label htmlFor="editGroupDefaultStartTime" className={labelClass}>
+                Время начала
               </label>
               <input
                 id="editGroupDefaultStartTime"
@@ -509,8 +509,8 @@ export function CoachGroupsCard() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="editGroupDefaultEndTime" className={`${labelClass} sm:min-h-10`}>
-                Время окончания тренировки
+              <label htmlFor="editGroupDefaultEndTime" className={labelClass}>
+                Время окончания
               </label>
               <input
                 id="editGroupDefaultEndTime"
@@ -616,6 +616,7 @@ function DotsIcon() {
     </svg>
   );
 }
+
 
 
 

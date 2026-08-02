@@ -105,7 +105,7 @@ export function CreateTrainingForm({
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor={`${idPrefix}startTime`} className={labelClass}>
-            Время начала тренировки
+            Время начала
           </label>
           <input
             ref={startTimeInputRef}
@@ -119,7 +119,7 @@ export function CreateTrainingForm({
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor={`${idPrefix}endTime`} className={labelClass}>
-            Время окончания тренировки
+            Время окончания
           </label>
           <input
             ref={endTimeInputRef}
@@ -151,4 +151,5 @@ export function CreateTrainingForm({
     </form>
   );
 }
+
 
