@@ -313,7 +313,7 @@ export function TrainingCalendar({
                               </span>
 
                               {dayTrainings.length > 0 && (
-                                <span className="absolute inset-x-1 bottom-1.5 grid grid-cols-4 justify-center justify-items-center gap-0.5 px-2 sm:inset-x-2 sm:bottom-auto sm:top-1/2 sm:flex sm:-translate-y-1/2 sm:flex-nowrap sm:gap-2 sm:px-0" aria-label={`Тренировок: ${dayTrainings.length}`}>
+                                <span className="absolute inset-x-1 bottom-1.5 grid grid-cols-4 justify-center justify-items-center gap-x-1.5 gap-y-1 px-2 sm:inset-x-2 sm:bottom-auto sm:top-1/2 sm:flex sm:-translate-y-1/2 sm:flex-nowrap sm:gap-2 sm:px-0" aria-label={`Тренировок: ${dayTrainings.length}`}>
                                   {dayTrainings.slice(0, 8).map((training) => (
                                     <span
                                       key={training.id}
@@ -355,7 +355,7 @@ export function TrainingCalendar({
                           {day.getDate()}
                         </span>
                         {dayTrainings.length > 0 && (
-                          <span className="absolute inset-x-1 bottom-1.5 grid grid-cols-4 justify-center justify-items-center gap-0.5 px-2 sm:inset-x-2 sm:bottom-auto sm:top-1/2 sm:flex sm:-translate-y-1/2 sm:flex-nowrap sm:gap-2 sm:px-0" aria-label={`Тренировок: ${dayTrainings.length}`}>
+                          <span className="absolute inset-x-1 bottom-1.5 grid grid-cols-4 justify-center justify-items-center gap-x-1.5 gap-y-1 px-2 sm:inset-x-2 sm:bottom-auto sm:top-1/2 sm:flex sm:-translate-y-1/2 sm:flex-nowrap sm:gap-2 sm:px-0" aria-label={`Тренировок: ${dayTrainings.length}`}>
                             {dayTrainings.slice(0, 8).map((training) => (
                               <span
                                 key={training.id}
