@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Card } from "@/components/Card";
 import { useGroups } from "@/components/GroupsProvider";
 import { getGroupColors, type Group, type GroupColor } from "@/lib/groups-client";
@@ -29,8 +29,9 @@ const groupDialogHeaderClass = "flex items-start justify-between gap-4 px-6 pb-2
 const groupDialogCloseButtonClass = "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-3xl leading-none text-muted transition duration-200 hover:bg-surface-muted hover:text-foreground disabled:opacity-50";
 const groupDialogFormClass = "flex flex-col gap-5 px-6 pb-6 pt-3";
 const groupDialogTimeGridClass = "grid grid-cols-2 gap-3 rounded-[1.35rem] bg-surface-muted/55 p-3";
-const groupDialogTimeInputClass = `${inputClass} bg-white text-center text-base font-semibold tabular-nums`;
 const groupDialogActionsClass = "flex justify-end gap-2 pt-1";
+const timePickerHours = Array.from({ length: 24 }, (_, index) => String(index).padStart(2, "0"));
+const timePickerMinutes = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, "0"));
 
 export function CoachGroupsCard() {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -390,24 +391,20 @@ export function CoachGroupsCard() {
               <label htmlFor="groupDefaultStartTime" className={labelClass}>
                 Время начала
               </label>
-              <input
+              <GroupTimePicker
                 id="groupDefaultStartTime"
-                type="time"
                 value={createDefaultStartTime}
-                onChange={(event) => setCreateDefaultStartTime(event.target.value)}
-                className={groupDialogTimeInputClass}
+                onChange={setCreateDefaultStartTime}
               />
             </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="groupDefaultEndTime" className={labelClass}>
                 Время окончания
               </label>
-              <input
+              <GroupTimePicker
                 id="groupDefaultEndTime"
-                type="time"
                 value={createDefaultEndTime}
-                onChange={(event) => setCreateDefaultEndTime(event.target.value)}
-                className={groupDialogTimeInputClass}
+                onChange={setCreateDefaultEndTime}
               />
             </div>
           </div>
@@ -506,24 +503,20 @@ export function CoachGroupsCard() {
               <label htmlFor="editGroupDefaultStartTime" className={labelClass}>
                 Время начала
               </label>
-              <input
+              <GroupTimePicker
                 id="editGroupDefaultStartTime"
-                type="time"
                 value={editDefaultStartTime}
-                onChange={(event) => setEditDefaultStartTime(event.target.value)}
-                className={groupDialogTimeInputClass}
+                onChange={setEditDefaultStartTime}
               />
             </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="editGroupDefaultEndTime" className={labelClass}>
                 Время окончания
               </label>
-              <input
+              <GroupTimePicker
                 id="editGroupDefaultEndTime"
-                type="time"
                 value={editDefaultEndTime}
-                onChange={(event) => setEditDefaultEndTime(event.target.value)}
-                className={groupDialogTimeInputClass}
+                onChange={setEditDefaultEndTime}
               />
             </div>
           </div>
@@ -576,6 +569,115 @@ export function CoachGroupsCard() {
         </form>
       </dialog>
     </Card>
+  );
+}
+function GroupTimePicker({ id, value, onChange }: { id: string; value: string; onChange: (value: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [selectedHour = "", selectedMinute = ""] = value.split(":");
+
+  const minuteOptions = useMemo(() => {
+    if (!selectedMinute || timePickerMinutes.includes(selectedMinute)) {
+      return timePickerMinutes;
+    }
+
+    return [...timePickerMinutes, selectedMinute].sort((first, second) => Number(first) - Number(second));
+  }, [selectedMinute]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (rootRef.current?.contains(target)) return;
+
+      setIsOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isOpen]);
+
+  function selectHour(hour: string) {
+    onChange(hour + ":" + (selectedMinute || "00"));
+  }
+
+  function selectMinute(minute: string) {
+    onChange((selectedHour || "09") + ":" + minute);
+  }
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        id={id}
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+        aria-expanded={isOpen}
+        className="flex min-h-12 w-full items-center justify-between rounded-xl border border-border bg-white px-4 text-left text-base font-semibold tabular-nums text-foreground shadow-[0_10px_24px_-22px_rgba(86,61,38,0.45)] transition duration-200 hover:border-accent/40 hover:bg-white focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+      >
+        <span>{value || "--:--"}</span>
+        <ClockIcon />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-1/2 top-[calc(100%+0.5rem)] z-30 w-64 -translate-x-1/2 overflow-hidden rounded-[1.6rem] border border-border/60 bg-white shadow-[0_24px_60px_-28px_rgba(86,61,38,0.72)]">
+          <div className="grid grid-cols-2 divide-x divide-border/70">
+            <TimePickerColumn title="Часы" options={timePickerHours} selectedValue={selectedHour} onSelect={selectHour} />
+            <TimePickerColumn title="Минуты" options={minuteOptions} selectedValue={selectedMinute} onSelect={selectMinute} />
+          </div>
+          {value && (
+            <button
+              type="button"
+              onClick={() => {
+                onChange("");
+                setIsOpen(false);
+              }}
+              className="w-full bg-surface-muted/45 px-4 py-2.5 text-sm font-medium text-muted transition hover:bg-surface-muted hover:text-foreground"
+            >
+              Очистить время
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TimePickerColumn({ title, options, selectedValue, onSelect }: { title: string; options: string[]; selectedValue: string; onSelect: (value: string) => void }) {
+  return (
+    <div className="py-3">
+      <div className="px-4 pb-2 text-center text-sm font-medium text-muted">{title}</div>
+      <div className="max-h-64 overflow-y-auto px-2">
+        {options.map((option) => {
+          const isSelected = option === selectedValue;
+
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onSelect(option)}
+              className={[
+                "inline-flex min-h-10 w-full items-center justify-center rounded-xl text-lg tabular-nums transition duration-150",
+                isSelected
+                  ? "bg-accent text-white shadow-[0_10px_24px_-16px_rgba(131,93,57,0.7)]"
+                  : "text-muted hover:bg-accent-soft hover:text-foreground"
+              ].join(" ")}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5 text-muted" aria-hidden="true">
+      <circle cx="12" cy="12" r="8" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l2.5 2" />
+    </svg>
   );
 }
 function GroupIcon() {
