@@ -274,12 +274,12 @@ export function TrainingCalendar({
             )}
           </div>
 
-          <div className="max-w-full overflow-x-auto pb-1">
-            <div className="min-w-[42rem]">
+          <div className="max-w-full overflow-visible pb-1 sm:overflow-x-auto">
+            <div className="min-w-0 sm:min-w-[42rem]">
               <div className="overflow-hidden rounded-2xl border border-border/70 bg-white">
-                <div className="grid grid-cols-7 border-b border-border/70 text-center text-xs font-medium text-muted sm:text-sm">
+                <div className="grid grid-cols-7 border-b border-border/70 text-center text-[0.68rem] font-medium text-muted sm:text-sm">
                   {WEEKDAY_LABELS.map((day) => (
-                    <div key={day} className="border-r border-border/70 py-3 last:border-r-0">{day}</div>
+                    <div key={day} className="border-r border-border/70 py-2 last:border-r-0 sm:py-3">{day}</div>
                   ))}
                 </div>
 
@@ -298,13 +298,13 @@ export function TrainingCalendar({
                               type="button"
                               onClick={() => selectDay(key)}
                               aria-pressed={isSelected}
-                              className={`group relative flex min-h-24 flex-col items-center px-1.5 py-3 text-center transition duration-200 ease-out lg:min-h-32 xl:min-h-36 ${
+                              className={`group relative flex min-h-14 flex-col items-center px-0.5 py-1.5 text-center transition duration-200 ease-out sm:min-h-24 sm:px-1.5 sm:py-3 lg:min-h-32 xl:min-h-36 ${
                                 isSelected
                                   ? "z-[1] bg-accent-soft ring-2 ring-inset ring-accent/45"
                                   : "bg-white hover:bg-accent-soft/65"
                               } ${cell.inMonth ? "" : "text-muted/45"}`}
                             >
-                              <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition duration-200 ${
+                              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium transition duration-200 sm:h-8 sm:w-8 sm:text-sm ${
                                 cell.isToday
                                   ? "bg-accent text-white shadow-[0_8px_20px_-8px_rgba(131,93,57,0.78)]"
                                   : "text-foreground group-hover:bg-white"
@@ -313,11 +313,11 @@ export function TrainingCalendar({
                               </span>
 
                               {dayTrainings.length > 0 && (
-                                <span className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 flex-nowrap justify-center gap-2" aria-label={`Тренировок: ${dayTrainings.length}`}>
+                                <span className="absolute inset-x-1 bottom-2 flex flex-nowrap justify-center gap-1 sm:inset-x-2 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:gap-2" aria-label={`Тренировок: ${dayTrainings.length}`}>
                                   {dayTrainings.map((training) => (
                                     <span
                                       key={training.id}
-                                      className={`h-3.5 w-3.5 shrink-0 rounded-full shadow-sm ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
+                                      className={`h-2 w-2 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
                                       aria-hidden="true"
                                     />
                                   ))}
@@ -343,23 +343,23 @@ export function TrainingCalendar({
                         type="button"
                         onClick={() => selectDay(key)}
                         aria-pressed={isSelected}
-                        className={`group relative flex min-h-72 flex-col items-center px-2 py-4 text-center transition duration-200 ease-out ${
+                        className={`group relative flex min-h-20 flex-col items-center px-0.5 py-2 text-center transition duration-200 ease-out sm:min-h-72 sm:px-2 sm:py-4 ${
                           isSelected
                             ? "z-[1] bg-accent-soft ring-2 ring-inset ring-accent/45"
                             : "bg-white hover:bg-accent-soft/65"
                         }`}
                       >
-                        <span className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${
+                        <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold sm:h-9 sm:w-9 sm:text-sm ${
                           isToday ? "bg-accent text-white" : "text-foreground group-hover:bg-white"
                         }`}>
                           {day.getDate()}
                         </span>
                         {dayTrainings.length > 0 && (
-                          <span className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 flex-nowrap justify-center gap-2" aria-label={`Тренировок: ${dayTrainings.length}`}>
+                          <span className="absolute inset-x-1 bottom-2 flex flex-nowrap justify-center gap-1 sm:inset-x-2 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:gap-2" aria-label={`Тренировок: ${dayTrainings.length}`}>
                             {dayTrainings.map((training) => (
                               <span
                                 key={training.id}
-                                className={`h-3.5 w-3.5 shrink-0 rounded-full shadow-sm ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
+                                className={`h-2 w-2 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
                                 aria-hidden="true"
                               />
                             ))}

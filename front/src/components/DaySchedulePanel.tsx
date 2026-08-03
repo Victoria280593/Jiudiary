@@ -81,7 +81,7 @@ export function DaySchedulePanel({
   return (
     <aside
       aria-label={`Тренировки на ${dateTitle}`}
-      className={`${isClosing ? "day-panel-closing" : "day-panel"} calendar-shadow overflow-hidden rounded-[1.6rem] bg-white/95 min-[1000px]:sticky min-[1000px]:top-6`}
+      className={`${isClosing ? "day-panel-closing" : "day-panel"} calendar-shadow max-h-[55svh] overflow-y-auto rounded-[1.6rem] bg-white/95 min-[1000px]:sticky min-[1000px]:top-6 min-[1000px]:max-h-none min-[1000px]:overflow-hidden`}
     >
       <header className="flex items-start justify-between gap-4 px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
         <div>
