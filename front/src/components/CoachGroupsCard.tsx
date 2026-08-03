@@ -24,6 +24,14 @@ const colorLabels: Record<string, string> = {
   Brown: "Коричневый",
 };
 
+const groupDialogClass = "fixed left-1/2 top-1/2 m-0 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-[1.7rem] border border-white/70 bg-white p-0 text-foreground shadow-[0_28px_80px_-38px_rgba(86,61,38,0.65)] backdrop:bg-black/35";
+const groupDialogHeaderClass = "flex items-start justify-between gap-4 px-6 pb-2 pt-6";
+const groupDialogCloseButtonClass = "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-3xl leading-none text-muted transition duration-200 hover:bg-surface-muted hover:text-foreground disabled:opacity-50";
+const groupDialogFormClass = "flex flex-col gap-5 px-6 pb-6 pt-3";
+const groupDialogTimeGridClass = "grid grid-cols-2 gap-3 rounded-[1.35rem] bg-surface-muted/55 p-3";
+const groupDialogTimeInputClass = `${inputClass} bg-white text-center text-base font-semibold tabular-nums`;
+const groupDialogActionsClass = "flex justify-end gap-2 pt-1";
+
 export function CoachGroupsCard() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const editDialogRef = useRef<HTMLDialogElement>(null);
@@ -340,25 +348,24 @@ export function CoachGroupsCard() {
         onClick={(event) => {
           if (event.target === dialogRef.current) closeModal();
         }}
-        className="fixed top-1/2 left-1/2 m-0 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface p-0 text-foreground shadow-2xl backdrop:bg-black/45"
+        className={groupDialogClass}
       >
-        <div className="flex items-start justify-between border-b border-border px-5 py-4">
+        <div className={groupDialogHeaderClass}>
           <div>
-            <h3 className="font-semibold">Новая группа</h3>
-            <p className="mt-1 text-xs text-muted">Укажите название, которое увидят ученики.</p>
+            <h3 className="text-xl font-semibold tracking-[-0.025em]">Новая группа</h3>
           </div>
           <button
             type="button"
             onClick={closeModal}
             disabled={isSubmitting}
             aria-label="Закрыть"
-            className="rounded-md px-2 py-1 text-muted hover:bg-surface-muted hover:text-foreground disabled:opacity-50"
+            className={groupDialogCloseButtonClass}
           >
             ×
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
+        <form onSubmit={handleSubmit} className={groupDialogFormClass}>
           {error && <p className={errorClass}>{error}</p>}
 
           <div className="flex flex-col gap-1.5">
@@ -378,7 +385,7 @@ export function CoachGroupsCard() {
           </div>
 
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className={groupDialogTimeGridClass}>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="groupDefaultStartTime" className={labelClass}>
                 Время начала
@@ -388,7 +395,7 @@ export function CoachGroupsCard() {
                 type="time"
                 value={createDefaultStartTime}
                 onChange={(event) => setCreateDefaultStartTime(event.target.value)}
-                className={inputClass}
+                className={groupDialogTimeInputClass}
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -400,7 +407,7 @@ export function CoachGroupsCard() {
                 type="time"
                 value={createDefaultEndTime}
                 onChange={(event) => setCreateDefaultEndTime(event.target.value)}
-                className={inputClass}
+                className={groupDialogTimeInputClass}
               />
             </div>
           </div>
@@ -433,19 +440,19 @@ export function CoachGroupsCard() {
             </div>
           </fieldset>
 
-          <div className="flex justify-end gap-2 border-t border-border pt-4">
+          <div className={groupDialogActionsClass}>
             <button
               type="button"
               onClick={closeModal}
               disabled={isSubmitting}
-              className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-muted disabled:opacity-50"
+              className="rounded-xl border border-border/70 bg-white px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-surface-muted disabled:opacity-50"
             >
               Отмена
             </button>
             <button
               type="submit"
               disabled={isSubmitting || colors.length === 0}
-              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_-18px_rgba(131,93,57,0.78)] transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? "Создание…" : "Создать"}
             </button>
@@ -462,25 +469,24 @@ export function CoachGroupsCard() {
         onClick={(event) => {
           if (event.target === editDialogRef.current) closeEditModal();
         }}
-        className="fixed top-1/2 left-1/2 m-0 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface p-0 text-foreground shadow-2xl backdrop:bg-black/45"
+        className={groupDialogClass}
       >
-        <div className="flex items-start justify-between border-b border-border px-5 py-4">
+        <div className={groupDialogHeaderClass}>
           <div>
-            <h3 className="font-semibold">Редактирование группы</h3>
-            <p className="mt-1 text-xs text-muted">Измените название и цвет бейджа в календаре.</p>
+            <h3 className="text-xl font-semibold tracking-[-0.025em]">Редактирование группы</h3>
           </div>
           <button
             type="button"
             onClick={closeEditModal}
             disabled={isEditing}
             aria-label="Закрыть"
-            className="rounded-md px-2 py-1 text-muted hover:bg-surface-muted hover:text-foreground disabled:opacity-50"
+            className={groupDialogCloseButtonClass}
           >
             ×
           </button>
         </div>
 
-        <form onSubmit={handleEditSubmit} className="flex flex-col gap-5 p-5">
+        <form onSubmit={handleEditSubmit} className={groupDialogFormClass}>
           {editError && <p className={errorClass}>{editError}</p>}
 
           <div className="flex flex-col gap-1.5">
@@ -495,7 +501,7 @@ export function CoachGroupsCard() {
           </div>
 
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className={groupDialogTimeGridClass}>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="editGroupDefaultStartTime" className={labelClass}>
                 Время начала
@@ -505,7 +511,7 @@ export function CoachGroupsCard() {
                 type="time"
                 value={editDefaultStartTime}
                 onChange={(event) => setEditDefaultStartTime(event.target.value)}
-                className={inputClass}
+                className={groupDialogTimeInputClass}
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -517,7 +523,7 @@ export function CoachGroupsCard() {
                 type="time"
                 value={editDefaultEndTime}
                 onChange={(event) => setEditDefaultEndTime(event.target.value)}
-                className={inputClass}
+                className={groupDialogTimeInputClass}
               />
             </div>
           </div>
@@ -550,19 +556,19 @@ export function CoachGroupsCard() {
             </div>
           </fieldset>
 
-          <div className="flex justify-end gap-2 border-t border-border pt-4">
+          <div className={groupDialogActionsClass}>
             <button
               type="button"
               onClick={closeEditModal}
               disabled={isEditing}
-              className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-muted disabled:opacity-50"
+              className="rounded-xl border border-border/70 bg-white px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-surface-muted disabled:opacity-50"
             >
               Отмена
             </button>
             <button
               type="submit"
               disabled={isEditing || colors.length === 0}
-              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_-18px_rgba(131,93,57,0.78)] transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isEditing ? "Сохранение…" : "Сохранить"}
             </button>
@@ -616,7 +622,3 @@ function DotsIcon() {
     </svg>
   );
 }
-
-
-
-
