@@ -298,13 +298,13 @@ export function TrainingCalendar({
                               type="button"
                               onClick={() => selectDay(key)}
                               aria-pressed={isSelected}
-                              className={`group relative flex min-h-14 flex-col items-center px-0.5 py-1.5 text-center transition duration-200 ease-out sm:min-h-24 sm:px-1.5 sm:py-3 lg:min-h-32 xl:min-h-36 ${
+                              className={`group relative flex min-h-16 flex-col items-center px-1 py-2 text-center transition duration-200 ease-out sm:min-h-24 sm:px-1.5 sm:py-3 lg:min-h-32 xl:min-h-36 ${
                                 isSelected
                                   ? "z-[1] bg-accent-soft ring-2 ring-inset ring-accent/45"
                                   : "bg-white hover:bg-accent-soft/65"
                               } ${cell.inMonth ? "" : "text-muted/45"}`}
                             >
-                              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium transition duration-200 sm:h-8 sm:w-8 sm:text-sm ${
+                              <span className={`flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium transition duration-200 sm:h-8 sm:w-8 sm:text-sm ${
                                 cell.isToday
                                   ? "bg-accent text-white shadow-[0_8px_20px_-8px_rgba(131,93,57,0.78)]"
                                   : "text-foreground group-hover:bg-white"
@@ -313,11 +313,11 @@ export function TrainingCalendar({
                               </span>
 
                               {dayTrainings.length > 0 && (
-                                <span className="absolute inset-x-1 bottom-1.5 grid grid-cols-4 justify-center justify-items-center gap-x-1.5 gap-y-1 px-2 sm:inset-x-2 sm:bottom-auto sm:top-1/2 sm:flex sm:-translate-y-1/2 sm:flex-nowrap sm:gap-2 sm:px-0" aria-label={`Тренировок: ${dayTrainings.length}`}>
+                                <span className="absolute inset-x-1 bottom-2 grid grid-cols-4 justify-center justify-items-center gap-x-1.5 gap-y-1 px-2 sm:inset-x-2 sm:bottom-auto sm:top-1/2 sm:flex sm:-translate-y-1/2 sm:flex-nowrap sm:gap-2 sm:px-0" aria-label={`Тренировок: ${dayTrainings.length}`}>
                                   {dayTrainings.slice(0, 8).map((training) => (
                                     <span
                                       key={training.id}
-                                      className={`h-2 w-2 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
+                                      className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
                                       aria-hidden="true"
                                     />
                                   ))}
@@ -343,23 +343,23 @@ export function TrainingCalendar({
                         type="button"
                         onClick={() => selectDay(key)}
                         aria-pressed={isSelected}
-                        className={`group relative flex min-h-20 flex-col items-center px-0.5 py-2 text-center transition duration-200 ease-out sm:min-h-72 sm:px-2 sm:py-4 ${
+                        className={`group relative flex min-h-24 flex-col items-center px-1 py-2.5 text-center transition duration-200 ease-out sm:min-h-72 sm:px-2 sm:py-4 ${
                           isSelected
                             ? "z-[1] bg-accent-soft ring-2 ring-inset ring-accent/45"
                             : "bg-white hover:bg-accent-soft/65"
                         }`}
                       >
-                        <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold sm:h-9 sm:w-9 sm:text-sm ${
+                        <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold sm:h-9 sm:w-9 sm:text-sm ${
                           isToday ? "bg-accent text-white" : "text-foreground group-hover:bg-white"
                         }`}>
                           {day.getDate()}
                         </span>
                         {dayTrainings.length > 0 && (
-                          <span className="absolute inset-x-1 bottom-1.5 grid grid-cols-4 justify-center justify-items-center gap-x-1.5 gap-y-1 px-2 sm:inset-x-2 sm:bottom-auto sm:top-1/2 sm:flex sm:-translate-y-1/2 sm:flex-nowrap sm:gap-2 sm:px-0" aria-label={`Тренировок: ${dayTrainings.length}`}>
+                          <span className="absolute inset-x-1 bottom-2 grid grid-cols-4 justify-center justify-items-center gap-x-1.5 gap-y-1 px-2 sm:inset-x-2 sm:bottom-auto sm:top-1/2 sm:flex sm:-translate-y-1/2 sm:flex-nowrap sm:gap-2 sm:px-0" aria-label={`Тренировок: ${dayTrainings.length}`}>
                             {dayTrainings.slice(0, 8).map((training) => (
                               <span
                                 key={training.id}
-                                className={`h-2 w-2 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
+                                className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
                                 aria-hidden="true"
                               />
                             ))}
