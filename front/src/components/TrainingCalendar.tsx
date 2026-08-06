@@ -157,68 +157,70 @@ export function TrainingCalendar({
       >
         <div className="calendar-shadow min-w-0 overflow-hidden rounded-[1.85rem] border border-border/80 bg-white/92 px-1.5 py-3 sm:p-5 lg:p-6">
           <div className="mb-5 flex flex-col gap-5 px-1">
-            <div className="grid items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
-              <div className="order-3 flex flex-wrap items-center gap-2 md:justify-self-end">
-                <button
-                  type="button"
-                  onClick={() => goRelative(-1)}
-                  aria-label={calendarView === "month" ? "Предыдущий месяц" : "Предыдущая неделя"}
-                  className="calendar-control"
-                >
-                  <ArrowIcon direction="left" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => goRelative(1)}
-                  aria-label={calendarView === "month" ? "Следующий месяц" : "Следующая неделя"}
-                  className="calendar-control"
-                >
-                  <ArrowIcon direction="right" />
-                </button>
-                <button
-                  type="button"
-                  onClick={goToday}
-                  className="ml-1 min-h-11 rounded-[0.8rem] border border-border bg-white px-4 text-sm font-medium text-foreground transition duration-200 ease-out hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
-                >
-                  Сегодня
-                </button>
-              </div>
-
-              <h2 className="order-first text-left text-lg font-semibold capitalize tracking-[-0.025em] text-foreground md:order-2 md:text-center md:text-xl">
+            <div className="flex flex-col gap-4">
+              <h2 className="text-left text-lg font-semibold capitalize tracking-[-0.025em] text-foreground md:text-xl">
                 {title}
               </h2>
 
-              <div className="relative order-1 grid min-w-44 grid-cols-2 justify-self-start rounded-xl bg-surface-muted p-1" aria-label="Вид календаря">
-                <span
-                  aria-hidden="true"
-                  className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-lg bg-white shadow-sm transition-transform duration-200 ease-out motion-reduce:transition-none ${
-                    calendarView === "week" ? "translate-x-full" : "translate-x-0"
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setCalendarView("month")}
-                  aria-pressed={calendarView === "month"}
-                  className={`relative z-10 rounded-lg px-4 py-2 text-sm transition-colors duration-200 ease-out ${
-                    calendarView === "month"
-                      ? "font-semibold text-foreground"
-                      : "text-muted hover:text-foreground"
-                  }`}
-                >
-                  Месяц
-                </button>
-                <button
-                  type="button"
-                  onClick={showWeek}
-                  aria-pressed={calendarView === "week"}
-                  className={`relative z-10 rounded-lg px-4 py-2 text-sm transition-colors duration-200 ease-out ${
-                    calendarView === "week"
-                      ? "font-semibold text-foreground"
-                      : "text-muted hover:text-foreground"
-                  }`}
-                >
-                  Неделя
-                </button>
+              <div className="flex w-full items-center justify-between gap-2 sm:gap-4">
+                <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+                  <button
+                    type="button"
+                    onClick={() => goRelative(-1)}
+                    aria-label={calendarView === "month" ? "Предыдущий месяц" : "Предыдущая неделя"}
+                    className="calendar-control"
+                  >
+                    <ArrowIcon direction="left" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goRelative(1)}
+                    aria-label={calendarView === "month" ? "Следующий месяц" : "Следующая неделя"}
+                    className="calendar-control"
+                  >
+                    <ArrowIcon direction="right" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goToday}
+                    className="min-h-10 rounded-[0.8rem] border border-border bg-white px-2 text-xs font-medium text-foreground transition duration-200 ease-out hover:border-accent/40 hover:bg-accent-soft hover:text-accent sm:ml-1 sm:min-h-11 sm:px-4 sm:text-sm"
+                  >
+                    Сегодня
+                  </button>
+                </div>
+
+                <div className="relative grid w-[7.75rem] shrink-0 grid-cols-2 rounded-xl bg-surface-muted p-1 min-[360px]:w-[8.75rem] sm:w-auto sm:min-w-44" aria-label="Вид календаря">
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-lg bg-white shadow-sm transition-transform duration-200 ease-out motion-reduce:transition-none ${
+                      calendarView === "week" ? "translate-x-full" : "translate-x-0"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setCalendarView("month")}
+                    aria-pressed={calendarView === "month"}
+                    className={`relative z-10 rounded-lg px-2 py-2 text-xs transition-colors duration-200 ease-out sm:px-4 sm:text-sm ${
+                      calendarView === "month"
+                        ? "font-semibold text-foreground"
+                        : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    Месяц
+                  </button>
+                  <button
+                    type="button"
+                    onClick={showWeek}
+                    aria-pressed={calendarView === "week"}
+                    className={`relative z-10 rounded-lg px-2 py-2 text-xs transition-colors duration-200 ease-out sm:px-4 sm:text-sm ${
+                      calendarView === "week"
+                        ? "font-semibold text-foreground"
+                        : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    Неделя
+                  </button>
+                </div>
               </div>
             </div>
 
