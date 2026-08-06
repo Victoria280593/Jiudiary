@@ -151,12 +151,16 @@ async function readSessionResponse(response: Response): Promise<LoginResult> {
   return { ok: true, session };
 }
 
-export async function loginWithBackend(login: string, password: string): Promise<LoginResult> {
+export async function loginWithBackend(
+  login: string,
+  password: string,
+  role: "COACH" | "STUDENT"
+): Promise<LoginResult> {
   try {
     const response = await fetch(`${backendUrl}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ login, password }),
+      body: JSON.stringify({ login, password, role }),
       cache: "no-store",
       signal: AbortSignal.timeout(5_000),
     });
@@ -189,7 +193,11 @@ export async function registerWithBackend(
       return { ok: false, error: "Проверьте имя, email и пароль" };
     }
     if (!response.ok) {
-      return { ok: false, error: "Сервис регистрации временно недоступен" };
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return {
+        ok: false,
+        error: result?.error ?? "Сервис регистрации временно недоступен",
+      };
     }
 
     const user: unknown = await response.json();

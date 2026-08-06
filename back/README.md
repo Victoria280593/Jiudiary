@@ -4,12 +4,12 @@ ASP.NET Core Web API на .NET 10.
 
 ## База данных
 
-EF Core работает через `libs/database/JiuDiaryDbContext.cs` и строку подключения
+EF Core работает через `libs/DataBase/JiuDiaryDbContext.cs` и строку подключения
 `ConnectionStrings:Default`.
 
 Для пустого MSSQL выполните единственный скрипт:
 
-`libs/database/Scripts/create-database.sql`
+`libs/DataBase/Scripts/create-database.sql`
 
 Он создаёт базу `JiuDiary`, таблицы `Roles`, `Users`, `AuthSessions`, роль `Admin`
 и пользователя `admin@jiudiary.local`.

@@ -1,3 +1,5 @@
+using JiuDiary.Database.Enums;
+
 namespace JiuDiary.Models.Auth;
 
 /// <summary>
@@ -23,5 +25,5 @@ public sealed class RegisterInputModel
     /// <summary>
     /// Роль создаваемого пользователя: Coach или Student.
     /// </summary>
-    public string? Role { get; set; }
+    public UserRolesEnum Role { get; set; }
 }

@@ -43,9 +43,7 @@ public sealed class AuthService(
             return null;
         }
 
-        var requestedRole = inputModel.Role?.Equals("Student", StringComparison.OrdinalIgnoreCase) == true
-            ? UserRolesEnum.Student
-            : UserRolesEnum.Coach;
+        var requestedRole = inputModel.Role;
         var requestedRoleName = requestedRole.ToString();
 
         var role = await dbContext.Roles.SingleOrDefaultAsync(
@@ -95,7 +93,10 @@ public sealed class AuthService(
         var normalizedLogin = inputModel.Login ?? string.Empty;
         var user = await dbContext.Users
             .Include(x => x.Role)
-            .SingleOrDefaultAsync(x => x.Login == normalizedLogin.Trim(), cancellationToken);
+            .SingleOrDefaultAsync(
+                x => x.Login == normalizedLogin.Trim() &&
+                     (x.RoleId == (int)inputModel.Role || x.RoleId == (int)UserRolesEnum.Admin),
+                cancellationToken);
 
         if (user is null || !user.IsActive)
         {

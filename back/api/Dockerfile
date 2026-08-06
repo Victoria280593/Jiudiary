@@ -4,7 +4,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY ["api/JiuDiary.Api.csproj", "api/"]
-COPY ["libs/database/JiuDiary.Database.csproj", "libs/database/"]
+COPY ["libs/DataBase/JiuDiary.DataBase.csproj", "libs/DataBase/"]
 COPY ["libs/models/JiuDiary.Models.csproj", "libs/models/"]
 RUN dotnet restore "api/JiuDiary.Api.csproj"
 

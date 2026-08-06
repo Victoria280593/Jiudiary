@@ -38,12 +38,13 @@ export async function loginAction(
     .trim()
     .toLowerCase();
   const password = String(formData.get("password") || "");
+  const role = String(formData.get("role") || "COACH") as RegistrationRole;
 
-  if (!email || !password) {
-    return { error: "Введите email и пароль" };
+  if (!email || !password || !["COACH", "STUDENT"].includes(role)) {
+    return { error: "Введите email, пароль и выберите роль" };
   }
 
-  const result = await loginWithBackend(email, password);
+  const result = await loginWithBackend(email, password, role);
   if (!result.ok) {
     return { error: result.error };
   }
