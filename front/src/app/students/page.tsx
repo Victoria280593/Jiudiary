@@ -1,71 +1,98 @@
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
-import { Belt } from "@/components/Belt";
-import { BELT_LABELS } from "@/lib/belt";
-import { getCurrentUser } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { Card } from "@/components/Card";
+import { CoachStudentRequestActions } from "@/components/CoachStudentRequestActions";
+import { getSession } from "@/lib/auth";
+import {
+  getBackendCoachStudentRequests,
+  getBackendCoachStudents,
+} from "@/lib/backend-auth";
+import { formatDateTime } from "@/lib/format";
 
 export default async function StudentsPage() {
-  const coach = await getCurrentUser();
-  if (!coach) redirect("/login");
-  if (coach.role !== "COACH") redirect("/");
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (session.user.role !== "COACH") redirect("/");
 
-  const students = await prisma.user.findMany({
-    where: { coachId: coach.id },
-    orderBy: { name: "asc" },
-  });
+  const [requests, students] = await Promise.all([
+    getBackendCoachStudentRequests(session.accessToken),
+    getBackendCoachStudents(session.accessToken),
+  ]);
 
   return (
     <main className="w-full flex-1 px-4 pb-12 pt-6 sm:px-6 sm:pt-8 xl:px-8">
-      <div className="mx-auto max-w-[1440px]">
-        <section className="mb-7">
+      <div className="mx-auto flex max-w-[1440px] flex-col gap-5">
+        <section>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">
               Ученики
             </h1>
             <span className="rounded-full bg-accent-soft px-3 py-1 text-sm font-semibold text-accent-foreground">
-              {students.length}
+              {students?.length ?? 0}
             </span>
           </div>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted sm:text-base">
-            Здесь будет собрана ваша команда: профили учеников, их пояса и прогресс в тренировках.
+            Принимайте заявки и управляйте списком своих учеников.
           </p>
         </section>
 
-        {students.length === 0 ? (
-          <section className="calendar-shadow rounded-[1.85rem] border border-white bg-white/92 px-6 py-12 text-center sm:px-10">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-soft text-accent">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-7 w-7" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16 20v-1.5A3.5 3.5 0 0012.5 15h-5A3.5 3.5 0 004 18.5V20m13-9a3 3 0 110-6 3 3 0 010 6zM10 11a3 3 0 110-6 3 3 0 010 6zm8.5 4.5A3.5 3.5 0 0122 19" />
-              </svg>
-            </div>
-            <h2 className="mt-5 text-lg font-semibold text-foreground">Учеников пока нет</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
-              Когда к вам прикрепят первого ученика, он появится здесь. Позже добавим приглашения и управление командой.
-            </p>
-          </section>
-        ) : (
-          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {students.map((student) => (
-              <li key={student.id} className="calendar-shadow flex min-w-0 items-center gap-3 rounded-[1.35rem] border border-white bg-white/92 p-4">
-                <Avatar src={student.avatarUrl} name={student.name} size={44} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-foreground">{student.name}</p>
-                  <p className="truncate text-xs text-muted">{student.email}</p>
-                </div>
-                <div className="flex shrink-0 flex-col items-center">
-                  <Belt
-                    belt={student.belt ?? "WHITE"}
-                    size="xs"
+        <Card title={`Заявки на присоединение${requests?.length ? ` · ${requests.length}` : ""}`}>
+          {!requests ? (
+            <p className="text-sm text-muted">Не удалось загрузить заявки.</p>
+          ) : requests.length === 0 ? (
+            <p className="text-sm text-muted">Новых заявок пока нет.</p>
+          ) : (
+            <div className="flex flex-col divide-y divide-border">
+              {requests.map((request) => (
+                <div
+                  key={request.id}
+                  className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center"
+                >
+                  <Avatar src={null} name={request.studentName} size={46} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-foreground">{request.studentName}</p>
+                    <p className="truncate text-sm text-muted">{request.studentLogin}</p>
+                    <p className="mt-1 text-xs text-muted">
+                      Отправлена {formatDateTime(new Date(request.createDate))}
+                    </p>
+                  </div>
+                  <CoachStudentRequestActions
+                    requestId={request.id}
+                    studentName={request.studentName}
                   />
-                  <span className="mt-0.5 text-[10px] text-muted">
-                    {BELT_LABELS[student.belt ?? "WHITE"]}
-                  </span>
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <Card title="Мои ученики">
+          {!students ? (
+            <p className="text-sm text-muted">Не удалось загрузить список учеников.</p>
+          ) : students.length === 0 ? (
+            <p className="text-sm text-muted">
+              Учеников пока нет. Принятые заявки появятся в этом списке.
+            </p>
+          ) : (
+            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {students.map((student) => (
+                <li
+                  key={student.id}
+                  className="flex min-w-0 items-center gap-3 rounded-2xl border border-border/70 bg-white p-4"
+                >
+                  <Avatar src={null} name={student.name} size={44} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-foreground">{student.name}</p>
+                    <p className="truncate text-xs text-muted">{student.login}</p>
+                    {student.beltName && (
+                      <p className="mt-1 truncate text-xs text-muted">Пояс: {student.beltName}</p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       </div>
     </main>
   );

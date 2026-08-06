@@ -27,4 +27,28 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
     public DbSet<CoachGroup> CoachGroups => Set<CoachGroup>();
 
     public DbSet<Training> Trainings => Set<Training>();
+
+    public DbSet<StudentRequest> StudentsRequests => Set<StudentRequest>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<StudentRequest>(entity =>
+        {
+            entity.HasOne(request => request.Student)
+                .WithMany(user => user.SentStudentRequests)
+                .HasForeignKey(request => request.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(request => request.Coach)
+                .WithMany(user => user.ReceivedStudentRequests)
+                .HasForeignKey(request => request.CoachId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(request => new { request.StudentId, request.CoachId })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0 AND [Status] = 1");
+        });
+    }
 }

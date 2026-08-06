@@ -66,6 +66,28 @@ export type BackendTrainerPage = {
   totalPages: number;
 };
 
+export type BackendStudentRequestStatus = "Pending" | "Accepted" | "Rejected";
+
+export type BackendStudentRequest = {
+  id: string;
+  studentId: string;
+  studentName: string;
+  studentLogin: string;
+  coachId: string;
+  coachName: string;
+  coachLogin: string;
+  status: BackendStudentRequestStatus;
+  createDate: string;
+};
+
+export type BackendStudent = {
+  id: string;
+  name: string;
+  login: string;
+  beltId: number | null;
+  beltName: string | null;
+};
+
 function isBackendGroup(value: unknown): value is BackendGroup {
   if (!value || typeof value !== "object") return false;
 
@@ -127,6 +149,36 @@ function isBackendTrainerPage(value: unknown): value is BackendTrainerPage {
     typeof page.itemsPerPage === "number" &&
     typeof page.totalItems === "number" &&
     typeof page.totalPages === "number"
+  );
+}
+
+function isBackendStudentRequest(value: unknown): value is BackendStudentRequest {
+  if (!value || typeof value !== "object") return false;
+
+  const request = value as Partial<BackendStudentRequest>;
+  return (
+    typeof request.id === "string" &&
+    typeof request.studentId === "string" &&
+    typeof request.studentName === "string" &&
+    typeof request.studentLogin === "string" &&
+    typeof request.coachId === "string" &&
+    typeof request.coachName === "string" &&
+    typeof request.coachLogin === "string" &&
+    ["Pending", "Accepted", "Rejected"].includes(request.status ?? "") &&
+    typeof request.createDate === "string"
+  );
+}
+
+function isBackendStudent(value: unknown): value is BackendStudent {
+  if (!value || typeof value !== "object") return false;
+
+  const student = value as Partial<BackendStudent>;
+  return (
+    typeof student.id === "string" &&
+    typeof student.name === "string" &&
+    typeof student.login === "string" &&
+    (student.beltId === null || typeof student.beltId === "number") &&
+    (student.beltName === null || typeof student.beltName === "string")
   );
 }
 
@@ -323,6 +375,105 @@ export async function getBackendTrainers(
     return isBackendTrainerPage(trainers) ? trainers : null;
   } catch {
     return null;
+  }
+}
+
+async function getBackendList<T>(
+  accessToken: string,
+  path: string,
+  validator: (value: unknown) => value is T
+): Promise<T[] | null> {
+  try {
+    const response = await fetch(`${backendUrl}${path}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!response.ok) return null;
+
+    const items: unknown = await response.json();
+    return Array.isArray(items) && items.every(validator) ? items : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getBackendStudentTrainerRequests(accessToken: string) {
+  return getBackendList(accessToken, "/api/trainers/requests", isBackendStudentRequest);
+}
+
+export function getBackendStudentTrainers(accessToken: string) {
+  return getBackendList(accessToken, "/api/trainers/my", isBackendTrainer);
+}
+
+export function getBackendCoachStudentRequests(accessToken: string) {
+  return getBackendList(accessToken, "/api/trainers/students/requests", isBackendStudentRequest);
+}
+
+export function getBackendCoachStudents(accessToken: string) {
+  return getBackendList(accessToken, "/api/trainers/students", isBackendStudent);
+}
+
+export type StudentRequestMutationResult =
+  | { ok: true; request: BackendStudentRequest }
+  | { ok: false; status: number; error: string };
+
+export async function createBackendStudentRequest(
+  accessToken: string,
+  coachId: string
+): Promise<StudentRequestMutationResult> {
+  return mutateBackendStudentRequest(
+    accessToken,
+    `/api/trainers/${encodeURIComponent(coachId)}/students/requests`,
+    "POST"
+  );
+}
+
+export async function resolveBackendStudentRequest(
+  accessToken: string,
+  requestId: string,
+  status: "Accepted" | "Rejected"
+): Promise<StudentRequestMutationResult> {
+  return mutateBackendStudentRequest(
+    accessToken,
+    `/api/trainers/students/requests/${encodeURIComponent(requestId)}`,
+    "PATCH",
+    { status }
+  );
+}
+
+async function mutateBackendStudentRequest(
+  accessToken: string,
+  path: string,
+  method: "POST" | "PATCH",
+  body?: object
+): Promise<StudentRequestMutationResult> {
+  try {
+    const response = await fetch(`${backendUrl}${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+    const result: unknown = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        status: response.status,
+        error: (result as { error?: string } | null)?.error ?? "Не удалось обработать заявку.",
+      };
+    }
+
+    return isBackendStudentRequest(result)
+      ? { ok: true, request: result }
+      : { ok: false, status: 502, error: "Сервер вернул некорректные данные заявки." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
   }
 }
 
