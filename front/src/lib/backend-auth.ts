@@ -170,13 +170,14 @@ export async function loginWithBackend(login: string, password: string): Promise
 export async function registerWithBackend(
   login: string,
   name: string,
-  password: string
+  password: string,
+  role: "COACH" | "STUDENT"
 ): Promise<RegisterResult> {
   try {
     const response = await fetch(`${backendUrl}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ login, name, password }),
+      body: JSON.stringify({ login, name, password, role }),
       cache: "no-store",
       signal: AbortSignal.timeout(5_000),
     });

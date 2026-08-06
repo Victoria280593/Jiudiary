@@ -32,8 +32,7 @@ export async function PUT(request: Request) {
   };
 
   if (
-    input.beltId === null ||
-    !Number.isInteger(input.beltId)
+    input.beltId !== null && !Number.isInteger(input.beltId)
   ) {
     return NextResponse.json({ error: "Некорректные спортивные данные" }, { status: 400 });
   }

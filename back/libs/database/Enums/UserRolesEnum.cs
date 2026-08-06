@@ -8,5 +8,6 @@ namespace JiuDiary.Database.Enums
     {
         Admin = 1,
         Coach = 2,
+        Student = 3,
     }
 }

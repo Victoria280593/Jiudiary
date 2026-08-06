@@ -96,7 +96,6 @@ export function AthleteProfileForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedBelt) return;
 
     setIsSaving(true);
     setState(undefined);
@@ -108,7 +107,7 @@ export function AthleteProfileForm({
         body: JSON.stringify({
           country: "Российская Федерация",
           birthDate: birthDateValue || null,
-          beltId: BELT_ID_BY_NAME[selectedBelt],
+          beltId: selectedBelt ? BELT_ID_BY_NAME[selectedBelt] : null,
         }),
         cache: "no-store",
       });
@@ -120,9 +119,9 @@ export function AthleteProfileForm({
       }
 
       const savedClientInfo: ClientInfoResponse = await response.json();
-      const savedBelt = BELT_BY_ID[savedClientInfo.beltId ?? 0] ?? selectedBelt;
+      const savedBelt = BELT_BY_ID[savedClientInfo.beltId ?? 0] ?? null;
       setBirthDateValue(savedClientInfo.birthDate ?? "");
-      setSelectedBelt(savedBelt);
+      setSelectedBelt(savedBelt ?? "");
       notifyBeltUpdated(savedBelt);
 
       for (let attempt = 0; attempt < 6; attempt += 1) {
@@ -130,10 +129,10 @@ export function AthleteProfileForm({
         if (refreshedResponse.ok) {
           const refreshedClientInfo: ClientInfoResponse = await refreshedResponse.json();
           const refreshedBelt = BELT_BY_ID[refreshedClientInfo.beltId ?? 0];
-          if (refreshedBelt === savedBelt) {
+          if ((refreshedBelt ?? null) === savedBelt) {
             setBirthDateValue(refreshedClientInfo.birthDate ?? "");
-            setSelectedBelt(refreshedBelt);
-            notifyBeltUpdated(refreshedBelt);
+            setSelectedBelt(refreshedBelt ?? "");
+            notifyBeltUpdated(refreshedBelt ?? null);
             break;
           }
         }
@@ -197,13 +196,12 @@ export function AthleteProfileForm({
         <select
           id="belt"
           name="belt"
-          required
           value={selectedBelt}
-          onChange={(e) => setSelectedBelt(e.target.value as Belt)}
+          onChange={(e) => setSelectedBelt(e.target.value as Belt | "")}
           className={inputClass}
         >
-          <option value="" disabled>
-            Выберите пояс
+          <option value="">
+            Без пояса
           </option>
           {beltOptions.map((b) => (
             <option key={b} value={b}>

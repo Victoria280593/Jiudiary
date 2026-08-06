@@ -15,7 +15,7 @@ namespace JiuDiary.Api.Controllers;
 public sealed class AuthController(IAuthService authService) : BaseController
 {
     /// <summary>
-    /// Создаёт нового активного тренера с ролью Coach.
+    /// Создаёт нового активного тренера или ученика.
     /// </summary>
     /// <param name="request">Логин, имя и пароль нового пользователя.</param>
     /// <param name="cancellationToken">Токен отмены HTTP-запроса.</param>
@@ -32,7 +32,10 @@ public sealed class AuthController(IAuthService authService) : BaseController
             string.IsNullOrWhiteSpace(request.Name) ||
             request.Name.Trim().Length > 200 ||
             request.Password is null ||
-            request.Password.Length is < 8 or > 128)
+            request.Password.Length is < 8 or > 128 ||
+            (request.Role is not null &&
+             !request.Role.Equals("Coach", StringComparison.OrdinalIgnoreCase) &&
+             !request.Role.Equals("Student", StringComparison.OrdinalIgnoreCase)))
         {
             return BadRequest(new
             {

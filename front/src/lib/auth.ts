@@ -113,13 +113,15 @@ export const getCurrentUser = cache(async () => {
         (country) => normalizeText(country.name) === normalizeText(clientInfo.country as string)
       )?.code ?? persistedUser?.countryCode ?? null
     : persistedUser?.countryCode ?? null;
-  const belt = clientInfo?.beltId
-    ? BELT_BY_ID[clientInfo.beltId] ?? null
-    : clientInfo?.beltName
-      ? (Object.entries(BELT_LABELS).find(
-          ([, name]) => normalizeText(name) === normalizeText(clientInfo.beltName as string)
-        )?.[0] as Belt | undefined) ?? null
-      : persistedUser?.belt ?? null;
+  const belt = clientInfo
+    ? clientInfo.beltId
+      ? BELT_BY_ID[clientInfo.beltId] ?? null
+      : clientInfo.beltName
+        ? (Object.entries(BELT_LABELS).find(
+            ([, name]) => normalizeText(name) === normalizeText(clientInfo.beltName as string)
+          )?.[0] as Belt | undefined) ?? null
+        : null
+    : persistedUser?.belt ?? null;
   const sportsData = clientInfo
     ? {
         countryCode,

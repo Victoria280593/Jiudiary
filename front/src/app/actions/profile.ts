@@ -12,7 +12,7 @@ import {
 import { getCountryList } from "@/lib/countries";
 import type { Belt } from "@prisma/client";
 
-export type FormState = { error?: string; success?: boolean; belt?: Belt } | undefined;
+export type FormState = { error?: string; success?: boolean; belt?: Belt | null } | undefined;
 
 const ALL_BELTS = new Set<Belt>([...KIDS_BELTS, ...ADULT_BELTS]);
 
@@ -49,7 +49,8 @@ export async function updateAthleteProfileAction(
 
   const countryCode = "RU";
   const birthDateStr = String(formData.get("birthDate") || "").trim();
-  const belt = String(formData.get("belt") || "").trim() as Belt;
+  const beltValue = String(formData.get("belt") || "").trim();
+  const belt = beltValue ? (beltValue as Belt) : null;
   const blackBeltDegreeRaw = String(formData.get("blackBeltDegree") || "").trim();
   const blackBeltAwardedAtStr = String(formData.get("blackBeltAwardedAt") || "").trim();
   const blackBeltProfessor = String(formData.get("blackBeltProfessor") || "").trim();
@@ -69,14 +70,14 @@ export async function updateAthleteProfileAction(
     }
   }
 
-  if (!belt || !ALL_BELTS.has(belt)) {
-    return { error: "Выберите пояс" };
+  if (belt && !ALL_BELTS.has(belt)) {
+    return { error: "Некорректный пояс" };
   }
 
   if (birthDate) {
     const age = calculateAge(birthDate);
     const allowed = isKidsAge(age) ? KIDS_BELTS : ADULT_BELTS;
-    if (!allowed.includes(belt)) {
+    if (belt && !allowed.includes(belt)) {
       return {
         error: isKidsAge(age)
           ? "Для указанного возраста доступны только детские пояса"
@@ -108,7 +109,7 @@ export async function updateAthleteProfileAction(
   const saved = await updateBackendClientInfo(session.accessToken, {
     country: countryName,
     birthDate: birthDateStr || null,
-    beltId: BELT_IDS[belt],
+    beltId: belt ? BELT_IDS[belt] : null,
   });
 
   if (!saved) {
