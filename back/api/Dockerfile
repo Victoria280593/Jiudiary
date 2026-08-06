@@ -5,6 +5,7 @@ WORKDIR /src
 
 COPY ["api/JiuDiary.Api.csproj", "api/"]
 COPY ["libs/DataBase/JiuDiary.DataBase.csproj", "libs/DataBase/"]
+COPY ["libs/Extensions/JiuDiary.Extensions.csproj", "libs/Extensions/"]
 COPY ["libs/models/JiuDiary.Models.csproj", "libs/models/"]
 RUN dotnet restore "api/JiuDiary.Api.csproj"
 

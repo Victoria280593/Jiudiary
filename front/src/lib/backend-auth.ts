@@ -50,6 +50,22 @@ export type BackendTraining = {
   endTime: string;
 };
 
+export type BackendTrainer = {
+  id: string;
+  name: string;
+  login: string;
+  beltId: number | null;
+  beltName: string | null;
+};
+
+export type BackendTrainerPage = {
+  items: BackendTrainer[];
+  page: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+};
+
 function isBackendGroup(value: unknown): value is BackendGroup {
   if (!value || typeof value !== "object") return false;
 
@@ -84,6 +100,33 @@ function isBackendTraining(value: unknown): value is BackendTraining {
     (training.description === null || typeof training.description === "string") &&
     typeof training.startTime === "string" &&
     typeof training.endTime === "string"
+  );
+}
+
+function isBackendTrainer(value: unknown): value is BackendTrainer {
+  if (!value || typeof value !== "object") return false;
+
+  const trainer = value as Partial<BackendTrainer>;
+  return (
+    typeof trainer.id === "string" &&
+    typeof trainer.name === "string" &&
+    typeof trainer.login === "string" &&
+    (trainer.beltId === null || typeof trainer.beltId === "number") &&
+    (trainer.beltName === null || typeof trainer.beltName === "string")
+  );
+}
+
+function isBackendTrainerPage(value: unknown): value is BackendTrainerPage {
+  if (!value || typeof value !== "object") return false;
+
+  const page = value as Partial<BackendTrainerPage>;
+  return (
+    Array.isArray(page.items) &&
+    page.items.every(isBackendTrainer) &&
+    typeof page.page === "number" &&
+    typeof page.itemsPerPage === "number" &&
+    typeof page.totalItems === "number" &&
+    typeof page.totalPages === "number"
   );
 }
 
@@ -253,6 +296,31 @@ export async function getBackendClientInfo(accessToken: string): Promise<Backend
 
     if (!response.ok) return null;
     return (await response.json()) as BackendClientInfo;
+  } catch {
+    return null;
+  }
+}
+
+export async function getBackendTrainers(
+  accessToken: string,
+  filter: { page?: number; itemsPerPage?: number; search?: string }
+): Promise<BackendTrainerPage | null> {
+  try {
+    const query = new URLSearchParams({
+      page: String(filter.page ?? 1),
+      itemsPerPage: String(filter.itemsPerPage ?? 10),
+    });
+    if (filter.search?.trim()) query.set("search", filter.search.trim());
+
+    const response = await fetch(`${backendUrl}/api/trainers?${query}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!response.ok) return null;
+
+    const trainers: unknown = await response.json();
+    return isBackendTrainerPage(trainers) ? trainers : null;
   } catch {
     return null;
   }
