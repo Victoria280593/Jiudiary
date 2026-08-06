@@ -22,7 +22,6 @@ public sealed class AuthService(
     IOptions<AuthBootstrapOptions> bootstrapOptions,
     ILogger<AuthService> logger) : IAuthService
 {
-    private const string DefaultCountry = "Российская Федерация";
     private readonly JwtOptions _jwtOptions = jwtOptions.Value;
     private readonly AuthBootstrapOptions _bootstrapOptions = bootstrapOptions.Value;
 
@@ -72,7 +71,6 @@ public sealed class AuthService(
         dbContext.ClientInfos.Add(new ClientInfo
         {
             UserId = user.Id,
-            Country = DefaultCountry,
             BirthDate = null,
             BeltId = null
         });

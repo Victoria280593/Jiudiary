@@ -10,7 +10,6 @@ import {
   type BackendSession,
 } from "@/lib/backend-auth";
 import { BELT_LABELS } from "@/lib/belt";
-import { getCountryList } from "@/lib/countries";
 import type { Belt } from "@prisma/client";
 import { REFRESH_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/auth-constants";
 
@@ -108,11 +107,6 @@ export const getCurrentUser = cache(async () => {
   });
 
   const clientInfo = await getBackendClientInfo(session.accessToken);
-  const countryCode = clientInfo?.country
-    ? getCountryList().find(
-        (country) => normalizeText(country.name) === normalizeText(clientInfo.country as string)
-      )?.code ?? persistedUser?.countryCode ?? null
-    : persistedUser?.countryCode ?? null;
   const belt = clientInfo
     ? clientInfo.beltId
       ? BELT_BY_ID[clientInfo.beltId] ?? null
@@ -124,7 +118,6 @@ export const getCurrentUser = cache(async () => {
     : persistedUser?.belt ?? null;
   const sportsData = clientInfo
     ? {
-        countryCode,
         birthDate: clientInfo.birthDate ? new Date(`${clientInfo.birthDate}T00:00:00`) : null,
         belt,
       }
@@ -140,7 +133,6 @@ export const getCurrentUser = cache(async () => {
     avatarUrl: null,
     createdAt: new Date(0),
     updatedAt: new Date(0),
-    countryCode: null,
     birthDate: null,
     belt: null,
     blackBeltDegree: null,

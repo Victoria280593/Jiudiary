@@ -47,7 +47,6 @@ model User {
   updatedAt    DateTime @updatedAt
 
   // Спортивный профиль (для тренеров и учеников BJJ)
-  countryCode         String?
   birthDate           DateTime?
   belt                Belt?
   blackBeltDegree     Int?

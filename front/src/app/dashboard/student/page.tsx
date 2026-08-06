@@ -7,7 +7,6 @@ import { AthleteCard } from "@/components/AthleteCard";
 import { AttendanceBadge } from "@/components/AttendanceBadge";
 import { Card } from "@/components/Card";
 import { calculateAge } from "@/lib/belt";
-import { flagEmoji, getCountryName } from "@/lib/countries";
 
 export default async function StudentDashboard() {
   const user = await getCurrentUser();
@@ -18,8 +17,6 @@ export default async function StudentDashboard() {
       <AthleteCard
         name={user.name}
         avatarUrl={user.avatarUrl}
-        flagEmoji={flagEmoji(user.countryCode)}
-        countryName={getCountryName(user.countryCode)}
         age={user.birthDate ? calculateAge(user.birthDate) : null}
         belt={user.belt}
         blackBeltDegree={user.blackBeltDegree}

@@ -3,7 +3,9 @@ import { inputClass, labelClass } from "@/lib/ui";
 export function PersonalDataForm({ name, email }: { name: string; email: string }) {
   return (
     <form className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <p className="text-sm text-muted">Редактирование профиля временно недоступно.</p>
+      <fieldset disabled className="flex flex-col gap-4 opacity-60">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1">
           <label htmlFor="personalName" className={labelClass}>
             Имя и фамилия
@@ -30,9 +32,9 @@ export function PersonalDataForm({ name, email }: { name: string; email: string 
             className={inputClass}
           />
         </div>
-      </div>
+        </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1">
           <label htmlFor="personalCity" className={labelClass}>
             Город
@@ -59,7 +61,8 @@ export function PersonalDataForm({ name, email }: { name: string; email: string 
             className={`${inputClass} bg-surface-muted text-muted`}
           />
         </div>
-      </div>
+        </div>
+      </fieldset>
     </form>
   );
 }

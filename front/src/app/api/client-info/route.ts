@@ -26,7 +26,6 @@ export async function PUT(request: Request) {
   }
 
   const input = (await request.json()) as {
-    country: string | null;
     birthDate: string | null;
     beltId: number | null;
   };

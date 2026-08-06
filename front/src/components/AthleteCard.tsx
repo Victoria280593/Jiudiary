@@ -11,8 +11,6 @@ import type { Belt as BeltType } from "@prisma/client";
 export function AthleteCard({
   name,
   avatarUrl,
-  flagEmoji,
-  countryName,
   age,
   belt,
   blackBeltDegree,
@@ -20,8 +18,6 @@ export function AthleteCard({
 }: {
   name: string;
   avatarUrl: string | null;
-  flagEmoji: string | null;
-  countryName: string | null;
   age: number | null;
   belt: BeltType | null;
   blackBeltDegree: number | null;
@@ -36,15 +32,10 @@ export function AthleteCard({
       </div>
 
       <div>
-        <h2 className="flex items-center justify-center gap-2 text-lg font-semibold text-foreground">
-          {flagEmoji && <span className="text-xl">{flagEmoji}</span>}
-          {name}
-        </h2>
+        <h2 className="text-lg font-semibold text-foreground">{name}</h2>
         <p className="text-sm text-muted">
-          {countryName && <>Гражданство: {countryName}</>}
-          {countryName && age !== null && " · "}
           {age !== null && <>Возраст: {age} {pluralYears(age)}</>}
-          {!countryName && age === null && "Данные не указаны"}
+          {age === null && "Данные не указаны"}
         </p>
       </div>
 

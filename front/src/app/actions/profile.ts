@@ -9,7 +9,6 @@ import {
   calculateAge,
   isKidsAge,
 } from "@/lib/belt";
-import { getCountryList } from "@/lib/countries";
 import type { Belt } from "@prisma/client";
 
 export type FormState = { error?: string; success?: boolean; belt?: Belt | null } | undefined;
@@ -47,20 +46,12 @@ export async function updateAthleteProfileAction(
     return { error: "Доступ запрещён" };
   }
 
-  const countryCode = "RU";
   const birthDateStr = String(formData.get("birthDate") || "").trim();
   const beltValue = String(formData.get("belt") || "").trim();
   const belt = beltValue ? (beltValue as Belt) : null;
   const blackBeltDegreeRaw = String(formData.get("blackBeltDegree") || "").trim();
   const blackBeltAwardedAtStr = String(formData.get("blackBeltAwardedAt") || "").trim();
   const blackBeltProfessor = String(formData.get("blackBeltProfessor") || "").trim();
-
-  if (countryCode) {
-    const validCodes = new Set(getCountryList().map((c) => c.code));
-    if (!validCodes.has(countryCode)) {
-      return { error: "Некорректная страна" };
-    }
-  }
 
   let birthDate: Date | null = null;
   if (birthDateStr) {
@@ -104,10 +95,7 @@ export async function updateAthleteProfileAction(
     }
   }
 
-  const countryName = "Российская Федерация";
-
   const saved = await updateBackendClientInfo(session.accessToken, {
-    country: countryName,
     birthDate: birthDateStr || null,
     beltId: belt ? BELT_IDS[belt] : null,
   });

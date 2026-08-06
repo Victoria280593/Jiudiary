@@ -9,14 +9,12 @@ export function ProfileHero({
   name,
   roleLabel,
   avatarUrl,
-  countryName,
   age,
   belt,
 }: {
   name: string;
   roleLabel: string;
   avatarUrl: string | null;
-  countryName: string | null;
   age: number | null;
   belt: Belt | null;
 }) {
@@ -39,10 +37,7 @@ export function ProfileHero({
             </span>
           </div>
 
-          <p className="mt-3 text-sm text-muted">
-            {countryName ? `Гражданство: ${countryName}` : "Гражданство не указано"}
-            {age !== null && ` · Возраст: ${age}`}
-          </p>
+          {age !== null && <p className="mt-3 text-sm text-muted">Возраст: {age}</p>}
 
           {liveBelt && (
             <div className="mt-4 flex justify-center sm:justify-start">

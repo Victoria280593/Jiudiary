@@ -20,7 +20,6 @@ export type BackendSession = {
 };
 
 export type BackendClientInfo = {
-  country: string | null;
   birthDate: string | null;
   beltId: number | null;
   beltName: string | null;
@@ -262,7 +261,6 @@ export async function getBackendClientInfo(accessToken: string): Promise<Backend
 export async function updateBackendClientInfo(
   accessToken: string,
   data: {
-    country: string | null;
     birthDate: string | null;
     beltId: number | null;
   }
