@@ -46,9 +46,6 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
                 .HasForeignKey(request => request.CoachId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasIndex(request => new { request.StudentId, request.CoachId })
-                .IsUnique()
-                .HasFilter("[IsDeleted] = 0 AND [Status] = 1");
         });
     }
 }
