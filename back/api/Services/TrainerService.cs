@@ -11,9 +11,7 @@ namespace JiuDiary.Api.Services;
 
 public sealed class TrainerService(JiuDiaryDbContext dbContext)
 {
-    public Task<PagedResult<TrainerOutputModel>> GetTrainersAsync(
-        Filter filter,
-        CancellationToken cancellationToken)
+    public Task<PagedResult<TrainerOutputModel>> GetTrainersAsync(Filter filter, CancellationToken cancellationToken)
     {
         var trainers = dbContext.Users
             .AsNoTracking()
@@ -37,10 +35,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         return trainers.ToPagedResultAsync(filter, cancellationToken);
     }
 
-    public async Task<StudentRequestOutputModel> CreateStudentRequestAsync(
-        AuthenticatedUser student,
-        Guid coachId,
-        CancellationToken cancellationToken)
+    public async Task<StudentRequestOutputModel> CreateStudentRequestAsync(AuthenticatedUser student, Guid coachId, CancellationToken cancellationToken)
     {
         EnsureRole(student, UserRolesEnum.Student);
 
@@ -52,12 +47,19 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             throw new KeyNotFoundException("Тренер не найден.");
         }
 
+        var isAlreadyStudent = await dbContext.CoachStudents.AnyAsync(
+            item => item.StudentId == student.Id && item.CoachId == coachId,
+            cancellationToken);
+        if (isAlreadyStudent)
+        {
+            throw new InvalidOperationException("Вы уже являетесь учеником этого тренера.");
+        }
+
         var hasActiveRequest = await dbContext.StudentsRequests.AnyAsync(
             request => request.StudentId == student.Id &&
                        request.CoachId == coachId &&
                        !request.IsDeleted &&
-                       (request.Status == StudentRequestStatusEnum.Pending ||
-                        request.Status == StudentRequestStatusEnum.Accepted),
+                       request.Status == StudentRequestStatusEnum.Pending,
             cancellationToken);
         if (hasActiveRequest)
         {
@@ -81,9 +83,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             .SingleAsync(item => item.Id == request.Id, cancellationToken);
     }
 
-    public Task<List<StudentRequestOutputModel>> GetStudentRequestsAsync(
-        AuthenticatedUser student,
-        CancellationToken cancellationToken)
+    public Task<List<StudentRequestOutputModel>> GetStudentRequestsAsync(AuthenticatedUser student, CancellationToken cancellationToken)
     {
         EnsureRole(student, UserRolesEnum.Student);
         return StudentRequestsQuery()
@@ -92,71 +92,57 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             .ToListAsync(cancellationToken);
     }
 
-    public Task<List<TrainerOutputModel>> GetStudentTrainersAsync(
-        AuthenticatedUser student,
-        CancellationToken cancellationToken)
+    public Task<List<TrainerOutputModel>> GetStudentTrainersAsync(AuthenticatedUser student, CancellationToken cancellationToken)
     {
         EnsureRole(student, UserRolesEnum.Student);
-        return dbContext.StudentsRequests
+        return dbContext.CoachStudents
             .AsNoTracking()
-            .Where(request => request.StudentId == student.Id &&
-                              !request.IsDeleted &&
-                              request.Status == StudentRequestStatusEnum.Accepted)
-            .OrderBy(request => request.Coach.Name)
-            .Select(request => new TrainerOutputModel
+            .Where(item => item.StudentId == student.Id)
+            .OrderBy(item => item.Coach.Name)
+            .Select(item => new TrainerOutputModel
             {
-                Id = request.Coach.Id,
-                Name = request.Coach.Name,
-                Login = request.Coach.Login,
-                BeltId = request.Coach.ClientInfo == null ? null : request.Coach.ClientInfo.BeltId,
-                BeltName = request.Coach.ClientInfo == null || request.Coach.ClientInfo.Belt == null
+                Id = item.Coach.Id,
+                Name = item.Coach.Name,
+                Login = item.Coach.Login,
+                BeltId = item.Coach.ClientInfo == null ? null : item.Coach.ClientInfo.BeltId,
+                BeltName = item.Coach.ClientInfo == null || item.Coach.ClientInfo.Belt == null
                     ? null
-                    : request.Coach.ClientInfo.Belt.Name
+                    : item.Coach.ClientInfo.Belt.Name
             })
             .ToListAsync(cancellationToken);
     }
 
-    public Task<List<StudentRequestOutputModel>> GetCoachRequestsAsync(
-        AuthenticatedUser coach,
-        CancellationToken cancellationToken)
+    public Task<List<StudentRequestOutputModel>> GetCoachRequestsAsync(AuthenticatedUser coach, CancellationToken cancellationToken)
     {
         EnsureRole(coach, UserRolesEnum.Coach);
-        return StudentRequestsQuery()
+        return StudentRequestsQuery(includeDeleted: false)
             .Where(request => request.CoachId == coach.Id &&
                               request.Status == StudentRequestStatusEnum.Pending)
             .OrderBy(request => request.CreateDate)
             .ToListAsync(cancellationToken);
     }
 
-    public Task<List<StudentOutputModel>> GetCoachStudentsAsync(
-        AuthenticatedUser coach,
-        CancellationToken cancellationToken)
+    public Task<List<StudentOutputModel>> GetCoachStudentsAsync(AuthenticatedUser coach, CancellationToken cancellationToken)
     {
         EnsureRole(coach, UserRolesEnum.Coach);
-        return dbContext.StudentsRequests
+        return dbContext.CoachStudents
             .AsNoTracking()
-            .Where(request => request.CoachId == coach.Id &&
-                              !request.IsDeleted &&
-                              request.Status == StudentRequestStatusEnum.Accepted)
-            .OrderBy(request => request.Student.Name)
-            .Select(request => new StudentOutputModel
+            .Where(item => item.CoachId == coach.Id)
+            .OrderBy(item => item.Student.Name)
+            .Select(item => new StudentOutputModel
             {
-                Id = request.Student.Id,
-                Name = request.Student.Name,
-                Login = request.Student.Login,
-                BeltId = request.Student.ClientInfo == null ? null : request.Student.ClientInfo.BeltId,
-                BeltName = request.Student.ClientInfo == null || request.Student.ClientInfo.Belt == null
+                Id = item.Student.Id,
+                Name = item.Student.Name,
+                Login = item.Student.Login,
+                BeltId = item.Student.ClientInfo == null ? null : item.Student.ClientInfo.BeltId,
+                BeltName = item.Student.ClientInfo == null || item.Student.ClientInfo.Belt == null
                     ? null
-                    : request.Student.ClientInfo.Belt.Name
+                    : item.Student.ClientInfo.Belt.Name
             })
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<StudentRequestOutputModel> ResolveStudentRequestAsync(
-        AuthenticatedUser coach,
-        Guid requestId,
-        StudentRequestStatusEnum status,
-        CancellationToken cancellationToken)
+    public async Task<StudentRequestOutputModel> ResolveStudentRequestAsync(AuthenticatedUser coach, Guid requestId, StudentRequestStatusEnum status, CancellationToken cancellationToken)
     {
         EnsureRole(coach, UserRolesEnum.Coach);
         if (status is not (StudentRequestStatusEnum.Accepted or StudentRequestStatusEnum.Rejected))
@@ -176,17 +162,59 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         }
 
         request.Status = status;
+        if (status == StudentRequestStatusEnum.Accepted)
+        {
+            var linkExists = await dbContext.CoachStudents.AnyAsync(
+                item => item.CoachId == coach.Id && item.StudentId == request.StudentId,
+                cancellationToken);
+            if (!linkExists)
+            {
+                dbContext.CoachStudents.Add(new CoachStudent
+                {
+                    Id = Guid.NewGuid(),
+                    CoachId = coach.Id,
+                    StudentId = request.StudentId,
+                    CreateDate = DateTime.Now
+                });
+            }
+        }
+        else
+        {
+            request.IsDeleted = true;
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return await StudentRequestsQuery()
             .SingleAsync(item => item.Id == request.Id, cancellationToken);
     }
 
-    private IQueryable<StudentRequestOutputModel> StudentRequestsQuery() =>
-        dbContext.StudentsRequests
-            .AsNoTracking()
-            .Where(request => !request.IsDeleted)
-            .Select(request => new StudentRequestOutputModel
+    public async Task<bool> RemoveCoachStudentAsync(AuthenticatedUser coach, Guid studentId, CancellationToken cancellationToken)
+    {
+        EnsureRole(coach, UserRolesEnum.Coach);
+
+        var links = await dbContext.CoachStudents
+            .Where(item => item.CoachId == coach.Id && item.StudentId == studentId)
+            .ToListAsync(cancellationToken);
+        if (links.Count == 0)
+        {
+            return false;
+        }
+
+        dbContext.CoachStudents.RemoveRange(links);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    private IQueryable<StudentRequestOutputModel> StudentRequestsQuery(bool includeDeleted = true)
+    {
+        var requests = dbContext.StudentsRequests.AsNoTracking();
+        if (!includeDeleted)
+        {
+            requests = requests.Where(request => !request.IsDeleted);
+        }
+
+        return requests.Select(request => new StudentRequestOutputModel
             {
                 Id = request.Id,
                 StudentId = request.StudentId,
@@ -198,6 +226,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
                 Status = request.Status,
                 CreateDate = request.CreateDate
             });
+    }
 
     private static void EnsureRole(AuthenticatedUser user, UserRolesEnum role)
     {

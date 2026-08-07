@@ -67,4 +67,8 @@ public sealed class User
     public ICollection<StudentRequest> SentStudentRequests { get; set; } = [];
 
     public ICollection<StudentRequest> ReceivedStudentRequests { get; set; } = [];
+
+    public ICollection<CoachStudent> Coaches { get; set; } = [];
+
+    public ICollection<CoachStudent> Students { get; set; } = [];
 }

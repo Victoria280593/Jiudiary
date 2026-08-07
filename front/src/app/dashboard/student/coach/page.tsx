@@ -45,6 +45,7 @@ export default async function StudentCoachPage({
   ]);
 
   const latestRequestByCoach = new Map<string, BackendStudentRequestStatus>();
+  const activeCoachIds = new Set((myTrainers ?? []).map((trainer) => trainer.id));
   for (const request of myRequests ?? []) {
     if (!latestRequestByCoach.has(request.coachId)) {
       latestRequestByCoach.set(request.coachId, request.status);
@@ -144,7 +145,12 @@ export default async function StudentCoachPage({
                   <StudentTrainerRequestButton
                     coachId={trainer.id}
                     coachName={trainer.name}
-                    status={latestRequestByCoach.get(trainer.id)}
+                    status={
+                      latestRequestByCoach.get(trainer.id) === "Accepted" &&
+                      !activeCoachIds.has(trainer.id)
+                        ? undefined
+                        : latestRequestByCoach.get(trainer.id)
+                    }
                   />
                 </div>
               ))}

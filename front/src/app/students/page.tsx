@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { Card } from "@/components/Card";
 import { CoachStudentRequestActions } from "@/components/CoachStudentRequestActions";
+import { CoachStudentRemoveButton } from "@/components/CoachStudentRemoveButton";
 import { getSession } from "@/lib/auth";
 import {
   getBackendCoachStudentRequests,
@@ -88,6 +89,10 @@ export default async function StudentsPage() {
                       <p className="mt-1 truncate text-xs text-muted">Пояс: {student.beltName}</p>
                     )}
                   </div>
+                  <CoachStudentRemoveButton
+                    studentId={student.id}
+                    studentName={student.name}
+                  />
                 </li>
               ))}
             </ul>
