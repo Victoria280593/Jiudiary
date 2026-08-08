@@ -147,7 +147,7 @@ export function AthleteProfileForm({
       {state?.error && <p className={errorClass}>{state.error}</p>}
       <p className="text-sm text-muted">Редактирование профиля временно недоступно.</p>
 
-      <fieldset disabled className="flex flex-col gap-4 opacity-60">
+      <fieldset className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-col gap-1">
             <label htmlFor="birthDate" className={labelClass}>
@@ -195,7 +195,7 @@ export function AthleteProfileForm({
 
         <button
           type="submit"
-          disabled
+          disabled={isSaving}
           className="w-full rounded-md bg-accent px-4 py-2 font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSaving ? "Подождите…" : "Сохранить"}
