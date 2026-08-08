@@ -1,0 +1,10 @@
+SET XACT_ABORT ON;
+BEGIN TRANSACTION;
+
+IF COL_LENGTH(N'dbo.ClientInfo', N'Country') IS NOT NULL
+BEGIN
+    ALTER TABLE [dbo].[ClientInfo]
+        DROP COLUMN [Country];
+END;
+
+COMMIT TRANSACTION;

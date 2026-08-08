@@ -1,25 +1,33 @@
 # JiuDiary
 
-Репозиторий разделён на два приложения:
+## Самое важное
 
-- `front` — Next.js frontend;
-- `back` — ASP.NET Core Web API.
+- Работать нужно в ветке `Dima-test`.
+- В `master` напрямую не коммитим.
+- Сначала делаем изменения в `Dima-test`, потом push.
+- После push проверяем фронт на сайте с портом `3002`.
+- Если все протестировано и все хорошо, тогда переносим изменения в `master`.
+- После попадания изменений в `master` основная версия будет доступна на порту `3001`.
 
-## Запуск frontend
+## Как работать в SourceTree
 
-```powershell
-cd front
-npm run dev
-```
+1. Открыл SourceTree.
+2. Нажал `Fetch`.
+3. Перешел в ветку `Dima-test`.
+4. Нажал `Pull`.
+5. Внес изменения.
+6. Нажал `Commit`.
+7. Нажал `Push`.
+8. Проверил результат на `http://217.114.15.222:3002`.
+9. Если все хорошо, вливаем `Dima-test` в `master`.
 
-Frontend: `http://localhost:3000`.
+## Локальный запуск
 
-## Запуск backend
+- frontend локально: `http://localhost:3000`
+- backend локально: `http://localhost:5136`
 
-```powershell
-cd back
-dotnet run --project api/JiuDiary.Api.csproj
-```
+## Сервер
 
-Backend: `http://localhost:5136`.
-Swagger UI: `http://localhost:5136/swagger`.
+- ветка `Dima-test`: `http://217.114.15.222:3002`
+- `master` frontend: `http://217.114.15.222:3001`
+- API: `http://217.114.15.222:5136`

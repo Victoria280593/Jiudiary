@@ -22,10 +22,6 @@ public sealed class AuthService(
     IOptions<AuthBootstrapOptions> bootstrapOptions,
     ILogger<AuthService> logger) : IAuthService
 {
-    private const int CoachRoleId = 2;
-    private const string CoachRoleName = "Coach";
-    private const string DefaultCountry = "Российская Федерация";
-    private const string DefaultBeltName = "Белый";
     private readonly JwtOptions _jwtOptions = jwtOptions.Value;
     private readonly AuthBootstrapOptions _bootstrapOptions = bootstrapOptions.Value;
 
@@ -46,26 +42,16 @@ public sealed class AuthService(
             return null;
         }
 
-        // Пока открыта только регистрация тренеров; роль создаётся один раз при необходимости.
+        var requestedRole = inputModel.Role;
+        var requestedRoleName = requestedRole.ToString();
+
         var role = await dbContext.Roles.SingleOrDefaultAsync(
-            existingRole => existingRole.Name == CoachRoleName,
+            existingRole => existingRole.Id == (int)requestedRole && existingRole.Name == requestedRoleName,
             cancellationToken);
 
         if (role is null)
         {
-            role = new Role { Id = CoachRoleId, Name = CoachRoleName };
-            dbContext.Roles.Add(role);
-            logger.LogInformation("Создана роль по умолчанию. RoleId: {RoleId} | RoleName: {RoleName}", role.Id, role.Name);
-        }
-
-        var defaultBeltId = await dbContext.Belts
-            .Where(belt => belt.Name == DefaultBeltName)
-            .Select(belt => (int?)belt.Id)
-            .SingleOrDefaultAsync(cancellationToken);
-
-        if (!defaultBeltId.HasValue)
-        {
-            throw new InvalidOperationException("В базе данных не найден белый пояс для создания профиля пользователя.");
+            throw new InvalidOperationException($"В базе данных не найдена роль {requestedRoleName} с идентификатором {(int)requestedRole}.");
         }
 
         var user = new User
@@ -85,9 +71,8 @@ public sealed class AuthService(
         dbContext.ClientInfos.Add(new ClientInfo
         {
             UserId = user.Id,
-            Country = DefaultCountry,
             BirthDate = null,
-            BeltId = defaultBeltId.Value
+            BeltId = null
         });
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -106,7 +91,10 @@ public sealed class AuthService(
         var normalizedLogin = inputModel.Login ?? string.Empty;
         var user = await dbContext.Users
             .Include(x => x.Role)
-            .SingleOrDefaultAsync(x => x.Login == normalizedLogin.Trim(), cancellationToken);
+            .SingleOrDefaultAsync(
+                x => x.Login == normalizedLogin.Trim() &&
+                     (x.RoleId == (int)inputModel.Role || x.RoleId == (int)UserRolesEnum.Admin),
+                cancellationToken);
 
         if (user is null || !user.IsActive)
         {

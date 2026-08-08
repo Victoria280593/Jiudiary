@@ -13,6 +13,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ClientInfoService>();
         services.AddScoped<GroupService>();
         services.AddScoped<TrainingService>();
+        services.AddScoped<TrainerService>();
         services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
 

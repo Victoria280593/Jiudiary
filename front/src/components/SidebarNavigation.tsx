@@ -57,6 +57,16 @@ export function SidebarNavigation({ role }: { role: Role }) {
           <span>Ученики</span>
         </Link>
       )}
+
+      {role === "STUDENT" && (
+        <Link
+          href="/dashboard/student/coach"
+          className={`sidebar-link ${pathname === "/dashboard/student/coach" ? "sidebar-link-active" : ""}`}
+        >
+          <ProfileIcon />
+          <span>Тренер</span>
+        </Link>
+      )}
     </nav>
   );
 }
@@ -84,6 +94,16 @@ export function MobileNavigation({ role }: { role: Role }) {
         >
           <UsersIcon />
           <span>Ученики</span>
+        </Link>
+      ) : role === "STUDENT" ? (
+        <Link
+          href="/dashboard/student/coach"
+          className={`flex min-h-10 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold ${
+            pathname === "/dashboard/student/coach" ? "bg-accent-soft text-accent" : "text-muted"
+          }`}
+        >
+          <ProfileIcon />
+          <span>Тренер</span>
         </Link>
       ) : (
         <span />

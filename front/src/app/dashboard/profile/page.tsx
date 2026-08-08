@@ -6,7 +6,6 @@ import { PersonalDataForm } from "@/components/PersonalDataForm";
 import { ProfileHero } from "@/components/ProfileHero";
 import { CoachGroupsCard } from "@/components/CoachGroupsCard";
 import { calculateAge } from "@/lib/belt";
-import { getCountryList, getCountryName } from "@/lib/countries";
 import type { Role } from "@prisma/client";
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -27,7 +26,7 @@ export default async function ProfilePage() {
           Мой профиль
         </h1>
         <p className="mt-1.5 text-sm text-muted">
-          Управляйте своими данными и настройками
+          Просматривайте свои данные и настройки
         </p>
       </div>
 
@@ -35,7 +34,6 @@ export default async function ProfilePage() {
         name={user.name}
         roleLabel={ROLE_LABELS[user.role]}
         avatarUrl={user.avatarUrl}
-        countryName={getCountryName(user.countryCode)}
         age={user.birthDate ? calculateAge(user.birthDate) : null}
         belt={user.belt}
       />
@@ -45,8 +43,6 @@ export default async function ProfilePage() {
       <Card title="Спортивные данные">
         <AthleteProfileForm
           key={user.updatedAt.getTime()}
-          countries={getCountryList()}
-          countryCode={user.countryCode}
           birthDate={user.birthDate}
           belt={user.belt}
         />

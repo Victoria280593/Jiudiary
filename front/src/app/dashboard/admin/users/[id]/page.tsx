@@ -6,7 +6,6 @@ import { AthleteCard } from "@/components/AthleteCard";
 import { BeltSelectForm } from "@/components/BeltSelectForm";
 import { Card } from "@/components/Card";
 import { BELT_LABELS, beltsForAge, calculateAge } from "@/lib/belt";
-import { flagEmoji, getCountryName } from "@/lib/countries";
 import { formatDate, formatDateTime } from "@/lib/format";
 import type { Belt, Role } from "@prisma/client";
 
@@ -69,8 +68,6 @@ export default async function AdminUserProfilePage({
       <AthleteCard
         name={user.name}
         avatarUrl={user.avatarUrl}
-        flagEmoji={flagEmoji(user.countryCode)}
-        countryName={getCountryName(user.countryCode)}
         age={user.birthDate ? calculateAge(user.birthDate) : null}
         belt={user.belt}
         blackBeltDegree={user.blackBeltDegree}

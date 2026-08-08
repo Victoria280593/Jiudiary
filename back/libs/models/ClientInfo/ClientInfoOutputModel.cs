@@ -2,8 +2,6 @@ namespace JiuDiary.Models.ClientInfo;
 
 public sealed class ClientInfoOutputModel
 {
-    public string? Country { get; set; }
-
     public DateOnly? BirthDate { get; set; }
 
     public int? BeltId { get; set; }

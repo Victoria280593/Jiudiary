@@ -196,3 +196,10 @@ body {
   background: var(--accent-soft);
   color: var(--accent);
 }
+
+@media (max-width: 639px) {
+  .calendar-control {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}

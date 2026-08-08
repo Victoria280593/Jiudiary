@@ -25,12 +25,6 @@ public sealed class ClientInfo
     public Guid UserId { get; set; }
 
     /// <summary>
-    /// Страна клиента.
-    /// </summary>
-    [MaxLength(100)]
-    public string? Country { get; set; }
-
-    /// <summary>
     /// Город клиента.
     /// </summary>
     [MaxLength(100)]

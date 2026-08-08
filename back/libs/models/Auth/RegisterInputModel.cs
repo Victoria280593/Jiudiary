@@ -1,3 +1,5 @@
+using JiuDiary.Database.Enums;
+
 namespace JiuDiary.Models.Auth;
 
 /// <summary>
@@ -19,4 +21,9 @@ public sealed class RegisterInputModel
     /// Пароль длиной от 8 до 128 символов.
     /// </summary>
     public string? Password { get; set; }
+
+    /// <summary>
+    /// Роль создаваемого пользователя: Coach или Student.
+    /// </summary>
+    public UserRolesEnum Role { get; set; }
 }

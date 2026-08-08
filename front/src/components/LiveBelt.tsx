@@ -7,10 +7,10 @@ import type { Belt as BeltType } from "@prisma/client";
 const BELT_UPDATED_EVENT = "jiudiary:belt-updated";
 
 type BeltUpdatedDetail = {
-  belt: BeltType;
+  belt: BeltType | null;
 };
 
-export function notifyBeltUpdated(belt: BeltType) {
+export function notifyBeltUpdated(belt: BeltType | null) {
   window.dispatchEvent(
     new CustomEvent<BeltUpdatedDetail>(BELT_UPDATED_EVENT, {
       detail: { belt },

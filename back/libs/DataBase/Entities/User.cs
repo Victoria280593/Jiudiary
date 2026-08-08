@@ -63,4 +63,12 @@ public sealed class User
     /// Дополнительная информация о клиенте.
     /// </summary>
     public ClientInfo? ClientInfo { get; set; }
+
+    public ICollection<StudentRequest> SentStudentRequests { get; set; } = [];
+
+    public ICollection<StudentRequest> ReceivedStudentRequests { get; set; } = [];
+
+    public ICollection<CoachStudent> Coaches { get; set; } = [];
+
+    public ICollection<CoachStudent> Students { get; set; } = [];
 }

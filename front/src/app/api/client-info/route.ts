@@ -26,14 +26,12 @@ export async function PUT(request: Request) {
   }
 
   const input = (await request.json()) as {
-    country: string | null;
     birthDate: string | null;
     beltId: number | null;
   };
 
   if (
-    input.beltId === null ||
-    !Number.isInteger(input.beltId)
+    input.beltId !== null && !Number.isInteger(input.beltId)
   ) {
     return NextResponse.json({ error: "Некорректные спортивные данные" }, { status: 400 });
   }

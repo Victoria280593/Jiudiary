@@ -1,4 +1,5 @@
 using JiuDiary.Api.Auth;
+using JiuDiary.Database.Enums;
 using JiuDiary.Models.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +16,7 @@ namespace JiuDiary.Api.Controllers;
 public sealed class AuthController(IAuthService authService) : BaseController
 {
     /// <summary>
-    /// Создаёт нового активного тренера с ролью Coach.
+    /// Создаёт нового активного тренера или ученика.
     /// </summary>
     /// <param name="request">Логин, имя и пароль нового пользователя.</param>
     /// <param name="cancellationToken">Токен отмены HTTP-запроса.</param>
@@ -32,7 +33,8 @@ public sealed class AuthController(IAuthService authService) : BaseController
             string.IsNullOrWhiteSpace(request.Name) ||
             request.Name.Trim().Length > 200 ||
             request.Password is null ||
-            request.Password.Length is < 8 or > 128)
+            request.Password.Length is < 8 or > 128 ||
+            request.Role is not (UserRolesEnum.Coach or UserRolesEnum.Student))
         {
             return BadRequest(new
             {
@@ -69,9 +71,11 @@ public sealed class AuthController(IAuthService authService) : BaseController
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<LoginOutputModel>> Login(LoginInputModel request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Login) || string.IsNullOrEmpty(request.Password))
+        if (string.IsNullOrWhiteSpace(request.Login) ||
+            string.IsNullOrEmpty(request.Password) ||
+            request.Role is not (UserRolesEnum.Coach or UserRolesEnum.Student))
         {
-            return BadRequest(new { error = "Необходимо указать логин и пароль." });
+            return BadRequest(new { error = "Необходимо указать логин, пароль и роль." });
         }
 
         var response = await authService.LoginAsync(request, cancellationToken);

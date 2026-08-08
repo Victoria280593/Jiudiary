@@ -5,10 +5,8 @@ import { BELT_LABELS, beltsForAge, calculateAge } from "@/lib/belt";
 import { notifyBeltUpdated } from "@/components/LiveBelt";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
 import type { Belt } from "@prisma/client";
-import type { Country } from "@/lib/countries";
 
 type ClientInfoResponse = {
-  country: string | null;
   birthDate: string | null;
   beltId: number | null;
   beltName: string | null;
@@ -46,12 +44,9 @@ function toDateInputValue(date: Date | null): string {
 }
 
 export function AthleteProfileForm({
-  countries,
   birthDate,
   belt,
 }: {
-  countries: Country[];
-  countryCode: string | null;
   birthDate: Date | null;
   belt: Belt | null;
 }) {
@@ -96,7 +91,6 @@ export function AthleteProfileForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedBelt) return;
 
     setIsSaving(true);
     setState(undefined);
@@ -106,9 +100,8 @@ export function AthleteProfileForm({
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          country: "Российская Федерация",
           birthDate: birthDateValue || null,
-          beltId: BELT_ID_BY_NAME[selectedBelt],
+          beltId: selectedBelt ? BELT_ID_BY_NAME[selectedBelt] : null,
         }),
         cache: "no-store",
       });
@@ -120,9 +113,9 @@ export function AthleteProfileForm({
       }
 
       const savedClientInfo: ClientInfoResponse = await response.json();
-      const savedBelt = BELT_BY_ID[savedClientInfo.beltId ?? 0] ?? selectedBelt;
+      const savedBelt = BELT_BY_ID[savedClientInfo.beltId ?? 0] ?? null;
       setBirthDateValue(savedClientInfo.birthDate ?? "");
-      setSelectedBelt(savedBelt);
+      setSelectedBelt(savedBelt ?? "");
       notifyBeltUpdated(savedBelt);
 
       for (let attempt = 0; attempt < 6; attempt += 1) {
@@ -130,10 +123,10 @@ export function AthleteProfileForm({
         if (refreshedResponse.ok) {
           const refreshedClientInfo: ClientInfoResponse = await refreshedResponse.json();
           const refreshedBelt = BELT_BY_ID[refreshedClientInfo.beltId ?? 0];
-          if (refreshedBelt === savedBelt) {
+          if ((refreshedBelt ?? null) === savedBelt) {
             setBirthDateValue(refreshedClientInfo.birthDate ?? "");
-            setSelectedBelt(refreshedBelt);
-            notifyBeltUpdated(refreshedBelt);
+            setSelectedBelt(refreshedBelt ?? "");
+            notifyBeltUpdated(refreshedBelt ?? null);
             break;
           }
         }
@@ -152,80 +145,62 @@ export function AthleteProfileForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {state?.error && <p className={errorClass}>{state.error}</p>}
+      <p className="text-sm text-muted">Редактирование профиля временно недоступно.</p>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <fieldset disabled className="flex flex-col gap-4 opacity-60">
+        <div className="grid grid-cols-1 gap-4">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="birthDate" className={labelClass}>
+              Дата рождения
+            </label>
+            <input
+              id="birthDate"
+              name="birthDate"
+              type="date"
+              value={birthDateValue}
+              onChange={(e) => setBirthDateValue(e.target.value)}
+              max={toDateInputValue(new Date())}
+              className={inputClass}
+            />
+          </div>
+        </div>
+
         <div className="flex flex-col gap-1">
-          <label htmlFor="countryCode" className={labelClass}>
-            Страна
+          <label htmlFor="belt" className={labelClass}>
+            Пояс
           </label>
           <select
-            id="countryCode"
-            value="RU"
-            disabled
+            id="belt"
+            name="belt"
+            value={selectedBelt}
+            onChange={(e) => setSelectedBelt(e.target.value as Belt | "")}
             className={inputClass}
           >
-            <option value="">Не указана</option>
-            {countries.filter((c) => c.code === "RU").map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.name}
+            <option value="">
+              Без пояса
+            </option>
+            {beltOptions.map((b) => (
+              <option key={b} value={b}>
+                {BELT_LABELS[b]}
               </option>
             ))}
           </select>
-          <input type="hidden" name="countryCode" value="RU" />
+          {!birthDateValue && (
+            <p className="text-xs text-muted">
+              Укажите дату рождения, чтобы видеть только пояса, доступные для этого возраста
+              (детская или взрослая система IBJJF).
+            </p>
+          )}
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="birthDate" className={labelClass}>
-            Дата рождения
-          </label>
-          <input
-            id="birthDate"
-            name="birthDate"
-            type="date"
-            value={birthDateValue}
-            onChange={(e) => setBirthDateValue(e.target.value)}
-            max={toDateInputValue(new Date())}
-            className={inputClass}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="belt" className={labelClass}>
-          Пояс
-        </label>
-        <select
-          id="belt"
-          name="belt"
-          required
-          value={selectedBelt}
-          onChange={(e) => setSelectedBelt(e.target.value as Belt)}
-          className={inputClass}
+        <button
+          type="submit"
+          disabled
+          className="w-full rounded-md bg-accent px-4 py-2 font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <option value="" disabled>
-            Выберите пояс
-          </option>
-          {beltOptions.map((b) => (
-            <option key={b} value={b}>
-              {BELT_LABELS[b]}
-            </option>
-          ))}
-        </select>
-        {!birthDateValue && (
-          <p className="text-xs text-muted">
-            Укажите дату рождения, чтобы видеть только пояса, доступные для этого возраста
-            (детская или взрослая система IBJJF).
-          </p>
-        )}
-      </div>
-
-      <button
-        type="submit"
-        disabled={isSaving}
-        className="w-full rounded-md bg-accent px-4 py-2 font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isSaving ? "Подождите…" : "Сохранить"}
-      </button>
+          {isSaving ? "Подождите…" : "Сохранить"}
+        </button>
+      </fieldset>
     </form>
   );
 }

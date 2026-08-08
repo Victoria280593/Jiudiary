@@ -5,6 +5,7 @@ import { createSession, destroySession } from "@/lib/auth";
 import { loginWithBackend, registerWithBackend } from "@/lib/backend-auth";
 
 export type FormState = { error?: string } | undefined;
+type RegistrationRole = "COACH" | "STUDENT";
 
 export async function registerAction(
   _prevState: FormState,
@@ -15,12 +16,13 @@ export async function registerAction(
     .trim()
     .toLowerCase();
   const password = String(formData.get("password") || "");
+  const role = String(formData.get("role") || "COACH") as RegistrationRole;
 
-  if (!name || !email || password.length < 8) {
+  if (!name || !email || password.length < 8 || !["COACH", "STUDENT"].includes(role)) {
     return { error: "Введите имя, email и пароль не короче 8 символов" };
   }
 
-  const result = await registerWithBackend(email, name, password);
+  const result = await registerWithBackend(email, name, password, role);
   if (!result.ok) {
     return { error: result.error };
   }
@@ -36,12 +38,13 @@ export async function loginAction(
     .trim()
     .toLowerCase();
   const password = String(formData.get("password") || "");
+  const role = String(formData.get("role") || "COACH") as RegistrationRole;
 
-  if (!email || !password) {
-    return { error: "Введите email и пароль" };
+  if (!email || !password || !["COACH", "STUDENT"].includes(role)) {
+    return { error: "Введите email, пароль и выберите роль" };
   }
 
-  const result = await loginWithBackend(email, password);
+  const result = await loginWithBackend(email, password, role);
   if (!result.ok) {
     return { error: result.error };
   }

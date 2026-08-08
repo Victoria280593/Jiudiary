@@ -46,7 +46,6 @@ public sealed class ClientInfoService(JiuDiaryDbContext dbContext, ILogger<Clien
             dbContext.ClientInfos.Add(clientInfo);
         }
 
-        clientInfo.Country = Normalize(inputModel.Country);
         clientInfo.BirthDate = inputModel.BirthDate;
         clientInfo.BeltId = inputModel.BeltId;
 
@@ -58,11 +57,9 @@ public sealed class ClientInfoService(JiuDiaryDbContext dbContext, ILogger<Clien
     private static System.Linq.Expressions.Expression<Func<ClientInfo, ClientInfoOutputModel>> ToOutputModelExpression() =>
         clientInfo => new ClientInfoOutputModel
         {
-            Country = clientInfo.Country,
             BirthDate = clientInfo.BirthDate,
             BeltId = clientInfo.BeltId,
             BeltName = clientInfo.Belt == null ? null : clientInfo.Belt.Name
         };
 
-    private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
