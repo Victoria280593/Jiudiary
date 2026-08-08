@@ -15,12 +15,21 @@ BEGIN
         CONSTRAINT [FK_CoachStudents_Students] FOREIGN KEY ([StudentId])
             REFERENCES [dbo].[Users] ([Id])
     );
+END;
 
+IF OBJECT_ID(N'[dbo].[coach_students]', N'U') IS NOT NULL
+BEGIN
     INSERT INTO [dbo].[CoachStudents] ([Id], [CoachId], [StudentId], [CreateDate])
-    SELECT NEWID(), [CoachId], [StudentId], MIN([CreateDate])
-    FROM [dbo].[StudentsRequests]
-    WHERE [Status] = 2 AND [IsDeleted] = 0
-    GROUP BY [CoachId], [StudentId];
+    SELECT [old].[Id], [old].[CoachId], [old].[StudentId], [old].[CreateDate]
+    FROM [dbo].[coach_students] AS [old]
+    WHERE NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[CoachStudents] AS [new]
+        WHERE [new].[Id] = [old].[Id]
+    );
+
+    DROP TABLE [dbo].[coach_students];
 END;
 
 COMMIT TRANSACTION;

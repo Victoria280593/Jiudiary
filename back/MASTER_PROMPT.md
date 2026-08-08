@@ -16,6 +16,7 @@
 - Новые сущности базы добавляются в `DataBase`-библиотеку и регистрируются через `DbSet` в `DbContext`.
 - Ограничения моделей базы по возможности описываются атрибутами в entity-классах: `Key`, `ForeignKey`, `DatabaseGenerated`, `Required`, `MaxLength`, `Table` и т.д.
 - `OnModelCreating` использовать только там, где атрибутов недостаточно.
+- Названия таблиц в базе писать в PascalCase, например `Users`, `CoachStudents`, `StudentsRequests`.
 
 ## Стиль кода
 

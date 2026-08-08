@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace JiuDiary.Database.Entities;
 
-[Table("coach_students")]
+[Table("CoachStudents")]
 public sealed class CoachStudent
 {
     [Key]
