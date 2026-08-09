@@ -10,7 +10,7 @@ export default async function RegisterPage() {
 
   return (
     <AuthCard
-      title="Регистрация тренера"
+      title="Регистрация"
       subtitle="Создайте аккаунт для ведения спортивного дневника"
       footer={
         <p>

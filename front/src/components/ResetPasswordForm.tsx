@@ -2,8 +2,9 @@
 
 import { useActionState } from "react";
 import { resetPasswordAction, type FormState } from "@/app/actions/password-reset";
+import { PasswordInput } from "@/components/PasswordInput";
 import { SubmitButton } from "@/components/SubmitButton";
-import { errorClass, inputClass, labelClass } from "@/lib/ui";
+import { errorClass, labelClass } from "@/lib/ui";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const [state, formAction] = useActionState<FormState, FormData>(
@@ -19,28 +20,24 @@ export function ResetPasswordForm({ token }: { token: string }) {
         <label htmlFor="password" className={labelClass}>
           Новый пароль
         </label>
-        <input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           required
           minLength={6}
           autoComplete="new-password"
-          className={inputClass}
         />
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="confirmPassword" className={labelClass}>
           Повторите пароль
         </label>
-        <input
+        <PasswordInput
           id="confirmPassword"
           name="confirmPassword"
-          type="password"
           required
           minLength={6}
           autoComplete="new-password"
-          className={inputClass}
         />
       </div>
       <SubmitButton>Сохранить новый пароль</SubmitButton>

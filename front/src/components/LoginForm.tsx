@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { loginAction, type FormState } from "@/app/actions/auth";
+import { PasswordInput } from "@/components/PasswordInput";
 import { SubmitButton } from "@/components/SubmitButton";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
 
@@ -60,13 +61,11 @@ export function LoginForm() {
         <label htmlFor="password" className={labelClass}>
           Пароль
         </label>
-        <input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           required
           autoComplete="current-password"
-          className={inputClass}
         />
       </div>
       <SubmitButton>Войти</SubmitButton>
