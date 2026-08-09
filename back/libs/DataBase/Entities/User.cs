@@ -26,26 +26,6 @@ public sealed class User
     public string Login { get; set; } = string.Empty;
 
     /// <summary>
-    /// Имя пользователя.
-    /// </summary>
-    [Required]
-    [MaxLength(200)]
-    public string FirstName { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Фамилия пользователя.
-    /// </summary>
-    [Required]
-    [MaxLength(200)]
-    public string LastName { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Отчество пользователя.
-    /// </summary>
-    [MaxLength(200)]
-    public string? MiddleName { get; set; }
-
-    /// <summary>
     /// Хеш пароля в формате ASP.NET Core Identity.
     /// </summary>
     [MaxLength(512)]

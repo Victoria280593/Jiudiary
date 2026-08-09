@@ -58,9 +58,6 @@ public sealed class AuthService(
         {
             Id = Guid.NewGuid(),
             Login = normalizedLogin,
-            FirstName = inputModel.FirstName?.Trim() ?? string.Empty,
-            LastName = inputModel.LastName?.Trim() ?? string.Empty,
-            MiddleName = string.IsNullOrWhiteSpace(inputModel.MiddleName) ? null : inputModel.MiddleName.Trim(),
             IsActive = true,
             Role = role,
             RoleId = role.Id
@@ -70,12 +67,17 @@ public sealed class AuthService(
         user.PasswordHash = passwordHasher.HashPassword(user, inputModel.Password!);
 
         dbContext.Users.Add(user);
-        dbContext.ClientInfos.Add(new ClientInfo
+        var clientInfo = new ClientInfo
         {
             UserId = user.Id,
+            FirstName = inputModel.FirstName?.Trim() ?? string.Empty,
+            LastName = inputModel.LastName?.Trim() ?? string.Empty,
+            MiddleName = string.IsNullOrWhiteSpace(inputModel.MiddleName) ? null : inputModel.MiddleName.Trim(),
             BirthDate = null,
             BeltId = null
-        });
+        };
+        user.ClientInfo = clientInfo;
+        dbContext.ClientInfos.Add(clientInfo);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("Пользователь зарегистрирован. UserId: {UserId} | RoleId: {RoleId}", user.Id, user.RoleId);
@@ -93,6 +95,7 @@ public sealed class AuthService(
         var normalizedLogin = inputModel.Login ?? string.Empty;
         var user = await dbContext.Users
             .Include(x => x.Role)
+            .Include(x => x.ClientInfo)
             .SingleOrDefaultAsync(
                 x => x.Login == normalizedLogin.Trim() &&
                      (x.RoleId == (int)inputModel.Role || x.RoleId == (int)UserRolesEnum.Admin),
@@ -153,6 +156,8 @@ public sealed class AuthService(
         var session = await dbContext.AuthSessions
             .Include(x => x.User)
             .ThenInclude(x => x.Role)
+            .Include(x => x.User)
+            .ThenInclude(x => x.ClientInfo)
             .SingleOrDefaultAsync(x => x.RefreshTokenHash == tokenHash, cancellationToken);
 
         if (session is null ||
@@ -253,7 +258,9 @@ public sealed class AuthService(
         new(
             user.Id,
             user.Login,
-            GetFullName(user.FirstName, user.LastName, user.MiddleName),
+            user.ClientInfo is null
+                ? user.Login
+                : GetFullName(user.ClientInfo.FirstName, user.ClientInfo.LastName, user.ClientInfo.MiddleName),
             (UserRolesEnum)user.RoleId);
 
     /// <summary>

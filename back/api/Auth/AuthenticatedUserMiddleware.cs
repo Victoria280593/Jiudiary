@@ -33,7 +33,9 @@ public sealed class AuthenticatedUserMiddleware(RequestDelegate next)
             .Select(x => new AuthenticatedUser(
                 x.Id,
                 x.Login,
-                x.LastName + " " + x.FirstName + (x.MiddleName == null || x.MiddleName == "" ? "" : " " + x.MiddleName),
+                x.ClientInfo == null
+                    ? x.Login
+                    : x.ClientInfo.LastName + " " + x.ClientInfo.FirstName + (x.ClientInfo.MiddleName == null || x.ClientInfo.MiddleName == "" ? "" : " " + x.ClientInfo.MiddleName),
                 (UserRolesEnum)x.RoleId))
             .SingleOrDefaultAsync(context.RequestAborted);
 

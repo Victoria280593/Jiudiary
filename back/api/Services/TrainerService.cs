@@ -18,18 +18,21 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             .Where(user => user.IsActive && user.RoleId == (int)UserRolesEnum.Coach)
             .ApplySearch(
                 filter.Search,
-                search => user => user.FirstName.Contains(search) ||
-                                  user.LastName.Contains(search) ||
-                                  (user.MiddleName != null && user.MiddleName.Contains(search)) ||
+                search => user => (user.ClientInfo != null &&
+                                  (user.ClientInfo.FirstName.Contains(search) ||
+                                   user.ClientInfo.LastName.Contains(search) ||
+                                   (user.ClientInfo.MiddleName != null && user.ClientInfo.MiddleName.Contains(search)))) ||
                                   user.Login.Contains(search))
-            .OrderBy(user => user.LastName)
-            .ThenBy(user => user.FirstName)
-            .ThenBy(user => user.MiddleName)
+            .OrderBy(user => user.ClientInfo == null ? "" : user.ClientInfo.LastName)
+            .ThenBy(user => user.ClientInfo == null ? "" : user.ClientInfo.FirstName)
+            .ThenBy(user => user.ClientInfo == null ? "" : user.ClientInfo.MiddleName)
             .ThenBy(user => user.Login)
             .Select(user => new TrainerOutputModel
             {
                 Id = user.Id,
-                Name = user.LastName + " " + user.FirstName + (user.MiddleName == null || user.MiddleName == "" ? "" : " " + user.MiddleName),
+                Name = user.ClientInfo == null
+                    ? user.Login
+                    : user.ClientInfo.LastName + " " + user.ClientInfo.FirstName + (user.ClientInfo.MiddleName == null || user.ClientInfo.MiddleName == "" ? "" : " " + user.ClientInfo.MiddleName),
                 Login = user.Login,
                 BeltId = user.ClientInfo == null ? null : user.ClientInfo.BeltId,
                 BeltName = user.ClientInfo == null || user.ClientInfo.Belt == null
@@ -103,12 +106,14 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         return dbContext.CoachStudents
             .AsNoTracking()
             .Where(item => item.StudentId == student.Id)
-            .OrderBy(item => item.Coach.LastName)
-            .ThenBy(item => item.Coach.FirstName)
+            .OrderBy(item => item.Coach.ClientInfo == null ? "" : item.Coach.ClientInfo.LastName)
+            .ThenBy(item => item.Coach.ClientInfo == null ? "" : item.Coach.ClientInfo.FirstName)
             .Select(item => new TrainerOutputModel
             {
                 Id = item.Coach.Id,
-                Name = item.Coach.LastName + " " + item.Coach.FirstName + (item.Coach.MiddleName == null || item.Coach.MiddleName == "" ? "" : " " + item.Coach.MiddleName),
+                Name = item.Coach.ClientInfo == null
+                    ? item.Coach.Login
+                    : item.Coach.ClientInfo.LastName + " " + item.Coach.ClientInfo.FirstName + (item.Coach.ClientInfo.MiddleName == null || item.Coach.ClientInfo.MiddleName == "" ? "" : " " + item.Coach.ClientInfo.MiddleName),
                 Login = item.Coach.Login,
                 BeltId = item.Coach.ClientInfo == null ? null : item.Coach.ClientInfo.BeltId,
                 BeltName = item.Coach.ClientInfo == null || item.Coach.ClientInfo.Belt == null
@@ -134,12 +139,14 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         return dbContext.CoachStudents
             .AsNoTracking()
             .Where(item => item.CoachId == coach.Id)
-            .OrderBy(item => item.Student.LastName)
-            .ThenBy(item => item.Student.FirstName)
+            .OrderBy(item => item.Student.ClientInfo == null ? "" : item.Student.ClientInfo.LastName)
+            .ThenBy(item => item.Student.ClientInfo == null ? "" : item.Student.ClientInfo.FirstName)
             .Select(item => new StudentOutputModel
             {
                 Id = item.Student.Id,
-                Name = item.Student.LastName + " " + item.Student.FirstName + (item.Student.MiddleName == null || item.Student.MiddleName == "" ? "" : " " + item.Student.MiddleName),
+                Name = item.Student.ClientInfo == null
+                    ? item.Student.Login
+                    : item.Student.ClientInfo.LastName + " " + item.Student.ClientInfo.FirstName + (item.Student.ClientInfo.MiddleName == null || item.Student.ClientInfo.MiddleName == "" ? "" : " " + item.Student.ClientInfo.MiddleName),
                 Login = item.Student.Login,
                 BeltId = item.Student.ClientInfo == null ? null : item.Student.ClientInfo.BeltId,
                 BeltName = item.Student.ClientInfo == null || item.Student.ClientInfo.Belt == null
@@ -225,10 +232,14 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             {
                 Id = request.Id,
                 StudentId = request.StudentId,
-                StudentName = request.Student.LastName + " " + request.Student.FirstName + (request.Student.MiddleName == null || request.Student.MiddleName == "" ? "" : " " + request.Student.MiddleName),
+                StudentName = request.Student.ClientInfo == null
+                    ? request.Student.Login
+                    : request.Student.ClientInfo.LastName + " " + request.Student.ClientInfo.FirstName + (request.Student.ClientInfo.MiddleName == null || request.Student.ClientInfo.MiddleName == "" ? "" : " " + request.Student.ClientInfo.MiddleName),
                 StudentLogin = request.Student.Login,
                 CoachId = request.CoachId,
-                CoachName = request.Coach.LastName + " " + request.Coach.FirstName + (request.Coach.MiddleName == null || request.Coach.MiddleName == "" ? "" : " " + request.Coach.MiddleName),
+                CoachName = request.Coach.ClientInfo == null
+                    ? request.Coach.Login
+                    : request.Coach.ClientInfo.LastName + " " + request.Coach.ClientInfo.FirstName + (request.Coach.ClientInfo.MiddleName == null || request.Coach.ClientInfo.MiddleName == "" ? "" : " " + request.Coach.ClientInfo.MiddleName),
                 CoachLogin = request.Coach.Login,
                 Status = request.Status,
                 CreateDate = request.CreateDate

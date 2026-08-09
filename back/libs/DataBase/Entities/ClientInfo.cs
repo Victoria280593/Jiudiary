@@ -25,6 +25,26 @@ public sealed class ClientInfo
     public Guid UserId { get; set; }
 
     /// <summary>
+    /// Имя клиента.
+    /// </summary>
+    [Required]
+    [MaxLength(200)]
+    public string FirstName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Фамилия клиента.
+    /// </summary>
+    [Required]
+    [MaxLength(200)]
+    public string LastName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Необязательное отчество клиента.
+    /// </summary>
+    [MaxLength(200)]
+    public string? MiddleName { get; set; }
+
+    /// <summary>
     /// Город клиента.
     /// </summary>
     [MaxLength(100)]
