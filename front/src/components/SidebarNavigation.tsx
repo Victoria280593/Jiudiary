@@ -49,13 +49,10 @@ export function SidebarNavigation({ role }: { role: Role }) {
       </Link>
 
       {role === "COACH" && (
-        <Link
-          href="/students"
-          className={`sidebar-link ${pathname === "/students" ? "sidebar-link-active" : ""}`}
-        >
+        <span className="sidebar-link sidebar-link-disabled" aria-disabled="true">
           <UsersIcon />
           <span>Ученики</span>
-        </Link>
+        </span>
       )}
 
       {role === "STUDENT" && (
@@ -86,15 +83,13 @@ export function MobileNavigation({ role }: { role: Role }) {
         <span>Профиль</span>
       </Link>
       {role === "COACH" ? (
-        <Link
-          href="/students"
-          className={`flex min-h-10 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold ${
-            pathname === "/students" ? "bg-accent-soft text-accent" : "text-muted"
-          }`}
+        <span
+          aria-disabled="true"
+          className="flex min-h-10 cursor-not-allowed items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold text-muted opacity-45"
         >
           <UsersIcon />
           <span>Ученики</span>
-        </Link>
+        </span>
       ) : role === "STUDENT" ? (
         <Link
           href="/dashboard/student/coach"
