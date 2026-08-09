@@ -28,7 +28,7 @@ public sealed class JwtOptions
     /// <summary>
     /// Срок жизни access-токена в минутах.
     /// </summary>
-    public int AccessTokenMinutes { get; init; } = 15;
+    public int AccessTokenMinutes { get; init; } = 60;
 
     /// <summary>
     /// Срок жизни refresh-сессии в днях.

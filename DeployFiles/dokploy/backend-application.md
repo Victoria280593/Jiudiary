@@ -28,7 +28,7 @@ ConnectionStrings__Default=Server=217.114.15.222,1433;Database=JiuDiary;User Id=
 Jwt__Issuer=JiuDiary
 Jwt__Audience=JiuDiary.Api
 Jwt__SigningKey=CHANGE_TO_A_RANDOM_SECRET_OF_AT_LEAST_32_CHARACTERS
-Jwt__AccessTokenMinutes=15
+Jwt__AccessTokenMinutes=60
 Jwt__RefreshTokenDays=30
 AuthBootstrap__Enabled=true
 AuthBootstrap__Login=admin@jiudiary.local

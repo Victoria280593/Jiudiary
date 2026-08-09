@@ -23,7 +23,7 @@ EF Core работает через `libs/DataBase/JiuDiaryDbContext.cs` и ст
 - `GET /api/auth/me` возвращает текущего пользователя по JWT.
 - `POST /api/auth/logout` отзывает refresh-сессию.
 
-Access-токен живёт 15 минут. Refresh-сессия живёт 30 дней и хранится в
+Access-токен живёт 60 минут. Refresh-сессия живёт 30 дней и хранится в
 `dbo.AuthSessions`; в базе сохраняется только SHA-256-хеш токена.
 
 Пароли пользователей хранятся в `dbo.Users.PasswordHash` в формате стандартного
