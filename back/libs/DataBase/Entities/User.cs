@@ -8,7 +8,7 @@ namespace JiuDiary.Database.Entities;
 /// Учётная запись пользователя JiuDiary.
 /// </summary>
 [Table("Users")]
-[Index(nameof(Login), IsUnique = true)]
+[Index(nameof(Login), nameof(RoleId), IsUnique = true)]
 public sealed class User
 {
     /// <summary>
