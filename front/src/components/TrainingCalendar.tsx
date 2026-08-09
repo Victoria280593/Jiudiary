@@ -316,13 +316,19 @@ export function TrainingCalendar({
 
                               {dayTrainings.length > 0 && (
                                 <span className="absolute inset-x-1 bottom-2 mx-auto flex max-w-[3.9rem] flex-wrap justify-center gap-x-1.5 gap-y-1 sm:inset-x-2 sm:bottom-auto sm:top-1/2 sm:max-w-none sm:-translate-y-1/2 sm:flex-nowrap sm:gap-2" aria-label={`Тренировок: ${dayTrainings.length}`}>
-                                  {dayTrainings.slice(0, 8).map((training) => (
-                                    <span
-                                      key={training.id}
-                                      className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
-                                      aria-hidden="true"
-                                    />
-                                  ))}
+                                  {dayTrainings.length > 6 ? (
+                                    <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-black px-1.5 text-xs font-semibold text-white shadow-sm sm:h-7 sm:min-w-7">
+                                      {dayTrainings.length}
+                                    </span>
+                                  ) : (
+                                    dayTrainings.map((training) => (
+                                      <span
+                                        key={training.id}
+                                        className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
+                                        aria-hidden="true"
+                                      />
+                                    ))
+                                  )}
                                 </span>
                               )}
                             </button>
@@ -358,13 +364,19 @@ export function TrainingCalendar({
                         </span>
                         {dayTrainings.length > 0 && (
                           <span className="absolute inset-x-1 bottom-2 mx-auto flex max-w-[3.9rem] flex-wrap justify-center gap-x-1.5 gap-y-1 sm:inset-x-2 sm:bottom-auto sm:top-1/2 sm:max-w-none sm:-translate-y-1/2 sm:flex-nowrap sm:gap-2" aria-label={`Тренировок: ${dayTrainings.length}`}>
-                            {dayTrainings.slice(0, 8).map((training) => (
-                              <span
-                                key={training.id}
-                                className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
-                                aria-hidden="true"
-                              />
-                            ))}
+                            {dayTrainings.length > 6 ? (
+                              <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-black px-1.5 text-xs font-semibold text-white shadow-sm sm:h-7 sm:min-w-7">
+                                {dayTrainings.length}
+                              </span>
+                            ) : (
+                              dayTrainings.map((training) => (
+                                <span
+                                  key={training.id}
+                                  className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
+                                  aria-hidden="true"
+                                />
+                              ))
+                            )}
                           </span>
                         )}
                       </button>
