@@ -195,7 +195,7 @@ export function AthleteProfileForm({
             />
           </div>
 
-          <div className="flex flex-col gap-1 sm:col-span-2">
+          <div className="flex flex-col gap-1">
             <label htmlFor="middleName" className={labelClass}>
               Отчество (необязательно)
             </label>
@@ -210,9 +210,7 @@ export function AthleteProfileForm({
               className={inputClass}
             />
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-col gap-1">
             <label htmlFor="birthDate" className={labelClass}>
               Дата рождения
