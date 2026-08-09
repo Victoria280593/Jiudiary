@@ -35,7 +35,7 @@ public sealed class AuthService(
 
         // Логин уникален: повторная регистрация возвращает Conflict через контроллер.
         if (await dbContext.Users.AnyAsync(
-                user => user.Login == normalizedLogin,
+                user => user.Login == normalizedLogin && user.RoleId == (int)inputModel.Role,
                 cancellationToken))
         {
             logger.LogInformation("Регистрация пользователя не выполнена: логин уже зарегистрирован");
