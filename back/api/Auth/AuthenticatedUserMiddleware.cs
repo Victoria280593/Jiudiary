@@ -30,7 +30,11 @@ public sealed class AuthenticatedUserMiddleware(RequestDelegate next)
         var user = await dbContext.Users
             .AsNoTracking()
             .Where(x => x.Id == userId && x.IsActive)
-            .Select(x => new AuthenticatedUser(x.Id, x.Login, x.Name, (UserRolesEnum)x.RoleId))
+            .Select(x => new AuthenticatedUser(
+                x.Id,
+                x.Login,
+                x.LastName + " " + x.FirstName + (x.MiddleName == null || x.MiddleName == "" ? "" : " " + x.MiddleName),
+                (UserRolesEnum)x.RoleId))
             .SingleOrDefaultAsync(context.RequestAborted);
 
         if (user is null || !Enum.IsDefined(user.Role))

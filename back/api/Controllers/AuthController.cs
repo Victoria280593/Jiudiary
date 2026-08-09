@@ -18,7 +18,7 @@ public sealed class AuthController(IAuthService authService) : BaseController
     /// <summary>
     /// Создаёт нового активного тренера или ученика.
     /// </summary>
-    /// <param name="request">Логин, имя и пароль нового пользователя.</param>
+    /// <param name="request">Логин, ФИО и пароль нового пользователя.</param>
     /// <param name="cancellationToken">Токен отмены HTTP-запроса.</param>
     /// <returns>Созданный пользователь без пароля и его хеша.</returns>
     [HttpPost("register")]
@@ -29,16 +29,20 @@ public sealed class AuthController(IAuthService authService) : BaseController
     public async Task<ActionResult<UserOutputModel>> Register(RegisterInputModel request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Login) ||
+            request.Login.Trim().Length < 12 ||
             request.Login.Trim().Length > 256 ||
-            string.IsNullOrWhiteSpace(request.Name) ||
-            request.Name.Trim().Length > 200 ||
+            string.IsNullOrWhiteSpace(request.FirstName) ||
+            request.FirstName.Trim().Length > 200 ||
+            string.IsNullOrWhiteSpace(request.LastName) ||
+            request.LastName.Trim().Length > 200 ||
+            request.MiddleName?.Trim().Length > 200 ||
             request.Password is null ||
             request.Password.Length is < 8 or > 128 ||
             request.Role is not (UserRolesEnum.Coach or UserRolesEnum.Student))
         {
             return BadRequest(new
             {
-                error = "Логин и имя обязательны, пароль должен содержать от 8 до 128 символов."
+                error = "Логин должен содержать от 12 до 256 символов, имя и фамилия обязательны, пароль должен содержать от 8 до 128 символов."
             });
         }
 
@@ -72,10 +76,11 @@ public sealed class AuthController(IAuthService authService) : BaseController
     public async Task<ActionResult<LoginOutputModel>> Login(LoginInputModel request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Login) ||
+            request.Login.Trim().Length < 12 ||
             string.IsNullOrEmpty(request.Password) ||
             request.Role is not (UserRolesEnum.Coach or UserRolesEnum.Student))
         {
-            return BadRequest(new { error = "Необходимо указать логин, пароль и роль." });
+            return BadRequest(new { error = "Необходимо указать логин длиной не менее 12 символов, пароль и роль." });
         }
 
         var response = await authService.LoginAsync(request, cancellationToken);

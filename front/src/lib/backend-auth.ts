@@ -267,7 +267,9 @@ export async function loginWithBackend(
 
 export async function registerWithBackend(
   login: string,
-  name: string,
+  firstName: string,
+  lastName: string,
+  middleName: string | null,
   password: string,
   role: "COACH" | "STUDENT"
 ): Promise<RegisterResult> {
@@ -275,16 +277,16 @@ export async function registerWithBackend(
     const response = await fetch(`${backendUrl}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ login, name, password, role }),
+      body: JSON.stringify({ login, firstName, lastName, middleName, password, role }),
       cache: "no-store",
       signal: AbortSignal.timeout(5_000),
     });
 
     if (response.status === 409) {
-      return { ok: false, error: "Пользователь с таким email уже зарегистрирован" };
+      return { ok: false, error: "Пользователь с таким логином уже зарегистрирован" };
     }
     if (response.status === 400) {
-      return { ok: false, error: "Проверьте имя, email и пароль" };
+      return { ok: false, error: "Проверьте ФИО, логин и пароль" };
     }
     if (!response.ok) {
       const result = (await response.json().catch(() => null)) as { error?: string } | null;

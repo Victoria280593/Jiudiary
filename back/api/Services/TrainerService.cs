@@ -18,13 +18,18 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             .Where(user => user.IsActive && user.RoleId == (int)UserRolesEnum.Coach)
             .ApplySearch(
                 filter.Search,
-                search => user => user.Name.Contains(search) || user.Login.Contains(search))
-            .OrderBy(user => user.Name)
+                search => user => user.FirstName.Contains(search) ||
+                                  user.LastName.Contains(search) ||
+                                  (user.MiddleName != null && user.MiddleName.Contains(search)) ||
+                                  user.Login.Contains(search))
+            .OrderBy(user => user.LastName)
+            .ThenBy(user => user.FirstName)
+            .ThenBy(user => user.MiddleName)
             .ThenBy(user => user.Login)
             .Select(user => new TrainerOutputModel
             {
                 Id = user.Id,
-                Name = user.Name,
+                Name = user.LastName + " " + user.FirstName + (user.MiddleName == null || user.MiddleName == "" ? "" : " " + user.MiddleName),
                 Login = user.Login,
                 BeltId = user.ClientInfo == null ? null : user.ClientInfo.BeltId,
                 BeltName = user.ClientInfo == null || user.ClientInfo.Belt == null
@@ -98,11 +103,12 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         return dbContext.CoachStudents
             .AsNoTracking()
             .Where(item => item.StudentId == student.Id)
-            .OrderBy(item => item.Coach.Name)
+            .OrderBy(item => item.Coach.LastName)
+            .ThenBy(item => item.Coach.FirstName)
             .Select(item => new TrainerOutputModel
             {
                 Id = item.Coach.Id,
-                Name = item.Coach.Name,
+                Name = item.Coach.LastName + " " + item.Coach.FirstName + (item.Coach.MiddleName == null || item.Coach.MiddleName == "" ? "" : " " + item.Coach.MiddleName),
                 Login = item.Coach.Login,
                 BeltId = item.Coach.ClientInfo == null ? null : item.Coach.ClientInfo.BeltId,
                 BeltName = item.Coach.ClientInfo == null || item.Coach.ClientInfo.Belt == null
@@ -128,11 +134,12 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         return dbContext.CoachStudents
             .AsNoTracking()
             .Where(item => item.CoachId == coach.Id)
-            .OrderBy(item => item.Student.Name)
+            .OrderBy(item => item.Student.LastName)
+            .ThenBy(item => item.Student.FirstName)
             .Select(item => new StudentOutputModel
             {
                 Id = item.Student.Id,
-                Name = item.Student.Name,
+                Name = item.Student.LastName + " " + item.Student.FirstName + (item.Student.MiddleName == null || item.Student.MiddleName == "" ? "" : " " + item.Student.MiddleName),
                 Login = item.Student.Login,
                 BeltId = item.Student.ClientInfo == null ? null : item.Student.ClientInfo.BeltId,
                 BeltName = item.Student.ClientInfo == null || item.Student.ClientInfo.Belt == null
@@ -218,10 +225,10 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             {
                 Id = request.Id,
                 StudentId = request.StudentId,
-                StudentName = request.Student.Name,
+                StudentName = request.Student.LastName + " " + request.Student.FirstName + (request.Student.MiddleName == null || request.Student.MiddleName == "" ? "" : " " + request.Student.MiddleName),
                 StudentLogin = request.Student.Login,
                 CoachId = request.CoachId,
-                CoachName = request.Coach.Name,
+                CoachName = request.Coach.LastName + " " + request.Coach.FirstName + (request.Coach.MiddleName == null || request.Coach.MiddleName == "" ? "" : " " + request.Coach.MiddleName),
                 CoachLogin = request.Coach.Login,
                 Status = request.Status,
                 CreateDate = request.CreateDate

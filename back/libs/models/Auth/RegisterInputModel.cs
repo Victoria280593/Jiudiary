@@ -13,9 +13,19 @@ public sealed class RegisterInputModel
     public string? Login { get; set; }
 
     /// <summary>
-    /// Отображаемое имя пользователя.
+    /// Имя пользователя.
     /// </summary>
-    public string? Name { get; set; }
+    public string? FirstName { get; set; }
+
+    /// <summary>
+    /// Фамилия пользователя.
+    /// </summary>
+    public string? LastName { get; set; }
+
+    /// <summary>
+    /// Необязательное отчество пользователя.
+    /// </summary>
+    public string? MiddleName { get; set; }
 
     /// <summary>
     /// Пароль длиной от 8 до 128 символов.

@@ -19,29 +19,45 @@ export function RegisterForm() {
       <input type="hidden" name="role" value="COACH" />
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="name" className={labelClass}>
-          Имя
+        <label htmlFor="lastName" className={labelClass}>
+          Фамилия
         </label>
-        <input id="name" name="name" type="text" required className={inputClass} />
+        <input id="lastName" name="lastName" type="text" required maxLength={200} autoComplete="family-name" className={inputClass} />
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="email" className={labelClass}>
-          Email
+        <label htmlFor="firstName" className={labelClass}>
+          Имя
+        </label>
+        <input id="firstName" name="firstName" type="text" required maxLength={200} autoComplete="given-name" className={inputClass} />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor="middleName" className={labelClass}>
+          Отчество (необязательно)
+        </label>
+        <input id="middleName" name="middleName" type="text" maxLength={200} autoComplete="additional-name" className={inputClass} />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor="login" className={labelClass}>
+          Логин (не менее 12 символов)
         </label>
         <input
-          id="email"
-          name="email"
-          type="email"
+          id="login"
+          name="login"
+          type="text"
           required
-          autoComplete="email"
+          minLength={12}
+          maxLength={256}
+          autoComplete="username"
           className={inputClass}
         />
       </div>
 
       <div className="flex flex-col gap-1">
         <label htmlFor="password" className={labelClass}>
-          Пароль
+          Пароль (не менее 8 символов)
         </label>
         <PasswordInput
           id="password"

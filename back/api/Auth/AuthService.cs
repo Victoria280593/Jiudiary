@@ -58,7 +58,9 @@ public sealed class AuthService(
         {
             Id = Guid.NewGuid(),
             Login = normalizedLogin,
-            Name = inputModel.Name?.Trim() ?? string.Empty,
+            FirstName = inputModel.FirstName?.Trim() ?? string.Empty,
+            LastName = inputModel.LastName?.Trim() ?? string.Empty,
+            MiddleName = string.IsNullOrWhiteSpace(inputModel.MiddleName) ? null : inputModel.MiddleName.Trim(),
             IsActive = true,
             Role = role,
             RoleId = role.Id
@@ -251,8 +253,14 @@ public sealed class AuthService(
         new(
             user.Id,
             user.Login,
-            user.Name,
+            GetFullName(user.FirstName, user.LastName, user.MiddleName),
             (UserRolesEnum)user.RoleId);
+
+    /// <summary>
+    /// Собирает отображаемое ФИО пользователя.
+    /// </summary>
+    private static string GetFullName(string firstName, string lastName, string? middleName) =>
+        string.Join(" ", new[] { lastName, firstName, middleName }.Where(value => !string.IsNullOrWhiteSpace(value)));
 
     /// <summary>
     /// Преобразует внутреннюю модель пользователя в DTO ответа API.

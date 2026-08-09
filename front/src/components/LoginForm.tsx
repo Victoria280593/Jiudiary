@@ -45,15 +45,17 @@ export function LoginForm() {
         <input type="hidden" name="role" value={role} />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="email" className={labelClass}>
-          Email
+        <label htmlFor="login" className={labelClass}>
+          Логин (не менее 12 символов)
         </label>
         <input
-          id="email"
-          name="email"
-          type="email"
+          id="login"
+          name="login"
+          type="text"
           required
-          autoComplete="email"
+          minLength={12}
+          maxLength={256}
+          autoComplete="username"
           className={inputClass}
         />
       </div>

@@ -11,18 +11,18 @@ export async function registerAction(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const name = String(formData.get("name") || "").trim();
-  const email = String(formData.get("email") || "")
-    .trim()
-    .toLowerCase();
+  const firstName = String(formData.get("firstName") || "").trim();
+  const lastName = String(formData.get("lastName") || "").trim();
+  const middleName = String(formData.get("middleName") || "").trim();
+  const login = String(formData.get("login") || "").trim();
   const password = String(formData.get("password") || "");
   const role = String(formData.get("role") || "COACH") as RegistrationRole;
 
-  if (!name || !email || password.length < 8 || !["COACH", "STUDENT"].includes(role)) {
-    return { error: "Введите имя, email и пароль не короче 8 символов" };
+  if (!firstName || !lastName || login.length < 12 || password.length < 8 || !["COACH", "STUDENT"].includes(role)) {
+    return { error: "Введите имя, фамилию, логин не короче 12 символов и пароль не короче 8 символов" };
   }
 
-  const result = await registerWithBackend(email, name, password, role);
+  const result = await registerWithBackend(login, firstName, lastName, middleName || null, password, role);
   if (!result.ok) {
     return { error: result.error };
   }
@@ -34,17 +34,15 @@ export async function loginAction(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const email = String(formData.get("email") || "")
-    .trim()
-    .toLowerCase();
+  const login = String(formData.get("login") || "").trim();
   const password = String(formData.get("password") || "");
   const role = String(formData.get("role") || "COACH") as RegistrationRole;
 
-  if (!email || !password || !["COACH", "STUDENT"].includes(role)) {
-    return { error: "Введите email, пароль и выберите роль" };
+  if (login.length < 12 || !password || !["COACH", "STUDENT"].includes(role)) {
+    return { error: "Введите логин не короче 12 символов, пароль и выберите роль" };
   }
 
-  const result = await loginWithBackend(email, password, role);
+  const result = await loginWithBackend(login, password, role);
   if (!result.ok) {
     return { error: result.error };
   }
