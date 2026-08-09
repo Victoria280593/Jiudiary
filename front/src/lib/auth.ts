@@ -123,7 +123,23 @@ export const getCurrentUser = cache(async () => {
       }
     : {};
 
-  if (persistedUser) return { ...persistedUser, ...sportsData };
+  const personalData = clientInfo
+    ? {
+        firstName: clientInfo.firstName,
+        lastName: clientInfo.lastName,
+        middleName: clientInfo.middleName,
+        name:
+          [clientInfo.lastName, clientInfo.firstName, clientInfo.middleName]
+            .filter((value): value is string => Boolean(value?.trim()))
+            .join(" ") || session.user.name,
+      }
+    : {
+        firstName: "",
+        lastName: "",
+        middleName: null,
+      };
+
+  if (persistedUser) return { ...persistedUser, ...sportsData, ...personalData };
 
   return {
     id: session.user.id,
@@ -140,5 +156,6 @@ export const getCurrentUser = cache(async () => {
     blackBeltProfessor: null,
     coachId: null,
     ...sportsData,
+    ...personalData,
   };
 });

@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AthleteProfileForm } from "@/components/AthleteProfileForm";
 import { Card } from "@/components/Card";
-import { PersonalDataForm } from "@/components/PersonalDataForm";
 import { ProfileHero } from "@/components/ProfileHero";
 import { CoachGroupsCard } from "@/components/CoachGroupsCard";
 import { calculateAge } from "@/lib/belt";
@@ -40,17 +39,17 @@ export default async function ProfilePage() {
 
       {user.role === "COACH" && <CoachGroupsCard />}
 
-      <Card title="Спортивные данные">
+      <Card title="Данные">
         <AthleteProfileForm
           key={user.updatedAt.getTime()}
+          firstName={user.firstName}
+          lastName={user.lastName}
+          middleName={user.middleName}
           birthDate={user.birthDate}
           belt={user.belt}
         />
       </Card>
 
-      <Card title="Личные данные">
-        <PersonalDataForm name={user.name} email={user.email} />
-      </Card>
     </div>
   );
 }

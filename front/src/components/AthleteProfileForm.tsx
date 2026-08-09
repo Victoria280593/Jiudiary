@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { BELT_LABELS, beltsForAge, calculateAge } from "@/lib/belt";
 import { notifyBeltUpdated } from "@/components/LiveBelt";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
 import type { Belt } from "@prisma/client";
 
 type ClientInfoResponse = {
+  firstName: string;
+  lastName: string;
+  middleName: string | null;
   birthDate: string | null;
   beltId: number | null;
   beltName: string | null;
@@ -44,14 +48,24 @@ function toDateInputValue(date: Date | null): string {
 }
 
 export function AthleteProfileForm({
+  firstName,
+  lastName,
+  middleName,
   birthDate,
   belt,
 }: {
+  firstName: string;
+  lastName: string;
+  middleName: string | null;
   birthDate: Date | null;
   belt: Belt | null;
 }) {
+  const router = useRouter();
   const [state, setState] = useState<{ error?: string; success?: boolean }>();
   const [isSaving, setIsSaving] = useState(false);
+  const [firstNameValue, setFirstNameValue] = useState(firstName);
+  const [lastNameValue, setLastNameValue] = useState(lastName);
+  const [middleNameValue, setMiddleNameValue] = useState(middleName ?? "");
   const [birthDateValue, setBirthDateValue] = useState(toDateInputValue(birthDate));
   const [selectedBelt, setSelectedBelt] = useState<Belt | "">(belt ?? "");
 
@@ -67,6 +81,9 @@ export function AthleteProfileForm({
 
         if (cancelled) return;
 
+        setFirstNameValue(clientInfo.firstName);
+        setLastNameValue(clientInfo.lastName);
+        setMiddleNameValue(clientInfo.middleName ?? "");
         setBirthDateValue(clientInfo.birthDate ?? "");
         setSelectedBelt(BELT_BY_ID[clientInfo.beltId ?? 0] ?? belt ?? "");
       } catch {
@@ -95,11 +112,20 @@ export function AthleteProfileForm({
     setIsSaving(true);
     setState(undefined);
 
+    if (!firstNameValue.trim() || !lastNameValue.trim()) {
+      setState({ error: "Укажите имя и фамилию" });
+      setIsSaving(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/client-info", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          firstName: firstNameValue.trim(),
+          lastName: lastNameValue.trim(),
+          middleName: middleNameValue.trim() || null,
           birthDate: birthDateValue || null,
           beltId: selectedBelt ? BELT_ID_BY_NAME[selectedBelt] : null,
         }),
@@ -108,35 +134,22 @@ export function AthleteProfileForm({
 
       if (!response.ok) {
         const error = (await response.json().catch(() => null)) as { error?: string } | null;
-        setState({ error: error?.error ?? "Не удалось сохранить спортивные данные" });
+        setState({ error: error?.error ?? "Не удалось сохранить данные" });
         return;
       }
 
       const savedClientInfo: ClientInfoResponse = await response.json();
       const savedBelt = BELT_BY_ID[savedClientInfo.beltId ?? 0] ?? null;
+      setFirstNameValue(savedClientInfo.firstName);
+      setLastNameValue(savedClientInfo.lastName);
+      setMiddleNameValue(savedClientInfo.middleName ?? "");
       setBirthDateValue(savedClientInfo.birthDate ?? "");
       setSelectedBelt(savedBelt ?? "");
       notifyBeltUpdated(savedBelt);
-
-      for (let attempt = 0; attempt < 6; attempt += 1) {
-        const refreshedResponse = await fetch(`/api/client-info?refresh=${Date.now()}`, { cache: "no-store" });
-        if (refreshedResponse.ok) {
-          const refreshedClientInfo: ClientInfoResponse = await refreshedResponse.json();
-          const refreshedBelt = BELT_BY_ID[refreshedClientInfo.beltId ?? 0];
-          if ((refreshedBelt ?? null) === savedBelt) {
-            setBirthDateValue(refreshedClientInfo.birthDate ?? "");
-            setSelectedBelt(refreshedBelt ?? "");
-            notifyBeltUpdated(refreshedBelt ?? null);
-            break;
-          }
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 200 * (attempt + 1)));
-      }
-
       setState({ success: true });
+      router.refresh();
     } catch {
-      setState({ error: "Не удалось сохранить спортивные данные" });
+      setState({ error: "Не удалось сохранить данные" });
     } finally {
       setIsSaving(false);
     }
@@ -145,9 +158,60 @@ export function AthleteProfileForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {state?.error && <p className={errorClass}>{state.error}</p>}
-      <p className="text-sm text-muted">Редактирование профиля временно недоступно.</p>
 
       <fieldset className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="lastName" className={labelClass}>
+              Фамилия
+            </label>
+            <input
+              id="lastName"
+              name="lastName"
+              type="text"
+              required
+              maxLength={200}
+              autoComplete="family-name"
+              value={lastNameValue}
+              onChange={(event) => setLastNameValue(event.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label htmlFor="firstName" className={labelClass}>
+              Имя
+            </label>
+            <input
+              id="firstName"
+              name="firstName"
+              type="text"
+              required
+              maxLength={200}
+              autoComplete="given-name"
+              value={firstNameValue}
+              onChange={(event) => setFirstNameValue(event.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1 sm:col-span-2">
+            <label htmlFor="middleName" className={labelClass}>
+              Отчество (необязательно)
+            </label>
+            <input
+              id="middleName"
+              name="middleName"
+              type="text"
+              maxLength={200}
+              autoComplete="additional-name"
+              value={middleNameValue}
+              onChange={(event) => setMiddleNameValue(event.target.value)}
+              className={inputClass}
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-col gap-1">
             <label htmlFor="birthDate" className={labelClass}>

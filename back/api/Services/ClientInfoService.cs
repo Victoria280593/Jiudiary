@@ -31,6 +31,21 @@ public sealed class ClientInfoService(JiuDiaryDbContext dbContext, ILogger<Clien
             return null;
         }
 
+        if (string.IsNullOrWhiteSpace(inputModel.FirstName) || inputModel.FirstName.Trim().Length > 200)
+        {
+            throw new ArgumentException("Имя обязательно и должно содержать не более 200 символов.", nameof(inputModel.FirstName));
+        }
+
+        if (string.IsNullOrWhiteSpace(inputModel.LastName) || inputModel.LastName.Trim().Length > 200)
+        {
+            throw new ArgumentException("Фамилия обязательна и должна содержать не более 200 символов.", nameof(inputModel.LastName));
+        }
+
+        if (inputModel.MiddleName?.Trim().Length > 200)
+        {
+            throw new ArgumentException("Отчество должно содержать не более 200 символов.", nameof(inputModel.MiddleName));
+        }
+
         if (inputModel.BeltId.HasValue &&
             !await dbContext.Belts.AnyAsync(x => x.Id == inputModel.BeltId.Value, cancellationToken))
         {
@@ -46,6 +61,9 @@ public sealed class ClientInfoService(JiuDiaryDbContext dbContext, ILogger<Clien
             dbContext.ClientInfos.Add(clientInfo);
         }
 
+        clientInfo.FirstName = inputModel.FirstName.Trim();
+        clientInfo.LastName = inputModel.LastName.Trim();
+        clientInfo.MiddleName = string.IsNullOrWhiteSpace(inputModel.MiddleName) ? null : inputModel.MiddleName.Trim();
         clientInfo.BirthDate = inputModel.BirthDate;
         clientInfo.BeltId = inputModel.BeltId;
 

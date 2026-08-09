@@ -1,7 +1,7 @@
 "use server";
 
 import { getSession } from "@/lib/auth";
-import { updateBackendClientInfo } from "@/lib/backend-auth";
+import { getBackendClientInfo, updateBackendClientInfo } from "@/lib/backend-auth";
 import {
   ADULT_BELTS,
   KIDS_BELTS,
@@ -95,7 +95,15 @@ export async function updateAthleteProfileAction(
     }
   }
 
+  const currentClientInfo = await getBackendClientInfo(session.accessToken);
+  if (!currentClientInfo) {
+    return { error: "Не удалось получить данные профиля с сервера" };
+  }
+
   const saved = await updateBackendClientInfo(session.accessToken, {
+    firstName: currentClientInfo.firstName,
+    lastName: currentClientInfo.lastName,
+    middleName: currentClientInfo.middleName,
     birthDate: birthDateStr || null,
     beltId: belt ? BELT_IDS[belt] : null,
   });

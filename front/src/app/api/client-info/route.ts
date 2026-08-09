@@ -26,14 +26,25 @@ export async function PUT(request: Request) {
   }
 
   const input = (await request.json()) as {
+    firstName: string;
+    lastName: string;
+    middleName: string | null;
     birthDate: string | null;
     beltId: number | null;
   };
 
   if (
+    typeof input.firstName !== "string" ||
+    !input.firstName.trim() ||
+    input.firstName.trim().length > 200 ||
+    typeof input.lastName !== "string" ||
+    !input.lastName.trim() ||
+    input.lastName.trim().length > 200 ||
+    (input.middleName !== null && typeof input.middleName !== "string") ||
+    (typeof input.middleName === "string" && input.middleName.trim().length > 200) ||
     input.beltId !== null && !Number.isInteger(input.beltId)
   ) {
-    return NextResponse.json({ error: "Некорректные спортивные данные" }, { status: 400 });
+    return NextResponse.json({ error: "Некорректные данные профиля" }, { status: 400 });
   }
 
   const clientInfo = await updateBackendClientInfo(session.accessToken, input);

@@ -20,6 +20,9 @@ export type BackendSession = {
 };
 
 export type BackendClientInfo = {
+  firstName: string;
+  lastName: string;
+  middleName: string | null;
   birthDate: string | null;
   beltId: number | null;
   beltName: string | null;
@@ -510,6 +513,9 @@ export async function removeBackendCoachStudent(
 export async function updateBackendClientInfo(
   accessToken: string,
   data: {
+    firstName: string;
+    lastName: string;
+    middleName: string | null;
     birthDate: string | null;
     beltId: number | null;
   }
