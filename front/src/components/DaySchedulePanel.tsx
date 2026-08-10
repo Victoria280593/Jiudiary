@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CreateTrainingForm } from "@/components/CreateTrainingForm";
 import { formatTime } from "@/lib/format";
@@ -38,16 +38,27 @@ export function DaySchedulePanel({
   const [deleteError, setDeleteError] = useState<string>();
   const closeTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
-  useEffect(() => {
-    return () => {
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-    };
-  }, []);
-
-  function closePanel() {
+  const closePanel = useCallback(() => {
+    if (closeTimerRef.current) return;
     setIsClosing(true);
     closeTimerRef.current = setTimeout(onClose, 180);
-  }
+  }, [onClose]);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closePanel();
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+  }, [closePanel]);
 
   const selectedDate = useMemo(() => new Date(`${dateKey}T00:00:00`), [dateKey]);
   const dateTitle = useMemo(
@@ -79,10 +90,19 @@ export function DaySchedulePanel({
   }
 
   return (
-    <aside
-      aria-label={`Тренировки на ${dateTitle}`}
-      className={`${isClosing ? "day-panel-closing" : "day-panel"} calendar-shadow max-h-[55svh] overflow-y-auto rounded-[1.6rem] bg-white/95 min-[1000px]:sticky min-[1000px]:top-6 min-[1000px]:max-h-none min-[1000px]:overflow-hidden`}
-    >
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 sm:p-6">
+      <button
+        type="button"
+        onClick={closePanel}
+        aria-label="Закрыть список тренировок"
+        className={`absolute inset-0 h-full w-full bg-black/40 backdrop-blur-md transition-opacity duration-200 ${isClosing ? "opacity-0" : "opacity-100"}`}
+      />
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Тренировки на ${dateTitle}`}
+        className={`${isClosing ? "day-panel-closing" : "day-panel"} calendar-shadow relative z-10 max-h-[calc(100svh-1.5rem)] w-full max-w-96 overflow-y-auto rounded-[1.6rem] bg-white/95 sm:max-h-[calc(100svh-3rem)]`}
+      >
       <header className="flex items-start justify-between gap-4 px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
         <div>
           <h2 className="text-xl font-semibold capitalize tracking-[-0.025em] text-foreground">
@@ -213,6 +233,7 @@ export function DaySchedulePanel({
           </div>
         )}
       </div>
-    </aside>
+      </aside>
+    </div>
   );
 }
