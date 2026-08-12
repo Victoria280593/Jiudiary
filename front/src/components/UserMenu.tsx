@@ -13,19 +13,10 @@ export function UserMenu({ children }: { children: ReactNode }) {
       }
     };
 
-    const closeMenuWithEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && menuRef.current?.open) {
-        menuRef.current.open = false;
-        menuRef.current.querySelector<HTMLElement>("summary")?.focus();
-      }
-    };
-
     document.addEventListener("pointerdown", closeMenu);
-    document.addEventListener("keydown", closeMenuWithEscape);
 
     return () => {
       document.removeEventListener("pointerdown", closeMenu);
-      document.removeEventListener("keydown", closeMenuWithEscape);
     };
   }, []);
 
