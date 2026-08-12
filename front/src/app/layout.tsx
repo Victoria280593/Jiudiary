@@ -34,7 +34,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full bg-background text-foreground">
         <GroupsProvider key={user?.id ?? "anonymous"} enabled={user?.role === "COACH"}>
-          <div className="flex min-h-screen flex-col lg:flex-row">
+          <div className="flex min-h-screen min-w-0 flex-col">
             <SiteHeader />
             <div className="min-w-0 flex-1">{children}</div>
           </div>
