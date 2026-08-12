@@ -44,7 +44,7 @@ export async function SiteHeader() {
         <TopNavigation role={user.role} />
         <details className="user-menu">
           <summary aria-label="Открыть меню аккаунта" className="user-menu-summary">
-            <span className="ring-4 ring-accent-soft"><Avatar src={user.avatarUrl} name={user.name} size={40} /></span>
+            <Avatar src={user.avatarUrl} name={user.name} size={40} />
             <span className="user-menu-copy">
               <span className="block truncate text-sm font-semibold text-foreground">{sidebarName}</span>
               <span className="block text-xs text-muted">{ROLE_LABELS[user.role]}</span>
