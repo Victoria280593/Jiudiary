@@ -3,6 +3,7 @@ import type { Role } from "@prisma/client";
 import { logoutAction } from "@/app/actions/auth";
 import { Avatar } from "@/components/Avatar";
 import { TopNavigation } from "@/components/SidebarNavigation";
+import { UserMenu } from "@/components/UserMenu";
 import { getCurrentUser } from "@/lib/auth";
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -42,7 +43,7 @@ export async function SiteHeader() {
       <div className="app-header-inner">
         <div className="app-header-logo"><Logo /></div>
         <TopNavigation role={user.role} />
-        <details className="user-menu">
+        <UserMenu>
           <summary aria-label="Открыть меню аккаунта" className="user-menu-summary">
             <Avatar src={user.avatarUrl} name={user.name} size={40} />
             <span className="user-menu-copy">
@@ -56,7 +57,7 @@ export async function SiteHeader() {
               <button type="submit" className="user-menu-action w-full text-left">Выйти из аккаунта</button>
             </form>
           </div>
-        </details>
+        </UserMenu>
       </div>
     </header>
   );
