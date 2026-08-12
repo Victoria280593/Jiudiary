@@ -326,7 +326,18 @@ body {
 
   .top-navigation {
     grid-column: 1 / -1;
+    grid-row: 2;
     width: min(100%, 31rem);
+  }
+
+  .app-header-logo {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .user-menu {
+    grid-column: 2;
+    grid-row: 1;
   }
 
   .nav-item {
