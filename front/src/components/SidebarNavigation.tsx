@@ -1,12 +1,13 @@
 "use client";
 
+import { useLayoutEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Role } from "@prisma/client";
 
 function CalendarIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 011 1v14H4V6a1 1 0 011-1z" />
       <path strokeLinecap="round" d="M8 13h2m4 0h2m-8 4h2m4 0h2" />
     </svg>
@@ -15,7 +16,7 @@ function CalendarIcon() {
 
 function UsersIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M16 20v-1.5A3.5 3.5 0 0012.5 15h-5A3.5 3.5 0 004 18.5V20m13-9a3 3 0 110-6 3 3 0 010 6zM10 11a3 3 0 110-6 3 3 0 010 6zm8.5 4.5A3.5 3.5 0 0122 19" />
     </svg>
   );
@@ -23,95 +24,72 @@ function UsersIcon() {
 
 function ProfileIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
       <circle cx="12" cy="8" r="3.5" />
       <path strokeLinecap="round" d="M5 20a7 7 0 0114 0" />
     </svg>
   );
 }
 
-export function SidebarNavigation({ role }: { role: Role }) {
+export function TopNavigation({ role }: { role: Role }) {
   const pathname = usePathname();
+  const navigationRef = useRef<HTMLElement>(null);
+
+  const profileIsActive = pathname.startsWith("/dashboard/profile");
+  const studentSectionIsActive = pathname.startsWith("/dashboard/student/coach");
+  const calendarIsActive = !profileIsActive && !studentSectionIsActive;
+
+  useLayoutEffect(() => {
+    const navigation = navigationRef.current;
+    if (!navigation) return;
+
+    let animationFrame = 0;
+    const updateActiveIndicator = () => {
+      cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(() => {
+        const activeItem = navigation.querySelector<HTMLElement>('[data-active="true"]');
+        if (!activeItem) return;
+
+        navigation.style.setProperty("--indicator-x", `${activeItem.offsetLeft}px`);
+        navigation.style.setProperty("--indicator-width", `${activeItem.offsetWidth}px`);
+        navigation.classList.add("is-ready");
+      });
+    };
+
+    updateActiveIndicator();
+    const resizeObserver = new ResizeObserver(updateActiveIndicator);
+    resizeObserver.observe(navigation);
+    window.addEventListener("orientationchange", updateActiveIndicator);
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      resizeObserver.disconnect();
+      window.removeEventListener("orientationchange", updateActiveIndicator);
+    };
+  }, [pathname, role]);
 
   return (
-    <nav aria-label="Основная навигация" className="mt-12 flex flex-col gap-2">
-      <Link
-        href="/dashboard/profile"
-        className={`sidebar-link ${pathname === "/dashboard/profile" ? "sidebar-link-active" : ""}`}
-      >
+    <nav ref={navigationRef} aria-label="Основная навигация" className="top-navigation">
+      <span className="nav-active-indicator" aria-hidden="true" />
+      <Link href="/dashboard/profile" data-active={profileIsActive} aria-current={profileIsActive ? "page" : undefined} className="nav-item">
         <ProfileIcon />
-        <span>Мой профиль</span>
+        <span className="nav-profile-label"><span className="nav-profile-prefix">Мой </span>профиль</span>
       </Link>
-
-      <Link href="/" className={`sidebar-link ${pathname === "/" ? "sidebar-link-active" : ""}`}>
+      <Link href="/" data-active={calendarIsActive} aria-current={calendarIsActive ? "page" : undefined} className="nav-item">
         <CalendarIcon />
         <span>Календарь</span>
       </Link>
-
-      {role === "COACH" && (
-        <span className="sidebar-link sidebar-link-disabled" aria-disabled="true">
-          <UsersIcon />
-          <span>Ученики</span>
-        </span>
-      )}
-
-      {role === "STUDENT" && (
-        <Link
-          href="/dashboard/student/coach"
-          className={`sidebar-link ${pathname === "/dashboard/student/coach" ? "sidebar-link-active" : ""}`}
-        >
-          <ProfileIcon />
-          <span>Тренер</span>
-        </Link>
-      )}
-    </nav>
-  );
-}
-
-export function MobileNavigation({ role }: { role: Role }) {
-  const pathname = usePathname();
-
-  return (
-    <nav aria-label="Мобильная навигация" className="mt-3 grid w-full grid-cols-3 gap-1">
-      <Link
-        href="/dashboard/profile"
-        className={`flex min-h-10 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold ${
-          pathname === "/dashboard/profile" ? "bg-accent-soft text-accent" : "text-muted"
-        }`}
-      >
-        <ProfileIcon />
-        <span>Профиль</span>
-      </Link>
-      {role === "COACH" ? (
-        <span
-          aria-disabled="true"
-          className="flex min-h-10 cursor-not-allowed items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold text-muted opacity-45"
-        >
-          <UsersIcon />
-          <span>Ученики</span>
-        </span>
-      ) : role === "STUDENT" ? (
-        <Link
-          href="/dashboard/student/coach"
-          className={`flex min-h-10 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold ${
-            pathname === "/dashboard/student/coach" ? "bg-accent-soft text-accent" : "text-muted"
-          }`}
-        >
+      {role === "STUDENT" ? (
+        <Link href="/dashboard/student/coach" data-active={studentSectionIsActive} aria-current={studentSectionIsActive ? "page" : undefined} className="nav-item">
           <ProfileIcon />
           <span>Тренер</span>
         </Link>
       ) : (
-        <span />
+        <span className="nav-item nav-item-disabled" data-active="false" aria-disabled="true">
+          <UsersIcon />
+          <span>Ученики</span>
+        </span>
       )}
-      <Link
-        href="/"
-        className={`flex min-h-10 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold ${
-          pathname === "/" ? "bg-accent-soft text-accent" : "text-muted"
-        }`}
-      >
-        <CalendarIcon />
-        <span>Календарь</span>
-      </Link>
     </nav>
   );
 }
