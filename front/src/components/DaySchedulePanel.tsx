@@ -218,23 +218,28 @@ export function DaySchedulePanel({
                       dateTime={training.date.toISOString()}
                       className="flex flex-col items-center justify-center border-r border-border/55 px-2 text-center text-sm font-semibold leading-5 text-foreground sm:text-base"
                     >
-                      {formatTime(training.date)}
-                      {endTime && <span className="text-[0.68rem] font-normal text-muted sm:text-xs">— {endTime}</span>}
+                      <span>{formatTime(training.date)}</span>
+                      {endTime && (
+                        <>
+                          <span aria-hidden="true">-</span>
+                          <span>{endTime}</span>
+                        </>
+                      )}
                     </time>
 
                     <div className="min-w-0 px-4 py-4 pr-12 sm:px-6 sm:py-5 sm:pr-16">
                       {linkBase ? (
                         <Link href={`${linkBase}/${training.id}`} className="group block rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
-                          <h3 className="break-words text-sm font-semibold leading-5 transition group-hover:text-accent sm:text-base sm:leading-6">
+                          {training.groupName && <p className="truncate text-xs font-normal text-muted sm:text-sm">{training.groupName}</p>}
+                          <h3 className={`${training.groupName ? "mt-1" : ""} break-words text-sm font-semibold leading-5 transition group-hover:text-accent sm:text-base sm:leading-6`}>
                             {training.title || "Тренировка"}
                           </h3>
-                          {training.groupName && <p className="mt-1 truncate text-xs text-muted sm:text-sm">{training.groupName}</p>}
                           {training.coachName && <p className="mt-3 text-xs font-medium text-accent-foreground">Тренер: {training.coachName}</p>}
                         </Link>
                       ) : (
                         <>
-                          <h3 className="break-words text-sm font-semibold leading-5 sm:text-base sm:leading-6">{training.title || "Тренировка"}</h3>
-                          {training.groupName && <p className="mt-1 truncate text-xs text-muted sm:text-sm">{training.groupName}</p>}
+                          {training.groupName && <p className="truncate text-xs font-normal text-muted sm:text-sm">{training.groupName}</p>}
+                          <h3 className={`${training.groupName ? "mt-1" : ""} break-words text-sm font-semibold leading-5 sm:text-base sm:leading-6`}>{training.title || "Тренировка"}</h3>
                           {training.coachName && <p className="mt-3 text-xs font-medium text-accent-foreground">Тренер: {training.coachName}</p>}
                         </>
                       )}
