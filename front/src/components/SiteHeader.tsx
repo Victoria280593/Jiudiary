@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { Role } from "@prisma/client";
 import { logoutAction } from "@/app/actions/auth";
 import { Avatar } from "@/components/Avatar";
-import { MobileNavigation, SidebarNavigation } from "@/components/SidebarNavigation";
+import { TopNavigation } from "@/components/SidebarNavigation";
+import { UserMenu } from "@/components/UserMenu";
 import { getCurrentUser } from "@/lib/auth";
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -38,48 +39,26 @@ export async function SiteHeader() {
     .join(" ") || user.name;
 
   return (
-    <>
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border/70 bg-white/82 px-5 py-7 backdrop-blur-xl lg:flex">
-        <div className="flex justify-center">
-          <Logo />
-        </div>
-
-        <SidebarNavigation role={user.role} />
-
-        <div className="mt-auto border-t border-border/70 pt-5">
-          <Link href="/dashboard/profile" className="flex min-w-0 items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-surface-muted">
+    <header className="app-header">
+      <div className="app-header-inner">
+        <div className="app-header-logo"><Logo /></div>
+        <TopNavigation role={user.role} />
+        <UserMenu>
+          <summary aria-label="Открыть меню аккаунта" className="user-menu-summary">
             <Avatar src={user.avatarUrl} name={user.name} size={40} />
-            <span className="min-w-0 flex-1">
+            <span className="user-menu-copy">
               <span className="block truncate text-sm font-semibold text-foreground">{sidebarName}</span>
               <span className="block text-xs text-muted">{ROLE_LABELS[user.role]}</span>
             </span>
-          </Link>
-          <form action={logoutAction}>
-            <button type="submit" className="mt-2 w-full rounded-xl px-3 py-2 text-left text-xs font-medium text-muted transition-colors hover:bg-surface-muted hover:text-foreground">
-              Выйти из аккаунта
-            </button>
-          </form>
-        </div>
-      </aside>
-
-      <header className="sticky top-0 z-40 flex flex-col border-b border-border/70 bg-white/90 px-4 py-3 backdrop-blur-xl lg:hidden">
-        <div className="flex w-full items-center justify-between">
-          <Logo />
-          <div className="flex items-center gap-2">
-            <Link href="/dashboard/profile" aria-label="Открыть аккаунт" className="rounded-full ring-4 ring-accent-soft">
-              <Avatar src={user.avatarUrl} name={user.name} size={36} />
-            </Link>
+          </summary>
+          <div className="user-menu-popover">
+            <Link href="/dashboard/profile" className="user-menu-action">Мой профиль</Link>
             <form action={logoutAction}>
-              <button type="submit" aria-label="Выйти из аккаунта" className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-surface-muted hover:text-foreground">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 8l4 4-4 4m4-4H7M10 5H6a2 2 0 00-2 2v10a2 2 0 002 2h4" />
-                </svg>
-              </button>
+              <button type="submit" className="user-menu-action w-full text-left">Выйти из аккаунта</button>
             </form>
           </div>
-        </div>
-        <MobileNavigation role={user.role} />
-      </header>
-    </>
+        </UserMenu>
+      </div>
+    </header>
   );
 }

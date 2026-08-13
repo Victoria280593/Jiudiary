@@ -39,10 +39,6 @@ function CreateTrainingModal({ dateKey, onClose }: { dateKey: string; onClose: (
       aria-labelledby="create-training-title"
       onCancel={(event) => {
         event.preventDefault();
-        onClose();
-      }}
-      onClick={(event) => {
-        if (event.target === dialogRef.current) onClose();
       }}
       className={`${styles.createModal} fixed inset-0 m-auto max-h-[calc(100svh-1.5rem)] w-[calc(100%-1.5rem)] max-w-lg overflow-y-auto rounded-[1.5rem] border border-border/70 bg-[#fbfaf8] p-0 text-foreground shadow-[0_30px_90px_-24px_rgba(43,36,29,0.55)] backdrop:bg-[#302820]/55 backdrop:backdrop-blur-[2px] sm:max-h-[calc(100svh-3rem)] sm:w-[calc(100%-3rem)]`}
     >
@@ -166,10 +162,6 @@ export function DaySchedulePanel({
       aria-labelledby="day-schedule-title"
       onCancel={(event) => {
         event.preventDefault();
-        onClose();
-      }}
-      onClick={(event) => {
-        if (event.target === dialogRef.current) onClose();
       }}
       className={`${styles.modal} fixed inset-0 m-auto h-[calc(100svh-1rem)] w-[calc(100%-1rem)] max-w-4xl overflow-hidden rounded-[1.75rem] border border-white/70 bg-[#fbfaf8] p-0 text-foreground shadow-[0_28px_90px_-28px_rgba(43,36,29,0.45)] backdrop:bg-[#302820]/45 backdrop:backdrop-blur-[3px] sm:h-auto sm:max-h-[calc(100svh-3rem)] sm:w-[calc(100%-3rem)] sm:rounded-[2rem]`}
     >
