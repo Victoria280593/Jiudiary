@@ -17,6 +17,12 @@ type DayTraining = {
   groupColorName?: string;
 };
 
+type GroupFilter = {
+  name: string;
+  colorName: string;
+  count: number;
+};
+
 export function DaySchedulePanel({
   dateKey,
   trainings,
@@ -32,22 +38,34 @@ export function DaySchedulePanel({
   showCreateForm?: boolean;
   onTrainingDeleted?: (trainingId: string) => void;
 }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [selectedGroup, setSelectedGroup] = useState("");
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
-  const [deletingTrainingId, setDeletingTrainingId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string>();
+  const [deletingTrainingId, setDeletingTrainingId] = useState<string>();
   const [deleteError, setDeleteError] = useState<string>();
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
+    const dialog = dialogRef.current;
+    dialog?.showModal();
+    document.body.style.overflow = "hidden";
+
     return () => {
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+      document.body.style.overflow = "";
+      dialog?.close();
     };
   }, []);
 
-  function closePanel() {
-    setIsClosing(true);
-    closeTimerRef.current = setTimeout(onClose, 180);
-  }
+  useEffect(() => {
+    function closeMenu(event: MouseEvent) {
+      if (!(event.target as HTMLElement).closest("[data-training-menu]")) {
+        setOpenMenuId(undefined);
+      }
+    }
+
+    document.addEventListener("pointerdown", closeMenu);
+    return () => document.removeEventListener("pointerdown", closeMenu);
+  }, []);
 
   const selectedDate = useMemo(() => new Date(`${dateKey}T00:00:00`), [dateKey]);
   const dateTitle = useMemo(
@@ -64,9 +82,28 @@ export function DaySchedulePanel({
     [trainings]
   );
 
+  const groups = useMemo(() => {
+    const filters = new Map<string, GroupFilter>();
+    for (const training of trainings) {
+      if (!training.groupName) continue;
+      const current = filters.get(training.groupName);
+      filters.set(training.groupName, {
+        name: training.groupName,
+        colorName: training.groupColorName ?? "Brown",
+        count: (current?.count ?? 0) + 1,
+      });
+    }
+    return [...filters.values()];
+  }, [trainings]);
+
+  const visibleTrainings = selectedGroup
+    ? orderedTrainings.filter((training) => training.groupName === selectedGroup)
+    : orderedTrainings;
+
   async function handleDeleteTraining(trainingId: string) {
     setDeletingTrainingId(trainingId);
     setDeleteError(undefined);
+    setOpenMenuId(undefined);
 
     try {
       await deleteTraining(trainingId);
@@ -74,145 +111,208 @@ export function DaySchedulePanel({
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : "Не удалось удалить тренировку.");
     } finally {
-      setDeletingTrainingId(null);
+      setDeletingTrainingId(undefined);
     }
   }
 
   return (
-    <aside
-      aria-label={`Тренировки на ${dateTitle}`}
-      className={`${isClosing ? "day-panel-closing" : "day-panel"} calendar-shadow max-h-[55svh] overflow-y-auto rounded-[1.6rem] bg-white/95 min-[1000px]:sticky min-[1000px]:top-6 min-[1000px]:max-h-none min-[1000px]:overflow-hidden`}
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="day-schedule-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target === dialogRef.current) onClose();
+      }}
+      className="day-schedule-modal fixed inset-0 m-auto h-[calc(100svh-1rem)] w-[calc(100%-1rem)] max-w-4xl overflow-hidden rounded-[1.75rem] border border-white/70 bg-[#fbfaf8] p-0 text-foreground shadow-[0_28px_90px_-28px_rgba(43,36,29,0.45)] backdrop:bg-[#302820]/45 backdrop:backdrop-blur-[3px] sm:h-auto sm:max-h-[calc(100svh-3rem)] sm:w-[calc(100%-3rem)] sm:rounded-[2rem]"
     >
-      <header className="flex items-start justify-between gap-4 px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
-        <div>
-          <h2 className="text-xl font-semibold capitalize tracking-[-0.025em] text-foreground">
-            {dateTitle}
-          </h2>
-          <p className="mt-1 text-sm text-muted">{weekday}</p>
-        </div>
-        <button
-          type="button"
-          onClick={closePanel}
-          aria-label="Закрыть панель выбранного дня"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted transition duration-200 ease-out hover:bg-surface-muted hover:text-foreground"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
-            <path strokeLinecap="round" d="m6 6 12 12M18 6 6 18" />
-          </svg>
-        </button>
-      </header>
+      <div className="flex h-full min-h-0 flex-col">
+        <header className="flex shrink-0 items-start justify-between gap-4 px-4 pb-4 pt-5 sm:px-7 sm:pb-5 sm:pt-7 lg:px-9">
+          <div className="flex min-w-0 items-start gap-2 sm:gap-4">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Вернуться к календарю"
+              className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition hover:bg-white hover:text-foreground hover:shadow-sm"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
+            <div className="min-w-0">
+              <h2 id="day-schedule-title" className="text-xl font-semibold capitalize tracking-[-0.025em] sm:text-2xl">
+                {dateTitle}
+              </h2>
+              <p className="mt-1 text-sm text-muted">{weekday}</p>
+            </div>
+          </div>
 
-      <div className="px-5 pb-5 sm:px-6 sm:pb-6">
-        {deleteError && (
-          <p className="mb-3 rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger">{deleteError}</p>
-        )}
-        <div className="flex flex-col gap-3">
-          {orderedTrainings.length > 0 ? (
-            orderedTrainings.map((training) => {
-              const colorStyle = getGroupColorStyle(training.groupColorName ?? "Brown");
-              const timeRange = training.endDate
-                ? `${formatTime(training.date)} – ${formatTime(training.endDate)}`
-                : formatTime(training.date);
-              const content = (
-                <>
-                  <span className={`absolute inset-y-0 left-0 w-1.5 ${colorStyle.dot}`} aria-hidden="true" />
-                  <div className="pr-10">
-                    <div className="flex min-w-0 flex-col items-start">
-                      <time className="ml-1.5 block text-sm font-medium text-muted" dateTime={training.date.toISOString()}>
-                        {timeRange}
-                      </time>
-                      {training.groupName && (
-                        <span className={`mt-2 inline-flex max-w-full rounded-full border px-3 py-1 text-xs font-semibold ${colorStyle.badge}`}>
-                          {training.groupName}
-                        </span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Закрыть список тренировок"
+            className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-white px-3 text-sm font-medium text-muted shadow-sm transition hover:text-foreground sm:px-4"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+              <path strokeLinecap="round" d="m6 6 12 12M18 6 6 18" />
+            </svg>
+            <span className="hidden sm:inline">Закрыть</span>
+          </button>
+        </header>
+
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-5 sm:px-7 sm:pb-7 lg:px-9">
+          {groups.length > 0 && (
+            <div role="group" aria-label="Фильтр тренировок по группе" className="mb-5 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+              <button
+                type="button"
+                onClick={() => setSelectedGroup("")}
+                aria-pressed={selectedGroup === ""}
+                className={`inline-flex min-h-9 shrink-0 items-center gap-2 rounded-full px-4 text-xs font-semibold transition ${
+                  selectedGroup === "" ? "bg-accent text-white shadow-sm" : "bg-white text-muted hover:text-foreground"
+                }`}
+              >
+                Все <span className="opacity-75">{trainings.length}</span>
+              </button>
+              {groups.map((group) => {
+                const colorStyle = getGroupColorStyle(group.colorName);
+                return (
+                  <button
+                    key={group.name}
+                    type="button"
+                    onClick={() => setSelectedGroup(group.name)}
+                    aria-pressed={selectedGroup === group.name}
+                    className={`inline-flex min-h-9 max-w-52 shrink-0 items-center gap-2 rounded-full border px-4 text-xs font-semibold transition ${
+                      selectedGroup === group.name ? colorStyle.activeBadge : colorStyle.badge
+                    }`}
+                  >
+                    <span className="truncate">{group.name}</span>
+                    <span className="opacity-75">{group.count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {deleteError && (
+            <p role="alert" className="mb-4 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">{deleteError}</p>
+          )}
+
+          <div className="flex flex-col gap-3">
+            {visibleTrainings.length > 0 ? (
+              visibleTrainings.map((training) => {
+                const colorStyle = getGroupColorStyle(training.groupColorName ?? "Brown");
+                const endTime = training.endDate ? formatTime(training.endDate) : undefined;
+                const isDeleting = deletingTrainingId === training.id;
+
+                return (
+                  <article
+                    key={training.id}
+                    className={`relative grid min-h-28 grid-cols-[4.4rem_minmax(0,1fr)] overflow-visible rounded-2xl border border-border/60 bg-white shadow-[0_12px_32px_-26px_rgba(86,61,38,0.48)] transition sm:grid-cols-[6.5rem_minmax(0,1fr)] sm:rounded-[1.15rem] ${isDeleting ? "pointer-events-none opacity-55" : ""}`}
+                  >
+                    <span className={`absolute inset-y-0 left-0 w-1 rounded-l-2xl sm:w-1.5 ${colorStyle.dot}`} aria-hidden="true" />
+
+                    <time
+                      dateTime={training.date.toISOString()}
+                      className="flex flex-col items-center justify-center border-r border-border/55 px-2 text-center text-sm font-semibold leading-5 text-foreground sm:text-base"
+                    >
+                      {formatTime(training.date)}
+                      {endTime && <span className="text-[0.68rem] font-normal text-muted sm:text-xs">— {endTime}</span>}
+                    </time>
+
+                    <div className="min-w-0 px-4 py-4 pr-12 sm:px-6 sm:py-5 sm:pr-16">
+                      {linkBase ? (
+                        <Link href={`${linkBase}/${training.id}`} className="group block rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
+                          <h3 className="break-words text-sm font-semibold leading-5 transition group-hover:text-accent sm:text-base sm:leading-6">
+                            {training.title || "Тренировка"}
+                          </h3>
+                          {training.groupName && <p className="mt-1 truncate text-xs text-muted sm:text-sm">{training.groupName}</p>}
+                          {training.coachName && <p className="mt-3 text-xs font-medium text-accent-foreground">Тренер: {training.coachName}</p>}
+                        </Link>
+                      ) : (
+                        <>
+                          <h3 className="break-words text-sm font-semibold leading-5 sm:text-base sm:leading-6">{training.title || "Тренировка"}</h3>
+                          {training.groupName && <p className="mt-1 truncate text-xs text-muted sm:text-sm">{training.groupName}</p>}
+                          {training.coachName && <p className="mt-3 text-xs font-medium text-accent-foreground">Тренер: {training.coachName}</p>}
+                        </>
                       )}
                     </div>
-                    {showCreateForm && (
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          void handleDeleteTraining(training.id);
-                        }}
-                        disabled={deletingTrainingId === training.id}
-                        aria-label="Удалить тренировку"
-                        className="absolute right-4 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-muted transition duration-200 ease-out hover:bg-danger-soft hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 6V4h8v2" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l1 15h10l1-15" />
-                          <path strokeLinecap="round" d="M10 11v6M14 11v6" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                  {training.title && (
-                    <h3 className="mt-3 whitespace-normal break-words text-base font-semibold leading-6 text-foreground transition-colors group-hover:text-accent-foreground">
-                      {training.title}
-                    </h3>
-                  )}
-                  {training.coachName && (
-                    <p className="mt-2 text-xs text-muted">Тренер: {training.coachName}</p>
-                  )}
-                </>
-              );
-              const className = "group relative overflow-hidden rounded-2xl border border-border/60 bg-white px-5 py-4 shadow-[0_10px_26px_-22px_rgba(86,61,38,0.42)] transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_34px_-24px_rgba(86,61,38,0.5)]";
 
-              return linkBase ? (
-                <Link key={training.id} href={`${linkBase}/${training.id}`} className={className}>
-                  {content}
-                </Link>
+                    {showCreateForm && (
+                      <div data-training-menu className="absolute right-2 top-2 z-10 sm:right-4 sm:top-4">
+                        <button
+                          type="button"
+                          onClick={() => setOpenMenuId((current) => current === training.id ? undefined : training.id)}
+                          aria-label={`Действия с тренировкой «${training.title || "Тренировка"}»`}
+                          aria-expanded={openMenuId === training.id}
+                          aria-haspopup="menu"
+                          className="flex h-9 w-9 items-center justify-center rounded-full text-lg tracking-[0.12em] text-muted transition hover:bg-surface-muted hover:text-foreground"
+                        >
+                          <span aria-hidden="true" className="-translate-y-1">…</span>
+                        </button>
+
+                        {openMenuId === training.id && (
+                          <div role="menu" className="absolute right-0 top-10 z-20 w-48 overflow-hidden rounded-xl border border-border/70 bg-white p-1.5 shadow-[0_18px_45px_-18px_rgba(43,36,29,0.42)]">
+                            <button
+                              type="button"
+                              role="menuitem"
+                              disabled
+                              title="Редактирование появится позже"
+                              className="flex min-h-10 w-full cursor-not-allowed items-center rounded-lg px-3 text-left text-sm text-muted opacity-45"
+                            >
+                              Редактировать
+                              <span className="ml-auto text-[0.65rem] uppercase tracking-wide">скоро</span>
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => void handleDeleteTraining(training.id)}
+                              className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm font-medium text-danger transition hover:bg-danger-soft"
+                            >
+                              Удалить
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </article>
+                );
+              })
+            ) : (
+              <div className="rounded-2xl bg-white px-5 py-10 text-center">
+                <p className="text-sm font-semibold">Тренировок пока нет</p>
+                <p className="mt-1 text-xs leading-5 text-muted">Добавьте первую тренировку на выбранный день.</p>
+              </div>
+            )}
+          </div>
+
+          {showCreateForm && (
+            <div className="mx-auto mt-5 max-w-md">
+              {isCreateFormOpen ? (
+                <div className="rounded-2xl border border-border/60 bg-white p-4 sm:p-5">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold">Новая тренировка</h3>
+                    <button type="button" onClick={() => setIsCreateFormOpen(false)} className="text-xs font-medium text-muted hover:text-foreground">
+                      Свернуть
+                    </button>
+                  </div>
+                  <CreateTrainingForm key={dateKey} idPrefix="day-modal-" defaultDateTime={`${dateKey}T09:00`} />
+                </div>
               ) : (
-                <article key={training.id} className={className}>
-                  {content}
-                </article>
-              );
-            })
-          ) : (
-            <div className="rounded-2xl bg-surface-muted/55 px-4 py-6 text-center">
-              <p className="text-sm font-medium text-foreground">Тренировок пока нет</p>
-              <p className="mt-1 text-xs leading-5 text-muted">Добавьте первую тренировку на выбранный день.</p>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateFormOpen(true)}
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-accent px-5 text-sm font-semibold text-white shadow-[0_12px_28px_-16px_rgba(131,93,57,0.72)] transition hover:-translate-y-0.5 hover:bg-accent-hover"
+                >
+                  <span className="text-xl font-light" aria-hidden="true">+</span>
+                  Добавить тренировку
+                </button>
+              )}
             </div>
           )}
         </div>
-
-        {showCreateForm && (
-          <div className="mt-5">
-            {isCreateFormOpen ? (
-              <div className="rounded-2xl bg-surface-muted/45 p-4">
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <h3 className="text-sm font-semibold text-foreground">Новая тренировка</h3>
-                  <button
-                    type="button"
-                    onClick={() => setIsCreateFormOpen(false)}
-                    className="text-xs font-medium text-muted transition hover:text-foreground"
-                  >
-                    Свернуть
-                  </button>
-                </div>
-                <CreateTrainingForm
-                  key={dateKey}
-                  idPrefix="day-panel-"
-                  defaultDateTime={`${dateKey}T09:00`}
-                />
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsCreateFormOpen(true)}
-                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-accent px-5 text-sm font-semibold text-white shadow-[0_12px_28px_-16px_rgba(131,93,57,0.72)] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent-hover"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
-                  <path strokeLinecap="round" d="M12 5v14M5 12h14" />
-                </svg>
-                Добавить тренировку
-              </button>
-            )}
-          </div>
-        )}
       </div>
-    </aside>
+    </dialog>
   );
 }
