@@ -6,6 +6,14 @@
   animation: backdrop-enter 180ms ease-out;
 }
 
+.createModal[open] {
+  animation: create-modal-enter 180ms ease-out;
+}
+
+.createModal[open]::backdrop {
+  animation: backdrop-enter 160ms ease-out;
+}
+
 @keyframes modal-enter {
   from {
     opacity: 0;
@@ -28,9 +36,23 @@
   }
 }
 
+@keyframes create-modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .modal[open],
-  .modal[open]::backdrop {
+  .modal[open]::backdrop,
+  .createModal[open],
+  .createModal[open]::backdrop {
     animation: none;
   }
 }

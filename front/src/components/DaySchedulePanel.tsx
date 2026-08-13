@@ -24,6 +24,49 @@ type GroupFilter = {
   count: number;
 };
 
+function CreateTrainingModal({ dateKey, onClose }: { dateKey: string; onClose: () => void }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
+
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="create-training-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target === dialogRef.current) onClose();
+      }}
+      className={`${styles.createModal} fixed inset-0 m-auto max-h-[calc(100svh-1.5rem)] w-[calc(100%-1.5rem)] max-w-lg overflow-y-auto rounded-[1.5rem] border border-border/70 bg-[#fbfaf8] p-0 text-foreground shadow-[0_30px_90px_-24px_rgba(43,36,29,0.55)] backdrop:bg-[#302820]/55 backdrop:backdrop-blur-[2px] sm:max-h-[calc(100svh-3rem)] sm:w-[calc(100%-3rem)]`}
+    >
+      <div className="p-5 sm:p-6">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <h3 id="create-training-title" className="text-base font-semibold sm:text-lg">Новая тренировка</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Закрыть окно добавления тренировки"
+            className="flex h-10 items-center justify-center gap-2 rounded-full bg-white px-3 text-sm font-medium text-muted shadow-sm transition hover:text-foreground sm:px-4"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
+              <path strokeLinecap="round" d="m6 6 12 12M18 6 6 18" />
+            </svg>
+            <span className="hidden sm:inline">Закрыть</span>
+          </button>
+        </div>
+        <CreateTrainingForm key={dateKey} idPrefix="day-modal-" defaultDateTime={`${dateKey}T09:00`} />
+      </div>
+    </dialog>
+  );
+}
+
 export function DaySchedulePanel({
   dateKey,
   trainings,
@@ -295,30 +338,22 @@ export function DaySchedulePanel({
 
           {showCreateForm && (
             <div className="mx-auto mt-5 max-w-md">
-              {isCreateFormOpen ? (
-                <div className="rounded-2xl border border-border/60 bg-white p-4 sm:p-5">
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold">Новая тренировка</h3>
-                    <button type="button" onClick={() => setIsCreateFormOpen(false)} className="text-xs font-medium text-muted hover:text-foreground">
-                      Свернуть
-                    </button>
-                  </div>
-                  <CreateTrainingForm key={dateKey} idPrefix="day-modal-" defaultDateTime={`${dateKey}T09:00`} />
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsCreateFormOpen(true)}
-                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-accent px-5 text-sm font-semibold text-white shadow-[0_12px_28px_-16px_rgba(131,93,57,0.72)] transition hover:-translate-y-0.5 hover:bg-accent-hover"
-                >
-                  <span className="text-xl font-light" aria-hidden="true">+</span>
-                  Добавить тренировку
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setIsCreateFormOpen(true)}
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-accent px-5 text-sm font-semibold text-white shadow-[0_12px_28px_-16px_rgba(131,93,57,0.72)] transition hover:-translate-y-0.5 hover:bg-accent-hover"
+              >
+                <span className="text-xl font-light" aria-hidden="true">+</span>
+                Добавить тренировку
+              </button>
             </div>
           )}
         </div>
       </div>
+
+      {isCreateFormOpen && (
+        <CreateTrainingModal dateKey={dateKey} onClose={() => setIsCreateFormOpen(false)} />
+      )}
     </dialog>
   );
 }
