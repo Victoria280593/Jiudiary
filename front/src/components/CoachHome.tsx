@@ -3,17 +3,12 @@ import { getSession } from "@/lib/auth";
 import { getBackendTrainings } from "@/lib/backend-auth";
 
 export async function CoachHome({
-  firstName,
-  middleName,
+  coachName,
 }: {
-  firstName: string;
-  middleName: string | null;
+  coachName: string;
 }) {
   const session = await getSession();
   const trainings = session ? await getBackendTrainings(session.accessToken) : null;
-  const coachName = [firstName, middleName]
-    .filter((value): value is string => Boolean(value?.trim()))
-    .join(" ");
 
   const calendarTrainings = (trainings ?? []).map((training) => ({
     id: training.id,
@@ -33,7 +28,7 @@ export async function CoachHome({
               Добро пожаловать, тренер!
             </h1>
             <p className="mt-2 text-sm text-muted sm:text-base">
-              {coachName}, выберите дату, чтобы посмотреть список тренировок или добавить новую.
+              {coachName}, выберите дату, чтобы запланировать тренировку или посмотреть темы.
             </p>
           </div>
         </section>

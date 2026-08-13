@@ -11,7 +11,7 @@ namespace JiuDiary.Api.Auth;
 public static class AuthExtensions
 {
     /// <summary>
-    /// Подключает сервис авторизации и проверку Bearer JWT.       
+    /// Подключает сервис авторизации и проверку Bearer JWT.
     /// </summary>
     /// <param name="services">Коллекция сервисов приложения.</param>
     /// <param name="configuration">Конфигурация приложения.</param>
