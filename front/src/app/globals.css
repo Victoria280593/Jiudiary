@@ -78,39 +78,67 @@ body {
     0 24px 65px -38px rgba(86, 61, 38, 0.26);
 }
 
-.day-schedule-modal[open] {
-  animation: day-schedule-modal-enter 180ms ease-out;
+.day-panel {
+  animation: day-panel-enter 200ms ease-out;
 }
 
-.day-schedule-modal[open]::backdrop {
-  animation: day-schedule-backdrop-enter 180ms ease-out;
+.day-panel-closing {
+  animation: day-panel-exit 180ms ease-in forwards;
 }
 
-@keyframes day-schedule-modal-enter {
+@keyframes day-panel-enter {
   from {
     opacity: 0;
-    transform: translateY(0.75rem) scale(0.985);
+    transform: translateY(0.75rem);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
-@keyframes day-schedule-backdrop-enter {
+@keyframes day-panel-exit {
   from {
-    opacity: 0;
+    opacity: 1;
+    transform: translateY(0);
   }
 
   to {
-    opacity: 1;
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+@media (min-width: 1000px) {
+  @keyframes day-panel-enter {
+    from {
+      opacity: 0;
+      transform: translateX(0.75rem);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes day-panel-exit {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    to {
+      opacity: 0;
+      transform: translateX(0.5rem);
+    }
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .day-schedule-modal[open],
-  .day-schedule-modal[open]::backdrop {
+  .day-panel,
+  .day-panel-closing {
     animation: none;
   }
 }
