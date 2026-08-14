@@ -20,6 +20,8 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
 
     public DbSet<Belt> Belts => Set<Belt>();
 
+    public DbSet<Submission> Submissions => Set<Submission>();
+
     public DbSet<Group> Groups => Set<Group>();
 
     public DbSet<GroupColor> Colors => Set<GroupColor>();
