@@ -187,10 +187,12 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             throw new KeyNotFoundException("Заявка не найдена.");
         }
 
-        request.Status = status;
         if (status == StudentRequestStatusEnum.Accepted)
         {
-            request.IsDeleted = false;
+            var acceptedRequest = await StudentRequestsQuery()
+                .SingleAsync(item => item.Id == request.Id, cancellationToken);
+            acceptedRequest.Status = StudentRequestStatusEnum.Accepted;
+
             var linkExists = await dbContext.CoachStudents.AnyAsync(
                 item => item.CoachId == coach.Id && item.StudentId == request.StudentId,
                 cancellationToken);
@@ -204,11 +206,14 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
                     CreateDate = DateTime.Now
                 });
             }
+
+            dbContext.StudentsRequests.Remove(request);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return acceptedRequest;
         }
-        else
-        {
-            request.IsDeleted = false;
-        }
+
+        request.Status = StudentRequestStatusEnum.Rejected;
+        request.IsDeleted = false;
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -266,6 +271,11 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
                 .ToListAsync(cancellationToken);
             dbContext.StudentGroups.RemoveRange(assignments);
         }
+
+        var requests = await dbContext.StudentsRequests
+            .Where(item => item.CoachId == coach.Id && item.StudentId == studentId)
+            .ToListAsync(cancellationToken);
+        dbContext.StudentsRequests.RemoveRange(requests);
 
         dbContext.CoachStudents.RemoveRange(links);
         await dbContext.SaveChangesAsync(cancellationToken);
