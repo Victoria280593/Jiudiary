@@ -26,15 +26,12 @@ export default async function StudentDashboard() {
 
   if (!user.coachId) {
     return (
-      <div className="flex flex-col gap-6">
-        {profileCard}
-        <Card>
-          <p className="text-sm text-muted">
-            К вам пока не привязан тренер, поэтому список тренировок пуст.
-            Попросите тренера добавить вас или обратитесь к администратору.
-          </p>
-        </Card>
-      </div>
+      <Card>
+        <p className="text-sm text-muted">
+          К вам пока не привязан тренер, поэтому список тренировок пуст.
+          Попросите тренера добавить вас или обратитесь к администратору.
+        </p>
+      </Card>
     );
   }
 

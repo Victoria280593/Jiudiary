@@ -36,8 +36,10 @@ export function TopNavigation({ role }: { role: Role }) {
   const navigationRef = useRef<HTMLElement>(null);
 
   const profileIsActive = pathname.startsWith("/dashboard/profile");
-  const studentSectionIsActive = pathname.startsWith("/dashboard/student/coach");
-  const calendarIsActive = !profileIsActive && !studentSectionIsActive;
+  const peopleSectionIsActive = role === "STUDENT"
+    ? pathname.startsWith("/dashboard/student/coach")
+    : role === "COACH" && pathname.startsWith("/students");
+  const calendarIsActive = !profileIsActive && !peopleSectionIsActive;
 
   useLayoutEffect(() => {
     const navigation = navigationRef.current;
@@ -80,9 +82,14 @@ export function TopNavigation({ role }: { role: Role }) {
         <span>Календарь</span>
       </Link>
       {role === "STUDENT" ? (
-        <Link href="/dashboard/student/coach" data-active={studentSectionIsActive} aria-current={studentSectionIsActive ? "page" : undefined} className="nav-item">
+        <Link href="/dashboard/student/coach" data-active={peopleSectionIsActive} aria-current={peopleSectionIsActive ? "page" : undefined} className="nav-item">
           <ProfileIcon />
           <span>Тренер</span>
+        </Link>
+      ) : role === "COACH" ? (
+        <Link href="/students" data-active={peopleSectionIsActive} aria-current={peopleSectionIsActive ? "page" : undefined} className="nav-item">
+          <UsersIcon />
+          <span>Ученики</span>
         </Link>
       ) : (
         <span className="nav-item nav-item-disabled" data-active="false" aria-disabled="true">
