@@ -1,85 +1,47 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
-import { prisma } from "@/lib/db";
-import { formatDateTime } from "@/lib/format";
-import { AthleteCard } from "@/components/AthleteCard";
-import { AttendanceBadge } from "@/components/AttendanceBadge";
-import { Card } from "@/components/Card";
-import { calculateAge } from "@/lib/belt";
+import { TrainingCalendar } from "@/components/TrainingCalendar";
+import { getSession } from "@/lib/auth";
+import { getBackendTrainings } from "@/lib/backend-auth";
 
 export default async function StudentDashboard() {
-  const user = await getCurrentUser();
-  if (!user || user.role !== "STUDENT") redirect("/dashboard");
+  const session = await getSession();
+  if (!session || session.user.role !== "STUDENT") redirect("/dashboard");
 
-  const profileCard = (
-    <Link href="/dashboard/profile" className="block">
-      <AthleteCard
-        name={user.name}
-        avatarUrl={user.avatarUrl}
-        age={user.birthDate ? calculateAge(user.birthDate) : null}
-        belt={user.belt}
-        blackBeltDegree={user.blackBeltDegree}
-      />
-    </Link>
-  );
-
-  if (!user.coachId) {
-    return (
-      <Card>
-        <p className="text-sm text-muted">
-          К вам пока не привязан тренер, поэтому список тренировок пуст.
-          Попросите тренера добавить вас или обратитесь к администратору.
-        </p>
-      </Card>
-    );
-  }
-
-  const trainings = await prisma.training.findMany({
-    where: { coachId: user.coachId },
-    orderBy: { date: "desc" },
-    include: {
-      attendances: { where: { studentId: user.id } },
-      coach: { select: { name: true } },
-    },
-  });
+  const trainings = await getBackendTrainings(session.accessToken);
+  const calendarTrainings = (trainings ?? []).map((training) => ({
+    id: training.id,
+    groupId: training.groupId,
+    title: training.description ?? "",
+    date: training.startTime,
+    endDate: training.endTime,
+    groupName: training.groupName,
+    groupColorName: training.groupColorName,
+  }));
 
   return (
-    <div className="flex flex-col gap-6">
-      {profileCard}
-
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">Мои тренировки</h1>
-        <p className="text-sm text-muted">
-          Тренер: {trainings[0]?.coach.name ?? "—"}
+    <div className="flex min-w-0 flex-col gap-6">
+      <section>
+        <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">
+          Мои тренировки
+        </h1>
+        <p className="mt-2 text-sm text-muted sm:text-base">
+          В календаре отображаются только тренировки групп, в которые вас добавили тренеры.
         </p>
-      </div>
+      </section>
 
-      <Card>
-        {trainings.length === 0 ? (
-          <p className="text-sm text-muted">Тренировок пока нет.</p>
-        ) : (
-          <ul className="flex flex-col divide-y divide-border">
-            {trainings.map((t) => (
-              <li key={t.id} className="flex items-center justify-between py-3">
-                <div>
-                  <p className="font-medium text-foreground">{t.title}</p>
-                  <p className="text-sm text-muted">
-                    {formatDateTime(t.date)}
-                    {t.location ? ` · ${t.location}` : ""}
-                  </p>
-                  {t.attendances[0]?.comment && (
-                    <p className="mt-1 text-sm text-foreground/70">
-                      {t.attendances[0].comment}
-                    </p>
-                  )}
-                </div>
-                <AttendanceBadge attended={t.attendances[0]?.attended ?? null} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      {trainings === null ? (
+        <div className="rounded-2xl border border-border bg-white px-5 py-10 text-center text-sm text-danger">
+          Не удалось загрузить тренировки.
+        </div>
+      ) : (
+        <TrainingCalendar
+          key={calendarTrainings.map((training) => training.id).join(",")}
+          trainings={calendarTrainings}
+          linkBase=""
+          showCreateForm={false}
+          showGroupFilter
+        />
+      )}
     </div>
   );
 }
