@@ -150,7 +150,19 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
                 BeltId = item.Student.ClientInfo == null ? null : item.Student.ClientInfo.BeltId,
                 BeltName = item.Student.ClientInfo == null || item.Student.ClientInfo.Belt == null
                     ? null
-                    : item.Student.ClientInfo.Belt.Name
+                    : item.Student.ClientInfo.Belt.Name,
+                Groups = item.Student.ClientInfo == null
+                    ? new List<StudentGroupOutputModel>()
+                    : item.Student.ClientInfo.StudentGroups
+                        .Where(studentGroup => studentGroup.Group.CoachGroups.Any(coachGroup => coachGroup.Coach.UserId == coach.Id))
+                        .OrderBy(studentGroup => studentGroup.Group.Name)
+                        .Select(studentGroup => new StudentGroupOutputModel
+                        {
+                            Id = studentGroup.GroupId,
+                            Name = studentGroup.Group.Name,
+                            ColorName = studentGroup.Group.Color.Name
+                        })
+                        .ToList()
             })
             .ToListAsync(cancellationToken);
     }
@@ -239,9 +251,84 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             return false;
         }
 
+        var studentClientInfoId = await dbContext.ClientInfos
+            .AsNoTracking()
+            .Where(item => item.UserId == studentId)
+            .Select(item => (Guid?)item.Id)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (studentClientInfoId.HasValue)
+        {
+            var coachGroupIds = dbContext.CoachGroups
+                .Where(item => item.Coach.UserId == coach.Id)
+                .Select(item => item.GroupId);
+            var assignments = await dbContext.StudentGroups
+                .Where(item => item.StudentId == studentClientInfoId.Value && coachGroupIds.Contains(item.GroupId))
+                .ToListAsync(cancellationToken);
+            dbContext.StudentGroups.RemoveRange(assignments);
+        }
+
         dbContext.CoachStudents.RemoveRange(links);
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    public async Task<List<StudentGroupOutputModel>> UpdateCoachStudentGroupsAsync(
+        AuthenticatedUser coach,
+        Guid studentId,
+        UpdateStudentGroupsInputModel inputModel,
+        CancellationToken cancellationToken)
+    {
+        EnsureRole(coach, UserRolesEnum.Coach);
+
+        var studentClientInfoId = await dbContext.CoachStudents
+            .AsNoTracking()
+            .Where(item => item.CoachId == coach.Id && item.StudentId == studentId)
+            .Select(item => item.Student.ClientInfo == null ? (Guid?)null : item.Student.ClientInfo.Id)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (!studentClientInfoId.HasValue)
+        {
+            throw new KeyNotFoundException("Ученик не найден или его профиль не заполнен.");
+        }
+
+        var coachGroupIds = await dbContext.CoachGroups
+            .AsNoTracking()
+            .Where(item => item.Coach.UserId == coach.Id)
+            .Select(item => item.GroupId)
+            .ToListAsync(cancellationToken);
+        var requestedGroupIds = inputModel.GroupIds.Distinct().ToList();
+        if (requestedGroupIds.Except(coachGroupIds).Any())
+        {
+            throw new ArgumentException("Можно назначить только группы текущего тренера.", nameof(inputModel.GroupIds));
+        }
+
+        var existingAssignments = await dbContext.StudentGroups
+            .Where(item => item.StudentId == studentClientInfoId.Value && coachGroupIds.Contains(item.GroupId))
+            .ToListAsync(cancellationToken);
+        dbContext.StudentGroups.RemoveRange(existingAssignments.Where(item => !requestedGroupIds.Contains(item.GroupId)));
+
+        var existingGroupIds = existingAssignments.Select(item => item.GroupId).ToHashSet();
+        foreach (var groupId in requestedGroupIds.Where(groupId => !existingGroupIds.Contains(groupId)))
+        {
+            dbContext.StudentGroups.Add(new StudentGroup
+            {
+                StudentId = studentClientInfoId.Value,
+                GroupId = groupId
+            });
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return await dbContext.StudentGroups
+            .AsNoTracking()
+            .Where(item => item.StudentId == studentClientInfoId.Value && coachGroupIds.Contains(item.GroupId))
+            .OrderBy(item => item.Group.Name)
+            .Select(item => new StudentGroupOutputModel
+            {
+                Id = item.GroupId,
+                Name = item.Group.Name,
+                ColorName = item.Group.Color.Name
+            })
+            .ToListAsync(cancellationToken);
     }
 
     private IQueryable<StudentRequestOutputModel> StudentRequestsQuery(bool includeDeleted = true)
