@@ -126,10 +126,11 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
     public Task<List<StudentRequestOutputModel>> GetCoachRequestsAsync(AuthenticatedUser coach, CancellationToken cancellationToken)
     {
         EnsureRole(coach, UserRolesEnum.Coach);
-        return StudentRequestsQuery(includeDeleted: false)
+        return StudentRequestsQuery()
             .Where(request => request.CoachId == coach.Id &&
-                              request.Status == StudentRequestStatusEnum.Pending)
-            .OrderBy(request => request.CreateDate)
+                              (request.Status == StudentRequestStatusEnum.Pending ||
+                               request.Status == StudentRequestStatusEnum.Rejected))
+            .OrderByDescending(request => request.CreateDate)
             .ToListAsync(cancellationToken);
     }
 
