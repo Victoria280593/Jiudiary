@@ -7,7 +7,7 @@ import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, dateKey, addMonths } from "
 import { getGroupColorStyle } from "@/lib/group-colors";
 import { getTrainings } from "@/lib/trainings-client";
 
-type TrainingItem = { id: string; title: string; date: string; endDate?: string; groupName?: string; coachName?: string; groupColorName?: string };
+type TrainingItem = { id: string; groupId?: string; title: string; date: string; endDate?: string; groupName?: string; coachName?: string; groupColorName?: string };
 type CalendarView = "month" | "week";
 
 function ArrowIcon({ direction }: { direction: "left" | "right" }) {
@@ -126,6 +126,41 @@ export function TrainingCalendar({
   const selectDay = (key: string) => {
     setSelectedDay(key);
     setIsDayPanelOpen(true);
+  };
+
+  const showRelativeDay = (key: string) => {
+    const nextDate = new Date(`${key}T00:00:00`);
+    setSelectedDay(key);
+    setViewYear(nextDate.getFullYear());
+    setViewMonth(nextDate.getMonth() + 1);
+    if (calendarView === "week") setWeekStart(startOfWeek(nextDate));
+  };
+
+  const saveVisibleTraining = (training: {
+    id: string;
+    groupId: string;
+    groupName: string;
+    groupColorName: string;
+    description: string | null;
+    startTime: string;
+    endTime: string;
+  }) => {
+    const nextTraining: TrainingItem = {
+      id: training.id,
+      groupId: training.groupId,
+      title: training.description ?? "",
+      date: training.startTime,
+      endDate: training.endTime,
+      groupName: training.groupName,
+      groupColorName: training.groupColorName,
+    };
+
+    setVisibleTrainings((current) => {
+      const exists = current.some((item) => item.id === training.id);
+      return exists
+        ? current.map((item) => item.id === training.id ? nextTraining : item)
+        : [...current, nextTraining];
+    });
   };
 
   const selectGroup = async (groupId: string) => {
@@ -385,13 +420,14 @@ export function TrainingCalendar({
 
         {selectedDay && isDayPanelOpen && (
           <DaySchedulePanel
-            key={selectedDay}
             dateKey={selectedDay}
             trainings={trainingsByDay.get(selectedDay) ?? []}
+            onDateChange={showRelativeDay}
             onClose={() => setIsDayPanelOpen(false)}
             onTrainingDeleted={(trainingId) => {
               setVisibleTrainings((current) => current.filter((training) => training.id !== trainingId));
             }}
+            onTrainingSaved={saveVisibleTraining}
             linkBase={linkBase}
             showCreateForm={showCreateForm}
           />

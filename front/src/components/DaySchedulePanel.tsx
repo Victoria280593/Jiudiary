@@ -10,6 +10,7 @@ import styles from "./DaySchedulePanel.module.css";
 
 type DayTraining = {
   id: string;
+  groupId?: string;
   title: string;
   date: Date;
   endDate?: Date;
@@ -24,8 +25,38 @@ type GroupFilter = {
   count: number;
 };
 
-function CreateTrainingModal({ dateKey, onClose }: { dateKey: string; onClose: () => void }) {
+type SavedTraining = {
+  id: string;
+  groupId: string;
+  groupName: string;
+  groupColorName: string;
+  description: string | null;
+  startTime: string;
+  endTime: string;
+};
+
+function localDateTimeValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}:00`;
+}
+
+function TrainingFormModal({
+  dateKey,
+  training,
+  onClose,
+  onSaved,
+}: {
+  dateKey: string;
+  training?: DayTraining;
+  onClose: () => void;
+  onSaved: (training: SavedTraining) => void;
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const isEditing = Boolean(training);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -36,7 +67,7 @@ function CreateTrainingModal({ dateKey, onClose }: { dateKey: string; onClose: (
   return (
     <dialog
       ref={dialogRef}
-      aria-labelledby="create-training-title"
+      aria-labelledby="training-form-title"
       onCancel={(event) => {
         event.preventDefault();
       }}
@@ -44,11 +75,13 @@ function CreateTrainingModal({ dateKey, onClose }: { dateKey: string; onClose: (
     >
       <div className="p-5 sm:p-6">
         <div className="mb-5 flex items-center justify-between gap-3">
-          <h3 id="create-training-title" className="text-base font-semibold sm:text-lg">Новая тренировка</h3>
+          <h3 id="training-form-title" className="text-base font-semibold sm:text-lg">
+            {isEditing ? "Редактирование тренировки" : "Новая тренировка"}
+          </h3>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Закрыть окно добавления тренировки"
+            aria-label="Закрыть форму тренировки"
             className="flex h-10 items-center justify-center gap-2 rounded-full bg-white px-3 text-sm font-medium text-muted shadow-sm transition hover:text-foreground sm:px-4"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
@@ -57,7 +90,19 @@ function CreateTrainingModal({ dateKey, onClose }: { dateKey: string; onClose: (
             <span className="hidden sm:inline">Закрыть</span>
           </button>
         </div>
-        <CreateTrainingForm key={dateKey} idPrefix="day-modal-" defaultDateTime={`${dateKey}T09:00`} />
+        <CreateTrainingForm
+          key={training?.id ?? dateKey}
+          idPrefix={isEditing ? "edit-training-" : "day-modal-"}
+          defaultDateTime={`${dateKey}T09:00`}
+          training={training ? {
+            id: training.id,
+            groupId: training.groupId ?? "",
+            description: training.title || null,
+            startTime: localDateTimeValue(training.date),
+            endTime: localDateTimeValue(training.endDate ?? training.date),
+          } : undefined}
+          onSaved={onSaved}
+        />
       </div>
     </dialog>
   );
@@ -67,20 +112,25 @@ export function DaySchedulePanel({
   dateKey,
   trainings,
   onClose,
+  onDateChange,
   linkBase = "/dashboard/coach/trainings",
   showCreateForm = true,
   onTrainingDeleted,
+  onTrainingSaved,
 }: {
   dateKey: string;
   trainings: DayTraining[];
   onClose: () => void;
+  onDateChange: (dateKey: string) => void;
   linkBase?: string;
   showCreateForm?: boolean;
   onTrainingDeleted?: (trainingId: string) => void;
+  onTrainingSaved?: (training: SavedTraining) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [selectedGroup, setSelectedGroup] = useState("");
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+  const [editingTraining, setEditingTraining] = useState<DayTraining>();
   const [openMenuId, setOpenMenuId] = useState<string>();
   const [deletingTrainingId, setDeletingTrainingId] = useState<string>();
   const [deleteError, setDeleteError] = useState<string>();
@@ -141,6 +191,17 @@ export function DaySchedulePanel({
     ? orderedTrainings.filter((training) => training.groupName === selectedGroup)
     : orderedTrainings;
 
+  function showRelativeDay(delta: number) {
+    const nextDate = new Date(`${dateKey}T00:00:00`);
+    nextDate.setDate(nextDate.getDate() + delta);
+    const year = nextDate.getFullYear();
+    const month = String(nextDate.getMonth() + 1).padStart(2, "0");
+    const day = String(nextDate.getDate()).padStart(2, "0");
+    setSelectedGroup("");
+    setOpenMenuId(undefined);
+    onDateChange(`${year}-${month}-${day}`);
+  }
+
   async function handleDeleteTraining(trainingId: string) {
     setDeletingTrainingId(trainingId);
     setDeleteError(undefined);
@@ -167,11 +228,11 @@ export function DaySchedulePanel({
     >
       <div className="flex h-full min-h-0 flex-col">
         <header className="flex shrink-0 items-start justify-between gap-4 px-4 pb-4 pt-5 sm:px-7 sm:pb-5 sm:pt-7 lg:px-9">
-          <div className="flex min-w-0 items-start gap-2 sm:gap-4">
+          <div className="flex min-w-0 items-start gap-1 sm:gap-3">
             <button
               type="button"
-              onClick={onClose}
-              aria-label="Вернуться к календарю"
+              onClick={() => showRelativeDay(-1)}
+              aria-label="Предыдущий день"
               className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition hover:bg-white hover:text-foreground hover:shadow-sm"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
@@ -184,6 +245,16 @@ export function DaySchedulePanel({
               </h2>
               <p className="mt-1 text-sm text-muted">{weekday}</p>
             </div>
+            <button
+              type="button"
+              onClick={() => showRelativeDay(1)}
+              aria-label="Следующий день"
+              className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition hover:bg-white hover:text-foreground hover:shadow-sm"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m9 6 6 6-6 6" />
+              </svg>
+            </button>
           </div>
 
           <button
@@ -266,7 +337,7 @@ export function DaySchedulePanel({
                       {linkBase ? (
                         <Link href={`${linkBase}/${training.id}`} className="group block rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
                           {training.groupName && <p className="truncate text-xs font-normal text-muted sm:text-sm">{training.groupName}</p>}
-                          <h3 className={`${training.groupName ? "mt-1" : ""} break-words text-sm font-semibold leading-5 transition group-hover:text-accent sm:text-base sm:leading-6`}>
+                          <h3 className={`${training.groupName ? "mt-1" : ""} whitespace-pre-wrap break-words text-sm font-semibold leading-5 transition group-hover:text-accent sm:text-base sm:leading-6`}>
                             {training.title || "Тренировка"}
                           </h3>
                           {training.coachName && <p className="mt-3 text-xs font-medium text-accent-foreground">Тренер: {training.coachName}</p>}
@@ -274,7 +345,7 @@ export function DaySchedulePanel({
                       ) : (
                         <>
                           {training.groupName && <p className="truncate text-xs font-normal text-muted sm:text-sm">{training.groupName}</p>}
-                          <h3 className={`${training.groupName ? "mt-1" : ""} break-words text-sm font-semibold leading-5 sm:text-base sm:leading-6`}>{training.title || "Тренировка"}</h3>
+                          <h3 className={`${training.groupName ? "mt-1" : ""} whitespace-pre-wrap break-words text-sm font-semibold leading-5 sm:text-base sm:leading-6`}>{training.title || "Тренировка"}</h3>
                           {training.coachName && <p className="mt-3 text-xs font-medium text-accent-foreground">Тренер: {training.coachName}</p>}
                         </>
                       )}
@@ -298,12 +369,13 @@ export function DaySchedulePanel({
                             <button
                               type="button"
                               role="menuitem"
-                              disabled
-                              title="Редактирование появится позже"
-                              className="flex min-h-10 w-full cursor-not-allowed items-center rounded-lg px-3 text-left text-sm text-muted opacity-45"
+                              onClick={() => {
+                                setEditingTraining(training);
+                                setOpenMenuId(undefined);
+                              }}
+                              className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm text-foreground transition hover:bg-surface-muted"
                             >
                               Редактировать
-                              <span className="ml-auto text-[0.65rem] uppercase tracking-wide">скоро</span>
                             </button>
                             <button
                               type="button"
@@ -344,7 +416,25 @@ export function DaySchedulePanel({
       </div>
 
       {isCreateFormOpen && (
-        <CreateTrainingModal dateKey={dateKey} onClose={() => setIsCreateFormOpen(false)} />
+        <TrainingFormModal
+          dateKey={dateKey}
+          onClose={() => setIsCreateFormOpen(false)}
+          onSaved={(training) => {
+            onTrainingSaved?.(training);
+            setIsCreateFormOpen(false);
+          }}
+        />
+      )}
+      {editingTraining && (
+        <TrainingFormModal
+          dateKey={dateKey}
+          training={editingTraining}
+          onClose={() => setEditingTraining(undefined)}
+          onSaved={(training) => {
+            onTrainingSaved?.(training);
+            setEditingTraining(undefined);
+          }}
+        />
       )}
     </dialog>
   );

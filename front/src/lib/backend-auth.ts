@@ -667,9 +667,16 @@ export type CreateBackendTrainingResult =
   | { ok: true; training: BackendTraining }
   | { ok: false; error: string };
 
+export type BackendTrainingInput = {
+  groupId: string;
+  description: string | null;
+  startTime: string;
+  endTime: string;
+};
+
 export async function createBackendTraining(
   accessToken: string,
-  input: { groupId: string; description: string | null; startTime: string; endTime: string }
+  input: BackendTrainingInput
 ): Promise<CreateBackendTrainingResult> {
   try {
     const response = await fetch(`${backendUrl}/api/trainings`, {
@@ -686,6 +693,37 @@ export async function createBackendTraining(
     if (!response.ok) {
       const result = (await response.json().catch(() => null)) as { error?: string } | null;
       return { ok: false, error: result?.error ?? "Не удалось создать тренировку." };
+    }
+
+    const training: unknown = await response.json();
+    return isBackendTraining(training)
+      ? { ok: true, training }
+      : { ok: false, error: "Сервер вернул некорректные данные тренировки." };
+  } catch {
+    return { ok: false, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export async function updateBackendTraining(
+  accessToken: string,
+  trainingId: string,
+  input: BackendTrainingInput
+): Promise<CreateBackendTrainingResult> {
+  try {
+    const response = await fetch(`${backendUrl}/api/trainings/${encodeURIComponent(trainingId)}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(input),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, error: result?.error ?? "Не удалось отредактировать тренировку." };
     }
 
     const training: unknown = await response.json();

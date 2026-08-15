@@ -20,5 +20,17 @@ export function UserMenu({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  return <details ref={menuRef} className="user-menu">{children}</details>;
+  return (
+    <details
+      ref={menuRef}
+      className="user-menu"
+      onClick={(event) => {
+        if ((event.target as HTMLElement).closest("a, button")) {
+          menuRef.current?.removeAttribute("open");
+        }
+      }}
+    >
+      {children}
+    </details>
+  );
 }

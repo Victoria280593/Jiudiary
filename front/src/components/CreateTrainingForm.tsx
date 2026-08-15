@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import { createTrainingAction, type FormState } from "@/app/actions/training";
+import { createTrainingAction, updateTrainingAction, type FormState } from "@/app/actions/training";
 import { useGroups } from "@/components/GroupsProvider";
 import { SubmitButton } from "@/components/SubmitButton";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
@@ -22,23 +22,44 @@ function addMinutes(time: string, minutes: number) {
 export function CreateTrainingForm({
   defaultDateTime,
   idPrefix = "",
+  training,
+  onSaved,
 }: {
   defaultDateTime?: string;
   idPrefix?: string;
+  training?: {
+    id: string;
+    groupId: string;
+    description: string | null;
+    startTime: string;
+    endTime: string;
+  };
+  onSaved?: (training: NonNullable<NonNullable<FormState>["training"]>) => void;
 }) {
-  const [state, formAction] = useActionState<FormState, FormData>(createTrainingAction, undefined);
+  const isEditing = Boolean(training);
+  const [state, formAction] = useActionState<FormState, FormData>(
+    isEditing ? updateTrainingAction : createTrainingAction,
+    undefined
+  );
   const { groups, status: groupsStatus, error: groupsError } = useGroups();
   const formRef = useRef<HTMLFormElement>(null);
   const startTimeInputRef = useRef<HTMLInputElement>(null);
   const endTimeInputRef = useRef<HTMLInputElement>(null);
-  const [defaultDate = "", defaultStartTime = "09:00"] = defaultDateTime?.split("T") ?? [];
-  const defaultEndTime = defaultStartTime ? addMinutes(defaultStartTime, 90) : "10:30";
+  const initialDateTime = training?.startTime ?? defaultDateTime;
+  const [defaultDate = "", rawStartTime = "09:00"] = initialDateTime?.split("T") ?? [];
+  const defaultStartTime = toTimeInputValue(rawStartTime) || "09:00";
+  const defaultEndTime = training?.endTime
+    ? toTimeInputValue(training.endTime.split("T")[1])
+    : defaultStartTime
+      ? addMinutes(defaultStartTime, 90)
+      : "10:30";
 
   useEffect(() => {
     if (!state?.success) return;
 
-    formRef.current?.reset();
-  }, [state]);
+    if (state.training) onSaved?.(state.training);
+    if (!isEditing) formRef.current?.reset();
+  }, [isEditing, onSaved, state]);
 
   const groupsAreLoading = groupsStatus === "idle" || groupsStatus === "loading";
   const formIsUnavailable = groupsAreLoading || groupsStatus === "error" || groups.length === 0;
@@ -62,7 +83,7 @@ export function CreateTrainingForm({
           name="groupId"
           required
           disabled={groupsAreLoading || groupsStatus === "error"}
-          defaultValue=""
+          defaultValue={training?.groupId ?? ""}
           onChange={(event) => {
             const selectedGroup = groups.find((group) => group.id === event.target.value);
             const groupStartTime = toTimeInputValue(selectedGroup?.defaultStartTime);
@@ -90,6 +111,7 @@ export function CreateTrainingForm({
       </div>
 
       <input type="hidden" name="date" defaultValue={defaultDate} />
+      {training && <input type="hidden" name="trainingId" value={training.id} />}
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
@@ -132,11 +154,14 @@ export function CreateTrainingForm({
           rows={3}
           maxLength={300}
           placeholder="Например, техника прохода гарда и учебные схватки"
+          defaultValue={training?.description ?? ""}
           className={inputClass}
         />
       </div>
 
-      <SubmitButton disabled={formIsUnavailable}>Добавить тренировку</SubmitButton>
+      <SubmitButton disabled={formIsUnavailable}>
+        {isEditing ? "Сохранить изменения" : "Добавить тренировку"}
+      </SubmitButton>
     </form>
   );
 }

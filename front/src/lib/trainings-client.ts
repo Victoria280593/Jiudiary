@@ -1,5 +1,6 @@
 export type CalendarTraining = {
   id: string;
+  groupId: string;
   title: string;
   date: string;
   endDate: string;
@@ -30,6 +31,7 @@ export async function getTrainings(groupId?: string): Promise<CalendarTraining[]
   const trainings = (await response.json()) as TrainingResponse[];
   return trainings.map((training) => ({
     id: training.id,
+    groupId: training.groupId,
     title: training.description ?? "",
     date: training.startTime,
     endDate: training.endTime,
