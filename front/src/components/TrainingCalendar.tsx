@@ -218,7 +218,7 @@ export function TrainingCalendar({
                   </button>
                 </div>
 
-                <div className="relative grid w-[7.75rem] shrink-0 grid-cols-2 rounded-xl bg-surface-muted p-1 min-[360px]:w-[8.75rem] sm:w-auto sm:min-w-44" aria-label="Вид календаря">
+                <div className="relative grid w-[7.75rem] shrink-0 grid-cols-2 rounded-xl border border-border/70 bg-surface-muted p-1 shadow-sm min-[360px]:w-[8.75rem] sm:w-auto sm:min-w-44" aria-label="Вид календаря">
                   <span
                     aria-hidden="true"
                     className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-lg bg-white shadow-sm transition-transform duration-200 ease-out motion-reduce:transition-none ${
@@ -232,7 +232,7 @@ export function TrainingCalendar({
                     className={`relative z-10 rounded-lg px-2 py-2 text-xs transition-colors duration-200 ease-out sm:px-4 sm:text-sm ${
                       calendarView === "month"
                         ? "font-semibold text-foreground"
-                        : "text-muted hover:text-foreground"
+                        : "text-muted hover:bg-accent/[0.05] hover:text-foreground"
                     }`}
                   >
                     Месяц
@@ -244,7 +244,7 @@ export function TrainingCalendar({
                     className={`relative z-10 rounded-lg px-2 py-2 text-xs transition-colors duration-200 ease-out sm:px-4 sm:text-sm ${
                       calendarView === "week"
                         ? "font-semibold text-foreground"
-                        : "text-muted hover:text-foreground"
+                        : "text-muted hover:bg-accent/[0.05] hover:text-foreground"
                     }`}
                   >
                     Неделя
