@@ -204,7 +204,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             throw new ArgumentException("Необходимо выбрать группу.", nameof(groupId));
         }
 
-        var description = string.IsNullOrWhiteSpace(inputDescription) ? null : inputDescription.Trim();
+        var description = string.IsNullOrWhiteSpace(inputDescription) ? null : inputDescription.Trim(); 
         if (description?.Length > 300)
         {
             throw new ArgumentException("Описание тренировки не должно превышать 300 символов.", nameof(inputDescription));
