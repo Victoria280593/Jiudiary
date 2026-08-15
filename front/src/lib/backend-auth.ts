@@ -447,6 +447,34 @@ export async function resolveBackendStudentRequest(
   );
 }
 
+export async function deleteBackendCoachStudentRequest(
+  accessToken: string,
+  requestId: string
+): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  try {
+    const response = await fetch(
+      `${backendUrl}/api/trainers/students/requests/${encodeURIComponent(requestId)}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      }
+    );
+
+    if (response.ok) return { ok: true };
+
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    return {
+      ok: false,
+      status: response.status,
+      error: result?.error ?? "Не удалось удалить заявку.",
+    };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
 async function mutateBackendStudentRequest(
   accessToken: string,
   path: string,

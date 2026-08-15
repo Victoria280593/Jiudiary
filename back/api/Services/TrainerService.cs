@@ -168,17 +168,18 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         var request = await dbContext.StudentsRequests.SingleOrDefaultAsync(
             item => item.Id == requestId &&
                     item.CoachId == coach.Id &&
-                    !item.IsDeleted &&
-                    item.Status == StudentRequestStatusEnum.Pending,
+                    (item.Status == StudentRequestStatusEnum.Pending ||
+                     item.Status == StudentRequestStatusEnum.Rejected),
             cancellationToken);
         if (request is null)
         {
-            throw new KeyNotFoundException("Активная заявка не найдена.");
+            throw new KeyNotFoundException("Заявка не найдена.");
         }
 
         request.Status = status;
         if (status == StudentRequestStatusEnum.Accepted)
         {
+            request.IsDeleted = false;
             var linkExists = await dbContext.CoachStudents.AnyAsync(
                 item => item.CoachId == coach.Id && item.StudentId == request.StudentId,
                 cancellationToken);
@@ -202,6 +203,25 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
 
         return await StudentRequestsQuery()
             .SingleAsync(item => item.Id == request.Id, cancellationToken);
+    }
+
+    public async Task<bool> DeleteRejectedStudentRequestAsync(AuthenticatedUser coach, Guid requestId, CancellationToken cancellationToken)
+    {
+        EnsureRole(coach, UserRolesEnum.Coach);
+
+        var request = await dbContext.StudentsRequests.SingleOrDefaultAsync(
+            item => item.Id == requestId &&
+                    item.CoachId == coach.Id &&
+                    item.Status == StudentRequestStatusEnum.Rejected,
+            cancellationToken);
+        if (request is null)
+        {
+            return false;
+        }
+
+        dbContext.StudentsRequests.Remove(request);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     public async Task<bool> RemoveCoachStudentAsync(AuthenticatedUser coach, Guid studentId, CancellationToken cancellationToken)

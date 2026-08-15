@@ -91,6 +91,21 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
         }
     }
 
+    [HttpDelete("students/requests/{requestId:guid}")]
+    [Authorize(Roles = nameof(UserRolesEnum.Coach))]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteRejectedStudentRequest(Guid requestId, CancellationToken cancellationToken)
+    {
+        var deleted = await trainerService.DeleteRejectedStudentRequestAsync(CurrentUser, requestId, cancellationToken);
+        if (!deleted)
+        {
+            return NotFound(new { error = "Отклонённая заявка не найдена." });
+        }
+
+        return NoContent();
+    }
+
     [HttpGet("students")]
     [Authorize(Roles = nameof(UserRolesEnum.Coach))]
     public async Task<ActionResult<List<StudentOutputModel>>> GetCoachStudents(CancellationToken cancellationToken)
