@@ -248,11 +248,11 @@ export default async function StudentsPage({
                       <p className="mt-1 text-xs text-muted">{formatDateTime(new Date(request.createDate))}</p>
                     </div>
                   </div>
-                  {request.status === "Pending" ? (
-                    <CoachStudentRequestActions requestId={request.id} studentName={request.studentName} />
-                  ) : (
-                    <span className="self-start rounded-full bg-danger-soft px-3 py-1.5 text-xs font-semibold text-danger sm:self-auto">Отклонена</span>
-                  )}
+                  <CoachStudentRequestActions
+                    requestId={request.id}
+                    studentName={request.studentName}
+                    status={request.status === "Rejected" ? "Rejected" : "Pending"}
+                  />
                 </div>
               ))}
             </div>
