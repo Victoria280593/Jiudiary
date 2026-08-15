@@ -140,14 +140,17 @@ export default async function StudentsPage({
           </p>
         </section>
 
-        <nav aria-label="Разделы учеников" className="mx-auto grid w-full max-w-xl grid-cols-2 gap-2">
+        <nav
+          aria-label="Разделы учеников"
+          className="mx-auto grid w-full max-w-xl grid-cols-2 overflow-hidden rounded-2xl border border-border/70 bg-white p-1 shadow-sm"
+        >
           <Link
             href={studentsHref("students", requestSection)}
             aria-current={section === "students" ? "page" : undefined}
-            className={`flex min-h-12 items-center justify-center gap-2 rounded-2xl border px-3 text-center text-sm font-semibold transition sm:px-5 ${
+            className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-center text-sm font-semibold transition sm:px-5 ${
               section === "students"
-                ? "border-accent/35 bg-accent-soft text-accent-foreground shadow-sm"
-                : "border-transparent bg-white/65 text-muted hover:border-border hover:text-foreground"
+                ? "bg-accent-soft text-accent-foreground shadow-sm"
+                : "text-muted hover:bg-surface-muted hover:text-foreground"
             }`}
           >
             <span>Мои ученики</span>
@@ -156,10 +159,10 @@ export default async function StudentsPage({
           <Link
             href={studentsHref("requests", "pending")}
             aria-current={section === "requests" ? "page" : undefined}
-            className={`flex min-h-12 items-center justify-center gap-2 rounded-2xl border px-3 text-center text-sm font-semibold transition sm:px-5 ${
+            className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-center text-sm font-semibold transition sm:px-5 ${
               section === "requests"
-                ? "border-accent/35 bg-accent-soft text-accent-foreground shadow-sm"
-                : "border-transparent bg-white/65 text-muted hover:border-border hover:text-foreground"
+                ? "bg-accent-soft text-accent-foreground shadow-sm"
+                : "text-muted hover:bg-surface-muted hover:text-foreground"
             }`}
           >
             <span>Заявки</span>
@@ -167,51 +170,49 @@ export default async function StudentsPage({
           </Link>
         </nav>
 
-        {section === "requests" && (
-          <nav aria-label="Статус заявок" className="relative mx-auto grid w-full max-w-sm grid-cols-2 rounded-full border border-border/70 bg-white p-1 shadow-sm">
-            <span
-              aria-hidden="true"
-              className={`absolute bottom-1 left-1 top-1 w-[calc(50%-0.25rem)] rounded-full bg-accent-soft shadow-sm transition-transform duration-300 ease-out ${
-                requestSection === "rejected" ? "translate-x-full" : "translate-x-0"
-              }`}
-            />
-            <Link
-              href={studentsHref("requests", "pending")}
-              aria-current={requestSection === "pending" ? "page" : undefined}
-              className={`relative z-10 flex min-h-10 items-center justify-center gap-2 rounded-full px-3 text-sm font-semibold transition-colors ${
-                requestSection === "pending" ? "text-accent-foreground" : "text-muted hover:text-foreground"
-              }`}
-            >
-              Входящие <span className="text-xs opacity-75">{pendingRequests.length}</span>
-            </Link>
-            <Link
-              href={studentsHref("requests", "rejected")}
-              aria-current={requestSection === "rejected" ? "page" : undefined}
-              className={`relative z-10 flex min-h-10 items-center justify-center gap-2 rounded-full px-3 text-sm font-semibold transition-colors ${
-                requestSection === "rejected" ? "text-accent-foreground" : "text-muted hover:text-foreground"
-              }`}
-            >
-              Отклонённые <span className="text-xs opacity-75">{rejectedRequests.length}</span>
-            </Link>
-          </nav>
-        )}
-
         <section className="overflow-hidden rounded-3xl border border-border/70 bg-white shadow-[0_18px_50px_-36px_rgba(66,45,27,0.45)]">
           <div className="border-b border-border/70 px-4 py-4 sm:px-6 sm:py-5">
             <h2 className="text-base font-semibold text-foreground sm:text-lg">
               {section === "students"
                 ? `Мои ученики · ${students?.length ?? 0}`
-                : requestSection === "pending"
-                  ? `Входящие заявки · ${pendingRequests.length}`
-                  : `Отклонённые заявки · ${rejectedRequests.length}`}
+                : `Заявки на присоединение · ${pendingRequests.length + rejectedRequests.length}`}
             </h2>
             <p className="mt-1 text-xs leading-5 text-muted sm:text-sm">
               {section === "students"
                 ? "Ученики, которые сейчас занимаются у вас."
-                : requestSection === "pending"
-                  ? "Новые заявки учеников на присоединение."
-                  : "История заявок, которые вы отклонили."}
+                : "Рассматривайте новые заявки и просматривайте историю отклонённых."}
             </p>
+            {section === "requests" && (
+              <nav
+                aria-label="Статус заявок"
+                className="relative mx-auto mt-4 grid w-full max-w-sm grid-cols-2 rounded-full border border-border/70 bg-surface-muted p-1 shadow-sm"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`absolute bottom-1 left-1 top-1 w-[calc(50%-0.25rem)] rounded-full bg-accent-soft shadow-sm transition-transform duration-300 ease-out ${
+                    requestSection === "rejected" ? "translate-x-full" : "translate-x-0"
+                  }`}
+                />
+                <Link
+                  href={studentsHref("requests", "pending")}
+                  aria-current={requestSection === "pending" ? "page" : undefined}
+                  className={`relative z-10 flex min-h-10 items-center justify-center gap-2 rounded-full px-3 text-sm font-semibold transition-colors ${
+                    requestSection === "pending" ? "text-accent-foreground" : "text-muted hover:text-foreground"
+                  }`}
+                >
+                  Входящие <span className="text-xs opacity-75">{pendingRequests.length}</span>
+                </Link>
+                <Link
+                  href={studentsHref("requests", "rejected")}
+                  aria-current={requestSection === "rejected" ? "page" : undefined}
+                  className={`relative z-10 flex min-h-10 items-center justify-center gap-2 rounded-full px-3 text-sm font-semibold transition-colors ${
+                    requestSection === "rejected" ? "text-accent-foreground" : "text-muted hover:text-foreground"
+                  }`}
+                >
+                  Отклонённые <span className="text-xs opacity-75">{rejectedRequests.length}</span>
+                </Link>
+              </nav>
+            )}
           </div>
 
           {section === "students" ? (
