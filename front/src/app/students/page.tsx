@@ -131,9 +131,6 @@ export default async function StudentsPage({
         <section>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">Ученики</h1>
-            <span className="rounded-full bg-accent-soft px-3 py-1 text-sm font-semibold text-accent-foreground">
-              {students?.length ?? 0}
-            </span>
           </div>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted sm:text-base">
             Управляйте своими учениками и заявками на присоединение.
@@ -154,7 +151,6 @@ export default async function StudentsPage({
             }`}
           >
             <span>Мои ученики</span>
-            <span className="rounded-full bg-white/75 px-2 py-0.5 text-xs">{students?.length ?? 0}</span>
           </Link>
           <Link
             href={studentsHref("requests", "pending")}
@@ -170,12 +166,10 @@ export default async function StudentsPage({
         </nav>
 
         <section className="overflow-hidden rounded-3xl border border-border/70 bg-white shadow-[0_18px_50px_-36px_rgba(66,45,27,0.45)]">
-          <div className="flex flex-col gap-4 border-b border-border/70 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-5">
+          <div className="flex flex-col gap-4 border-b border-border/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">
-                {section === "students"
-                  ? `Мои ученики · ${students?.length ?? 0}`
-                  : "Заявки на присоединение"}
+                {section === "students" ? "Мои ученики" : "Заявки на присоединение"}
               </h2>
               {section === "students" && (
                 <p className="mt-1 text-xs leading-5 text-muted sm:text-sm">
