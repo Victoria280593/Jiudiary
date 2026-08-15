@@ -11,33 +11,45 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 {
     public async Task<List<GetGroupsOutputModel>> GetGroups(AuthenticatedUser user, Guid? groupId)
     {
-        if (user.Role != UserRolesEnum.Coach)
+        IQueryable<Group> groups;
+        if (user.Role == UserRolesEnum.Coach)
         {
-            throw new UnauthorizedAccessException("Получать список групп может только тренер.");
+            groups = dbContext.CoachGroups
+                .AsNoTracking()
+                .Where(item => item.Coach.UserId == user.Id)
+                .Select(item => item.Group);
         }
-
-        var groups = dbContext.CoachGroups
-            .AsNoTracking()
-            .Where(x => x.Coach.UserId == user.Id);
+        else if (user.Role == UserRolesEnum.Student)
+        {
+            groups = dbContext.StudentGroups
+                .AsNoTracking()
+                .Where(item => item.Student.UserId == user.Id)
+                .Select(item => item.Group);
+        }
+        else
+        {
+            throw new UnauthorizedAccessException("Получать список групп может только тренер или ученик.");
+        }
 
         if (groupId.HasValue)
         {
-            groups = groups.Where(x => x.GroupId == groupId.Value);
+            groups = groups.Where(group => group.Id == groupId.Value);
         }
 
         var result = await groups
-            .Select(x => new GetGroupsOutputModel
+            .OrderBy(group => group.Name)
+            .Select(group => new GetGroupsOutputModel
             {
-                Id = x.Group.Id,
-                Name = x.Group.Name,
-                ColorId = x.Group.ColorId,
-                ColorName = x.Group.Color.Name,
-                DefaultStartTime = x.Group.DefaultStartTime,
-                DefaultEndTime = x.Group.DefaultEndTime
+                Id = group.Id,
+                Name = group.Name,
+                ColorId = group.ColorId,
+                ColorName = group.Color.Name,
+                DefaultStartTime = group.DefaultStartTime,
+                DefaultEndTime = group.DefaultEndTime
             })
             .ToListAsync();
 
-        logger.LogInformation("Группы тренера получены. UserId: {UserId} | Count: {Count}", user.Id, result.Count);
+        logger.LogInformation("Группы пользователя получены. UserId: {UserId} | Role: {Role} | Count: {Count}", user.Id, user.Role, result.Count);
         return result;
     }
 
