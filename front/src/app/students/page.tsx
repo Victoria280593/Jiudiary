@@ -166,26 +166,27 @@ export default async function StudentsPage({
             }`}
           >
             <span>Заявки</span>
-            <span className="rounded-full bg-white/75 px-2 py-0.5 text-xs">{pendingRequests.length}</span>
           </Link>
         </nav>
 
         <section className="overflow-hidden rounded-3xl border border-border/70 bg-white shadow-[0_18px_50px_-36px_rgba(66,45,27,0.45)]">
-          <div className="border-b border-border/70 px-4 py-4 sm:px-6 sm:py-5">
-            <h2 className="text-base font-semibold text-foreground sm:text-lg">
-              {section === "students"
-                ? `Мои ученики · ${students?.length ?? 0}`
-                : `Заявки на присоединение · ${pendingRequests.length + rejectedRequests.length}`}
-            </h2>
-            <p className="mt-1 text-xs leading-5 text-muted sm:text-sm">
-              {section === "students"
-                ? "Ученики, которые сейчас занимаются у вас."
-                : "Рассматривайте новые заявки и просматривайте историю отклонённых."}
-            </p>
+          <div className="flex flex-col gap-4 border-b border-border/70 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-5">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">
+                {section === "students"
+                  ? `Мои ученики · ${students?.length ?? 0}`
+                  : "Заявки на присоединение"}
+              </h2>
+              {section === "students" && (
+                <p className="mt-1 text-xs leading-5 text-muted sm:text-sm">
+                  Ученики, которые сейчас занимаются у вас.
+                </p>
+              )}
+            </div>
             {section === "requests" && (
               <nav
                 aria-label="Статус заявок"
-                className="relative mx-auto mt-4 grid w-full max-w-sm grid-cols-2 rounded-xl border border-border/70 bg-surface-muted p-1 shadow-sm"
+                className="relative grid w-full shrink-0 grid-cols-2 rounded-xl border border-border/70 bg-surface-muted p-1 shadow-sm sm:w-80"
               >
                 <span
                   aria-hidden="true"
@@ -200,7 +201,7 @@ export default async function StudentsPage({
                     requestSection === "pending" ? "text-accent-foreground" : "text-muted hover:bg-accent/[0.05] hover:text-foreground"
                   }`}
                 >
-                  Входящие <span className="text-xs opacity-75">{pendingRequests.length}</span>
+                  Входящие
                 </Link>
                 <Link
                   href={studentsHref("requests", "rejected")}
@@ -209,7 +210,7 @@ export default async function StudentsPage({
                     requestSection === "rejected" ? "text-accent-foreground" : "text-muted hover:bg-accent/[0.05] hover:text-foreground"
                   }`}
                 >
-                  Отклонённые <span className="text-xs opacity-75">{rejectedRequests.length}</span>
+                  Отклонённые
                 </Link>
               </nav>
             )}
