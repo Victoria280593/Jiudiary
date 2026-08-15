@@ -107,3 +107,54 @@ export function StudentTrainerRequestButton({
     </>
   );
 }
+
+export function StudentRequestDeleteButton({
+  requestId,
+  coachName,
+}: {
+  requestId: string;
+  coachName: string;
+}) {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string>();
+
+  async function deleteRequest() {
+    if (!window.confirm(`Удалить заявку тренеру «${coachName}»?`)) return;
+
+    setIsSubmitting(true);
+    setError(undefined);
+    try {
+      const response = await fetch("/api/trainers", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId }),
+      });
+      if (!response.ok) {
+        const result = (await response.json().catch(() => null)) as { error?: string } | null;
+        setError(result?.error ?? "Не удалось удалить заявку.");
+        return;
+      }
+
+      router.refresh();
+    } catch {
+      setError("Не удалось подключиться к серверу.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="flex shrink-0 flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={() => void deleteRequest()}
+        disabled={isSubmitting}
+        className="rounded-lg px-2 py-1 text-xs font-medium text-danger transition hover:bg-danger-soft disabled:opacity-50"
+      >
+        {isSubmitting ? "Удаление…" : "Удалить"}
+      </button>
+      {error && <p className="max-w-52 text-right text-xs text-danger">{error}</p>}
+    </div>
+  );
+}

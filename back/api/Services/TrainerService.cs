@@ -66,9 +66,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         var hasActiveRequest = await dbContext.StudentsRequests.AnyAsync(
             request => request.StudentId == student.Id &&
                        request.CoachId == coachId &&
-                       !request.IsDeleted &&
-                       request.Status == StudentRequestStatusEnum.Pending,
-            cancellationToken);
+                       !request.IsDeleted, cancellationToken);
         if (hasActiveRequest)
         {
             throw new InvalidOperationException("Заявка этому тренеру уже отправлена или уже принята.");
@@ -94,7 +92,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
     public Task<List<StudentRequestOutputModel>> GetStudentRequestsAsync(AuthenticatedUser student, CancellationToken cancellationToken)
     {
         EnsureRole(student, UserRolesEnum.Student);
-        return StudentRequestsQuery()
+        return StudentRequestsQuery(includeDeleted: false)
             .Where(request => request.StudentId == student.Id)
             .OrderByDescending(request => request.CreateDate)
             .ToListAsync(cancellationToken);
@@ -126,7 +124,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
     public Task<List<StudentRequestOutputModel>> GetCoachRequestsAsync(AuthenticatedUser coach, CancellationToken cancellationToken)
     {
         EnsureRole(coach, UserRolesEnum.Coach);
-        return StudentRequestsQuery()
+        return StudentRequestsQuery(includeDeleted: false)
             .Where(request => request.CoachId == coach.Id &&
                               (request.Status == StudentRequestStatusEnum.Pending ||
                                request.Status == StudentRequestStatusEnum.Rejected))
@@ -168,6 +166,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         var request = await dbContext.StudentsRequests.SingleOrDefaultAsync(
             item => item.Id == requestId &&
                     item.CoachId == coach.Id &&
+                    !item.IsDeleted &&
                     (item.Status == StudentRequestStatusEnum.Pending ||
                      item.Status == StudentRequestStatusEnum.Rejected),
             cancellationToken);
@@ -196,7 +195,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         }
         else
         {
-            request.IsDeleted = true;
+            request.IsDeleted = false;
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -205,21 +204,25 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             .SingleAsync(item => item.Id == request.Id, cancellationToken);
     }
 
-    public async Task<bool> DeleteRejectedStudentRequestAsync(AuthenticatedUser coach, Guid requestId, CancellationToken cancellationToken)
+    public async Task<bool> DeleteStudentRequestAsync(AuthenticatedUser user, Guid requestId, CancellationToken cancellationToken)
     {
-        EnsureRole(coach, UserRolesEnum.Coach);
+        if (user.Role is not (UserRolesEnum.Coach or UserRolesEnum.Student))
+        {
+            throw new UnauthorizedAccessException("Удалить заявку может только тренер или ученик.");
+        }
 
         var request = await dbContext.StudentsRequests.SingleOrDefaultAsync(
             item => item.Id == requestId &&
-                    item.CoachId == coach.Id &&
-                    item.Status == StudentRequestStatusEnum.Rejected,
+                    !item.IsDeleted &&
+                    ((user.Role == UserRolesEnum.Coach && item.CoachId == user.Id) ||
+                     (user.Role == UserRolesEnum.Student && item.StudentId == user.Id)),
             cancellationToken);
         if (request is null)
         {
             return false;
         }
 
-        dbContext.StudentsRequests.Remove(request);
+        request.IsDeleted = true;
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;
     }
