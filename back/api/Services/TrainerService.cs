@@ -66,9 +66,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         var hasActiveRequest = await dbContext.StudentsRequests.AnyAsync(
             request => request.StudentId == student.Id &&
                        request.CoachId == coachId &&
-                       !request.IsDeleted &&
-                       request.Status == StudentRequestStatusEnum.Pending,
-            cancellationToken);
+                       !request.IsDeleted, cancellationToken);
         if (hasActiveRequest)
         {
             throw new InvalidOperationException("Заявка этому тренеру уже отправлена или уже принята.");
