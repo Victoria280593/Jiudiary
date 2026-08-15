@@ -2,13 +2,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { CoachStudentRequestActions } from "@/components/CoachStudentRequestActions";
-import { CoachStudentRemoveButton } from "@/components/CoachStudentRemoveButton";
+import { CoachStudentActions } from "@/components/CoachStudentRemoveButton";
 import { getSession } from "@/lib/auth";
 import {
   getBackendCoachStudentRequests,
   getBackendCoachStudents,
+  getBackendGroups,
 } from "@/lib/backend-auth";
 import { formatDateTime } from "@/lib/format";
+import { getGroupColorStyle } from "@/lib/group-colors";
 
 type StudentsSection = "students" | "requests";
 type RequestsSection = "pending" | "rejected";
@@ -110,9 +112,10 @@ export default async function StudentsPage({
   const requestSection: RequestsSection = firstValue(query.status) === "rejected" ? "rejected" : "pending";
   const requestedPage = positivePage(firstValue(query.page));
 
-  const [requests, students] = await Promise.all([
+  const [requests, students, trainerGroups] = await Promise.all([
     getBackendCoachStudentRequests(session.accessToken),
     getBackendCoachStudents(session.accessToken),
+    getBackendGroups(session.accessToken),
   ]);
 
   const pendingRequests = requests?.filter((request) => request.status === "Pending") ?? [];
@@ -218,14 +221,30 @@ export default async function StudentsPage({
             ) : (
               <ul className="divide-y divide-border/70">
                 {visibleStudents.map((student) => (
-                  <li key={student.id} className="flex min-w-0 items-center gap-3 px-4 py-4 sm:px-6">
+                  <li key={student.id} className="flex min-w-0 flex-wrap items-center gap-3 px-4 py-4 sm:flex-nowrap sm:px-6">
                     <Avatar src={null} name={student.name} size={46} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-foreground sm:text-base">{student.name}</p>
                       <p className="mt-0.5 truncate text-xs text-muted sm:text-sm">{student.login}</p>
-                      {student.beltName && <p className="mt-1 truncate text-xs text-muted">Пояс: {student.beltName}</p>}
                     </div>
-                    <CoachStudentRemoveButton studentId={student.id} studentName={student.name} />
+                    <div className="order-last flex w-full flex-wrap items-center gap-1.5 pl-[3.625rem] sm:order-none sm:w-auto sm:max-w-[48%] sm:justify-end sm:pl-0">
+                      {student.beltName && (
+                        <span className="rounded-lg border border-border bg-surface-muted px-2.5 py-1 text-xs font-medium text-muted">
+                          {student.beltName}
+                        </span>
+                      )}
+                      {student.groups.map((group) => (
+                        <span key={group.id} className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${getGroupColorStyle(group.colorName).badge}`}>
+                          {group.name}
+                        </span>
+                      ))}
+                    </div>
+                    <CoachStudentActions
+                      studentId={student.id}
+                      studentName={student.name}
+                      groups={trainerGroups}
+                      assignedGroupIds={student.groups.map((group) => group.id)}
+                    />
                   </li>
                 ))}
               </ul>

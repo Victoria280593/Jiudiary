@@ -89,6 +89,13 @@ export type BackendStudent = {
   login: string;
   beltId: number | null;
   beltName: string | null;
+  groups: BackendStudentGroup[];
+};
+
+export type BackendStudentGroup = {
+  id: string;
+  name: string;
+  colorName: string;
 };
 
 function isBackendGroup(value: unknown): value is BackendGroup {
@@ -181,7 +188,15 @@ function isBackendStudent(value: unknown): value is BackendStudent {
     typeof student.name === "string" &&
     typeof student.login === "string" &&
     (student.beltId === null || typeof student.beltId === "number") &&
-    (student.beltName === null || typeof student.beltName === "string")
+    (student.beltName === null || typeof student.beltName === "string") &&
+    Array.isArray(student.groups) &&
+    student.groups.every((group) =>
+      Boolean(group) &&
+      typeof group === "object" &&
+      typeof (group as Partial<BackendStudentGroup>).id === "string" &&
+      typeof (group as Partial<BackendStudentGroup>).name === "string" &&
+      typeof (group as Partial<BackendStudentGroup>).colorName === "string"
+    )
   );
 }
 
@@ -533,6 +548,52 @@ export async function removeBackendCoachStudent(
       status: response.status,
       error: result?.error ?? "Не удалось удалить ученика.",
     };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export async function updateBackendCoachStudentGroups(
+  accessToken: string,
+  studentId: string,
+  groupIds: string[]
+): Promise<{ ok: true; groups: BackendStudentGroup[] } | { ok: false; status: number; error: string }> {
+  try {
+    const response = await fetch(
+      `${backendUrl}/api/trainers/students/${encodeURIComponent(studentId)}/groups`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ groupIds }),
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      }
+    );
+    const result: unknown = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        status: response.status,
+        error: (result as { error?: string } | null)?.error ?? "Не удалось обновить группы ученика.",
+      };
+    }
+
+    const groups = Array.isArray(result) ? result : null;
+    if (!groups || !groups.every((group) =>
+      Boolean(group) &&
+      typeof group === "object" &&
+      typeof (group as Partial<BackendStudentGroup>).id === "string" &&
+      typeof (group as Partial<BackendStudentGroup>).name === "string" &&
+      typeof (group as Partial<BackendStudentGroup>).colorName === "string"
+    )) {
+      return { ok: false, status: 502, error: "Сервер вернул некорректные данные групп ученика." };
+    }
+
+    return { ok: true, groups };
   } catch {
     return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
   }

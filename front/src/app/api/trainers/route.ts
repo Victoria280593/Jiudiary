@@ -5,6 +5,7 @@ import {
   deleteBackendStudentRequest,
   removeBackendCoachStudent,
   resolveBackendStudentRequest,
+  updateBackendCoachStudentGroups,
 } from "@/lib/backend-auth";
 
 export async function POST(request: Request) {
@@ -45,6 +46,32 @@ export async function PATCH(request: Request) {
   );
   return result.ok
     ? NextResponse.json(result.request)
+    : NextResponse.json({ error: result.error }, { status: result.status });
+}
+
+export async function PUT(request: Request) {
+  const session = await getSession();
+  if (!session || session.user.role !== "COACH") {
+    return NextResponse.json({ error: "Доступ запрещён." }, { status: 403 });
+  }
+
+  const input = (await request.json().catch(() => null)) as {
+    studentId?: unknown;
+    groupIds?: unknown;
+  } | null;
+  if (typeof input?.studentId !== "string" ||
+      !Array.isArray(input.groupIds) ||
+      !input.groupIds.every((groupId) => typeof groupId === "string")) {
+    return NextResponse.json({ error: "Некорректный список групп ученика." }, { status: 400 });
+  }
+
+  const result = await updateBackendCoachStudentGroups(
+    session.accessToken,
+    input.studentId,
+    input.groupIds
+  );
+  return result.ok
+    ? NextResponse.json(result.groups)
     : NextResponse.json({ error: result.error }, { status: result.status });
 }
 
