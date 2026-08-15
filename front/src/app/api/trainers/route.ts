@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import {
   createBackendStudentRequest,
-  deleteBackendCoachStudentRequest,
+  deleteBackendStudentRequest,
   removeBackendCoachStudent,
   resolveBackendStudentRequest,
 } from "@/lib/backend-auth";
@@ -50,7 +50,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   const session = await getSession();
-  if (!session || session.user.role !== "COACH") {
+  if (!session) {
     return NextResponse.json({ error: "Доступ запрещён." }, { status: 403 });
   }
 
@@ -59,10 +59,14 @@ export async function DELETE(request: Request) {
     studentId?: string;
   } | null;
   if (input?.requestId) {
-    const result = await deleteBackendCoachStudentRequest(session.accessToken, input.requestId);
+    const result = await deleteBackendStudentRequest(session.accessToken, input.requestId);
     return result.ok
       ? new NextResponse(null, { status: 204 })
       : NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  if (session.user.role !== "COACH") {
+    return NextResponse.json({ error: "Доступ запрещён." }, { status: 403 });
   }
 
   if (!input?.studentId) {

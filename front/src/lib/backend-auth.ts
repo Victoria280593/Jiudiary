@@ -447,7 +447,7 @@ export async function resolveBackendStudentRequest(
   );
 }
 
-export async function deleteBackendCoachStudentRequest(
+export async function deleteBackendStudentRequest(
   accessToken: string,
   requestId: string
 ): Promise<{ ok: true } | { ok: false; status: number; error: string }> {

@@ -2,7 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { Card } from "@/components/Card";
-import { StudentTrainerRequestButton } from "@/components/StudentTrainerRequestButton";
+import {
+  StudentRequestDeleteButton,
+  StudentTrainerRequestButton,
+} from "@/components/StudentTrainerRequestButton";
 import { getSession } from "@/lib/auth";
 import {
   getBackendStudentTrainerRequests,
@@ -93,9 +96,12 @@ export default async function StudentCoachPage({
                   <p className="truncate font-medium text-foreground">{request.coachName}</p>
                   <p className="truncate text-sm text-muted">{request.coachLogin}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-surface-muted px-3 py-1 text-xs font-semibold text-muted">
-                  {STATUS_LABELS[request.status]}
-                </span>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="rounded-full bg-surface-muted px-3 py-1 text-xs font-semibold text-muted">
+                    {STATUS_LABELS[request.status]}
+                  </span>
+                  <StudentRequestDeleteButton requestId={request.id} coachName={request.coachName} />
+                </div>
               </div>
             ))}
           </div>
