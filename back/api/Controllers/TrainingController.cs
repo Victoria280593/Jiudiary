@@ -66,4 +66,28 @@ public sealed class TrainingController(TrainingService trainingService) : BaseCo
             return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
         }
     }
+
+    [HttpPut("{trainingId:guid}")]
+    public async Task<ActionResult<TrainingOutputModel>> UpdateTraining(
+        Guid trainingId,
+        UpdateTrainingInputModel inputModel,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return Ok(await trainingService.UpdateTraining(trainingId, inputModel, CurrentUser, cancellationToken));
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new { error = exception.Message });
+        }
+        catch (InvalidOperationException exception)
+        {
+            return NotFound(new { error = exception.Message });
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
+        }
+    }
 }

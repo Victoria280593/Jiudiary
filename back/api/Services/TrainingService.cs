@@ -44,35 +44,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
     public async Task<TrainingOutputModel> CreateTraining(CreateTrainingInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
     {
         EnsureCoach(user, "Создавать тренировки может только тренер.");
-
-        if (inputModel.GroupId == Guid.Empty)
-        {
-            throw new ArgumentException("Необходимо выбрать группу.", nameof(inputModel.GroupId));
-        }
-
-        var description = string.IsNullOrWhiteSpace(inputModel.Description)
-            ? null
-            : inputModel.Description.Trim();
-
-        if (description?.Length > 300)
-        {
-            throw new ArgumentException("Описание тренировки не должно превышать 300 символов.", nameof(inputModel.Description));
-        }
-
-        if (inputModel.StartTime == default)
-        {
-            throw new ArgumentException("Необходимо указать дату и время начала тренировки.", nameof(inputModel.StartTime));
-        }
-
-        if (inputModel.EndTime == default)
-        {
-            throw new ArgumentException("Необходимо указать дату и время окончания тренировки.", nameof(inputModel.EndTime));
-        }
-
-        if (inputModel.EndTime <= inputModel.StartTime)
-        {
-            throw new ArgumentException("Время окончания тренировки должно быть позже времени начала.", nameof(inputModel.EndTime));
-        }
+        var description = ValidateTrainingInput(inputModel.GroupId, inputModel.Description, inputModel.StartTime, inputModel.EndTime);
 
         var group = await dbContext.CoachGroups
             .AsNoTracking()
@@ -106,6 +78,71 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         await dbContext.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Тренировка создана. UserId: {UserId} | GroupId: {GroupId} | TrainingId: {TrainingId}", user.Id, training.GroupId, training.Id);
 
+        return new TrainingOutputModel
+        {
+            Id = training.Id,
+            GroupId = training.GroupId,
+            GroupName = group.Name,
+            GroupColorId = group.ColorId,
+            GroupColorName = group.ColorName,
+            Description = training.Description,
+            StartTime = training.StartTime,
+            EndTime = training.EndTime
+        };
+    }
+
+    public async Task<TrainingOutputModel> UpdateTraining(
+        Guid trainingId,
+        UpdateTrainingInputModel inputModel,
+        AuthenticatedUser user,
+        CancellationToken cancellationToken)
+    {
+        EnsureCoach(user, "Редактировать тренировки может только тренер.");
+
+        if (trainingId == Guid.Empty)
+        {
+            throw new ArgumentException("Необходимо указать тренировку.", nameof(trainingId));
+        }
+
+        var description = ValidateTrainingInput(inputModel.GroupId, inputModel.Description, inputModel.StartTime, inputModel.EndTime);
+        var training = await dbContext.Trainings
+            .Include(currentTraining => currentTraining.Coach)
+            .SingleOrDefaultAsync(currentTraining => currentTraining.Id == trainingId, cancellationToken);
+
+        if (training is null)
+        {
+            throw new InvalidOperationException("Тренировка не найдена.");
+        }
+
+        if (training.Coach.UserId != user.Id)
+        {
+            throw new UnauthorizedAccessException("Тренировка не принадлежит текущему тренеру.");
+        }
+
+        var group = await dbContext.CoachGroups
+            .AsNoTracking()
+            .Where(coachGroup => coachGroup.GroupId == inputModel.GroupId && coachGroup.Coach.UserId == user.Id)
+            .Select(coachGroup => new
+            {
+                coachGroup.GroupId,
+                coachGroup.Group.Name,
+                coachGroup.Group.ColorId,
+                ColorName = coachGroup.Group.Color.Name
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (group is null)
+        {
+            throw new ArgumentException("Выбранная группа не принадлежит текущему тренеру.", nameof(inputModel.GroupId));
+        }
+
+        training.GroupId = group.GroupId;
+        training.Description = description;
+        training.StartTime = DateTime.SpecifyKind(inputModel.StartTime, DateTimeKind.Unspecified);
+        training.EndTime = DateTime.SpecifyKind(inputModel.EndTime, DateTimeKind.Unspecified);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation("Тренировка отредактирована. UserId: {UserId} | TrainingId: {TrainingId} | GroupId: {GroupId}", user.Id, training.Id, training.GroupId);
         return new TrainingOutputModel
         {
             Id = training.Id,
@@ -158,5 +195,36 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         {
             throw new UnauthorizedAccessException(message);
         }
+    }
+
+    private static string? ValidateTrainingInput(Guid groupId, string? inputDescription, DateTime startTime, DateTime endTime)
+    {
+        if (groupId == Guid.Empty)
+        {
+            throw new ArgumentException("Необходимо выбрать группу.", nameof(groupId));
+        }
+
+        var description = string.IsNullOrWhiteSpace(inputDescription) ? null : inputDescription.Trim();
+        if (description?.Length > 300)
+        {
+            throw new ArgumentException("Описание тренировки не должно превышать 300 символов.", nameof(inputDescription));
+        }
+
+        if (startTime == default)
+        {
+            throw new ArgumentException("Необходимо указать дату и время начала тренировки.", nameof(startTime));
+        }
+
+        if (endTime == default)
+        {
+            throw new ArgumentException("Необходимо указать дату и время окончания тренировки.", nameof(endTime));
+        }
+
+        if (endTime <= startTime)
+        {
+            throw new ArgumentException("Время окончания тренировки должно быть позже времени начала.", nameof(endTime));
+        }
+
+        return description;
     }
 }
