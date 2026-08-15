@@ -11,11 +11,23 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
 {
     public async Task<List<TrainingOutputModel>> GetTrainings(AuthenticatedUser user, Guid? groupId, CancellationToken cancellationToken)
     {
-        EnsureCoach(user, "Получать тренировки может только тренер.");
-
-        var trainings = dbContext.Trainings
-            .AsNoTracking()
-            .Where(training => training.Coach.UserId == user.Id);
+        IQueryable<Training> trainings;
+        if (user.Role == UserRolesEnum.Coach)
+        {
+            trainings = dbContext.Trainings
+                .AsNoTracking()
+                .Where(training => training.Coach.UserId == user.Id);
+        }
+        else if (user.Role == UserRolesEnum.Student)
+        {
+            trainings = dbContext.Trainings
+                .AsNoTracking()
+                .Where(training => training.Group.StudentGroups.Any(studentGroup => studentGroup.Student.UserId == user.Id));
+        }
+        else
+        {
+            throw new UnauthorizedAccessException("Получать тренировки может только тренер или ученик.");
+        }
 
         if (groupId.HasValue)
         {
@@ -37,7 +49,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             })
             .ToListAsync(cancellationToken);
 
-        logger.LogInformation("Тренировки тренера получены. UserId: {UserId} | Count: {Count}", user.Id, result.Count);
+        logger.LogInformation("Тренировки пользователя получены. UserId: {UserId} | Role: {Role} | Count: {Count}", user.Id, user.Role, result.Count);
         return result;
     }
 
