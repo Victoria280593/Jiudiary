@@ -32,5 +32,7 @@ public sealed class Group
     public ICollection<CoachGroup> CoachGroups { get; set; } = [];
 
     public ICollection<Training> Trainings { get; set; } = [];
+
+    public ICollection<StudentGroup> StudentGroups { get; set; } = [];
 }
 

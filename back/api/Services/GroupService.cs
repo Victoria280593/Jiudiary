@@ -69,6 +69,10 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
         dbContext.CoachGroups.Remove(coachGroup);
         if (!belongsToAnotherCoach)
         {
+            var studentGroups = await dbContext.StudentGroups
+                .Where(item => item.GroupId == groupId)
+                .ToListAsync(cancellationToken);
+            dbContext.StudentGroups.RemoveRange(studentGroups);
             dbContext.Groups.Remove(coachGroup.Group);
         }
 

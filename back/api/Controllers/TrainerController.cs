@@ -113,6 +113,30 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
         return Ok(await trainerService.GetCoachStudentsAsync(CurrentUser, cancellationToken));
     }
 
+    [HttpPut("students/{studentId:guid}/groups")]
+    [Authorize(Roles = nameof(UserRolesEnum.Coach))]
+    [ProducesResponseType<List<StudentGroupOutputModel>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<List<StudentGroupOutputModel>>> UpdateStudentGroups(
+        Guid studentId,
+        UpdateStudentGroupsInputModel inputModel,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return Ok(await trainerService.UpdateCoachStudentGroupsAsync(CurrentUser, studentId, inputModel, cancellationToken));
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new { error = exception.Message });
+        }
+        catch (KeyNotFoundException exception)
+        {
+            return NotFound(new { error = exception.Message });
+        }
+    }
+
     [HttpDelete("students/{studentId:guid}")]
     [Authorize(Roles = nameof(UserRolesEnum.Coach))]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
