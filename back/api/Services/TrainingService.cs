@@ -10,7 +10,10 @@ namespace JiuDiary.Api.Services;
 
 public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<TrainingService> logger)
 {
-    public async Task<List<TrainingOutputModel>> GetTrainings(AuthenticatedUser user, Guid? groupId, CancellationToken cancellationToken)
+    public async Task<List<TrainingOutputModel>> GetTrainings(
+        AuthenticatedUser user,
+        IReadOnlyCollection<Guid>? groupIds,
+        CancellationToken cancellationToken)
     {
         IQueryable<Training> trainings;
         if (user.Role == UserRolesEnum.Coach)
@@ -30,9 +33,9 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             throw new AspNetException("Получать тренировки может только тренер или ученик.", StatusCodes.Status403Forbidden);
         }
 
-        if (groupId.HasValue)
+        if (groupIds is { Count: > 0 })
         {
-            trainings = trainings.Where(training => training.GroupId == groupId.Value);
+            trainings = trainings.Where(training => groupIds.Contains(training.GroupId));
         }
 
         var result = await trainings
