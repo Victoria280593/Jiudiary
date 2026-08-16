@@ -30,19 +30,8 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<StudentRequestOutputModel>> CreateStudentRequest(Guid coachId, CancellationToken cancellationToken)
     {
-        try
-        {
-            var request = await trainerService.CreateStudentRequestAsync(CurrentUser, coachId, cancellationToken);
-            return StatusCode(StatusCodes.Status201Created, request);
-        }
-        catch (KeyNotFoundException exception)
-        {
-            return NotFound(new { error = exception.Message });
-        }
-        catch (InvalidOperationException exception)
-        {
-            return Conflict(new { error = exception.Message });
-        }
+        var request = await trainerService.CreateStudentRequestAsync(CurrentUser, coachId, cancellationToken);
+        return StatusCode(StatusCodes.Status201Created, request);
     }
 
     [HttpGet("requests")]
@@ -72,24 +61,11 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<StudentRequestOutputModel>> ResolveStudentRequest(Guid requestId, UpdateStudentRequestInputModel inputModel, CancellationToken cancellationToken)
-    {
-        try
-        {
-            return Ok(await trainerService.ResolveStudentRequestAsync(
-                CurrentUser,
-                requestId,
-                inputModel.Status,
-                cancellationToken));
-        }
-        catch (ArgumentException exception)
-        {
-            return BadRequest(new { error = exception.Message });
-        }
-        catch (KeyNotFoundException exception)
-        {
-            return NotFound(new { error = exception.Message });
-        }
-    }
+        => Ok(await trainerService.ResolveStudentRequestAsync(
+            CurrentUser,
+            requestId,
+            inputModel.Status,
+            cancellationToken));
 
     [HttpGet("students")]
     [Authorize(Roles = nameof(UserRolesEnum.Coach))]

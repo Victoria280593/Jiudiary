@@ -25,16 +25,9 @@ public sealed class ClientInfoController(ClientInfoService clientInfoService) : 
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ClientInfoOutputModel>> Update(UpdateClientInfoInputModel inputModel, CancellationToken cancellationToken)
     {
-        try
-        {
-            var clientInfo = await clientInfoService.UpdateAsync(CurrentUser.Id, inputModel, cancellationToken);
-            return clientInfo is null
-                ? Unauthorized()
-                : Ok(clientInfo);
-        }
-        catch (ArgumentException exception)
-        {
-            return BadRequest(new { error = exception.Message });
-        }
+        var clientInfo = await clientInfoService.UpdateAsync(CurrentUser.Id, inputModel, cancellationToken);
+        return clientInfo is null
+            ? Unauthorized()
+            : Ok(clientInfo);
     }
 }

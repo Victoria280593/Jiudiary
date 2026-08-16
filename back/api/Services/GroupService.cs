@@ -3,6 +3,7 @@ using JiuDiary.Database;
 using JiuDiary.Database.Entities;
 using JiuDiary.Database.Enums;
 using JiuDiary.Models.Group;
+using JiraDiary.AspCore.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace JiuDiary.Api.Services;
@@ -13,7 +14,7 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
     {
         if (user.Role != UserRolesEnum.Coach)
         {
-            throw new UnauthorizedAccessException("Получать список групп может только тренер.");
+            throw new AspNetException("Получать список групп может только тренер.", StatusCodes.Status403Forbidden);
         }
 
         var groups = dbContext.CoachGroups
@@ -45,7 +46,7 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
     {
         if (user.Role != UserRolesEnum.Coach)
         {
-            throw new UnauthorizedAccessException("Удалять группы может только тренер.");
+            throw new AspNetException("Удалять группы может только тренер.", StatusCodes.Status403Forbidden);
         }
 
         var coachGroup = await dbContext.CoachGroups
@@ -54,7 +55,7 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 
         if (coachGroup is null)
         {
-            throw new InvalidOperationException("Группа не принадлежит текущему тренеру.");
+            throw new AspNetException("Группа не принадлежит текущему тренеру.", StatusCodes.Status403Forbidden);
         }
 
         var belongsToAnotherCoach = await dbContext.CoachGroups
@@ -80,12 +81,12 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
     {
         if (user.Role != UserRolesEnum.Coach)
         {
-            throw new UnauthorizedAccessException("Создавать группы может только тренер.");
+            throw new AspNetException("Создавать группы может только тренер.", StatusCodes.Status403Forbidden);
         }
 
         if (string.IsNullOrWhiteSpace(inputModel.Name))
         {
-            throw new ArgumentException("Необходимо указать название группы.", nameof(inputModel.Name));
+            throw new AspNetException("Необходимо указать название группы.", StatusCodes.Status400BadRequest);
         }
 
         var color = await dbContext.Colors
@@ -94,7 +95,7 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 
         if (color is null)
         {
-            throw new ArgumentException("Выбранный цвет группы не существует.", nameof(inputModel.ColorId));
+            throw new AspNetException("Выбранный цвет группы не существует.", StatusCodes.Status400BadRequest);
         }
 
         ValidateDefaultTrainingTime(inputModel.DefaultStartTime, inputModel.DefaultEndTime);
@@ -161,7 +162,7 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 
         if (string.IsNullOrWhiteSpace(inputModel.Name))
         {
-            throw new ArgumentException("Необходимо указать название группы.", nameof(inputModel.Name));
+            throw new AspNetException("Необходимо указать название группы.", StatusCodes.Status400BadRequest);
         }
 
         var coachGroup = await dbContext.CoachGroups
@@ -170,7 +171,7 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 
         if (coachGroup is null)
         {
-            throw new InvalidOperationException("Группа не принадлежит текущему тренеру.");
+            throw new AspNetException("Группа не принадлежит текущему тренеру.", StatusCodes.Status403Forbidden);
         }
 
         var color = await dbContext.Colors
@@ -179,7 +180,7 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 
         if (color is null)
         {
-            throw new ArgumentException("Выбранный цвет группы не существует.", nameof(inputModel.ColorId));
+            throw new AspNetException("Выбранный цвет группы не существует.", StatusCodes.Status400BadRequest);
         }
 
         ValidateDefaultTrainingTime(inputModel.DefaultStartTime, inputModel.DefaultEndTime);
@@ -211,24 +212,24 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 
         if (!defaultStartTime.HasValue)
         {
-            throw new ArgumentException("Необходимо указать время начала тренировки.", nameof(defaultStartTime));
+            throw new AspNetException("Необходимо указать время начала тренировки.", StatusCodes.Status400BadRequest);
         }
 
         if (!defaultEndTime.HasValue)
         {
-            throw new ArgumentException("Необходимо указать время окончания тренировки.", nameof(defaultEndTime));
+            throw new AspNetException("Необходимо указать время окончания тренировки.", StatusCodes.Status400BadRequest);
         }
 
         if (defaultEndTime.Value <= defaultStartTime.Value)
         {
-            throw new ArgumentException("Время окончания тренировки должно быть позже времени начала.", nameof(defaultEndTime));
+            throw new AspNetException("Время окончания тренировки должно быть позже времени начала.", StatusCodes.Status400BadRequest);
         }
     }
     private static void EnsureCoach(AuthenticatedUser user, string message)
     {
         if (user.Role != UserRolesEnum.Coach)
         {
-            throw new UnauthorizedAccessException(message);
+            throw new AspNetException(message, StatusCodes.Status403Forbidden);
         }
     }
 }

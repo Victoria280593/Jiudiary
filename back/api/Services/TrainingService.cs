@@ -3,6 +3,7 @@ using JiuDiary.Database;
 using JiuDiary.Database.Entities;
 using JiuDiary.Database.Enums;
 using JiuDiary.Models.Training;
+using JiraDiary.AspCore.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace JiuDiary.Api.Services;
@@ -61,7 +62,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
 
         if (group is null)
         {
-            throw new InvalidOperationException("Выбранная группа не принадлежит текущему тренеру.");
+            throw new AspNetException("Выбранная группа не принадлежит текущему тренеру.", StatusCodes.Status403Forbidden);
         }
 
         var training = new Training
@@ -101,7 +102,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
 
         if (trainingId == Guid.Empty)
         {
-            throw new ArgumentException("Необходимо указать тренировку.", nameof(trainingId));
+            throw new AspNetException("Необходимо указать тренировку.", StatusCodes.Status400BadRequest);
         }
 
         var description = ValidateTrainingInput(inputModel.GroupId, inputModel.Description, inputModel.StartTime, inputModel.EndTime);
@@ -111,12 +112,12 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
 
         if (training is null)
         {
-            throw new InvalidOperationException("Тренировка не найдена.");
+            throw new AspNetException("Тренировка не найдена.", StatusCodes.Status404NotFound);
         }
 
         if (training.Coach.UserId != user.Id)
         {
-            throw new UnauthorizedAccessException("Тренировка не принадлежит текущему тренеру.");
+            throw new AspNetException("Тренировка не принадлежит текущему тренеру.", StatusCodes.Status403Forbidden);
         }
 
         var group = await dbContext.CoachGroups
@@ -133,7 +134,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
 
         if (group is null)
         {
-            throw new ArgumentException("Выбранная группа не принадлежит текущему тренеру.", nameof(inputModel.GroupId));
+            throw new AspNetException("Выбранная группа не принадлежит текущему тренеру.", StatusCodes.Status400BadRequest);
         }
 
         training.GroupId = group.GroupId;
@@ -162,7 +163,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
 
         if (trainingId == Guid.Empty)
         {
-            throw new ArgumentException("Необходимо указать тренировку.", nameof(trainingId));
+            throw new AspNetException("Необходимо указать тренировку.", StatusCodes.Status400BadRequest);
         }
 
         var training = await dbContext.Trainings
@@ -176,12 +177,12 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
 
         if (training is null)
         {
-            throw new InvalidOperationException("Тренировка не найдена.");
+            throw new AspNetException("Тренировка не найдена.", StatusCodes.Status404NotFound);
         }
 
         if (training.UserId != user.Id)
         {
-            throw new UnauthorizedAccessException("Тренировка не принадлежит текущему тренеру.");
+            throw new AspNetException("Тренировка не принадлежит текущему тренеру.", StatusCodes.Status403Forbidden);
         }
 
         dbContext.Trainings.Remove(training.Entity);
@@ -193,7 +194,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
     {
         if (user.Role != UserRolesEnum.Coach)
         {
-            throw new UnauthorizedAccessException(message);
+            throw new AspNetException(message, StatusCodes.Status403Forbidden);
         }
     }
 
@@ -201,28 +202,28 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
     {
         if (groupId == Guid.Empty)
         {
-            throw new ArgumentException("Необходимо выбрать группу.", nameof(groupId));
+            throw new AspNetException("Необходимо выбрать группу.", StatusCodes.Status400BadRequest);
         }
 
         var description = string.IsNullOrWhiteSpace(inputDescription) ? null : inputDescription.Trim();
         if (description?.Length > 300)
         {
-            throw new ArgumentException("Описание тренировки не должно превышать 300 символов.", nameof(inputDescription));
+            throw new AspNetException("Описание тренировки не должно превышать 300 символов.", StatusCodes.Status400BadRequest);
         }
 
         if (startTime == default)
         {
-            throw new ArgumentException("Необходимо указать дату и время начала тренировки.", nameof(startTime));
+            throw new AspNetException("Необходимо указать дату и время начала тренировки.", StatusCodes.Status400BadRequest);
         }
 
         if (endTime == default)
         {
-            throw new ArgumentException("Необходимо указать дату и время окончания тренировки.", nameof(endTime));
+            throw new AspNetException("Необходимо указать дату и время окончания тренировки.", StatusCodes.Status400BadRequest);
         }
 
         if (endTime <= startTime)
         {
-            throw new ArgumentException("Время окончания тренировки должно быть позже времени начала.", nameof(endTime));
+            throw new AspNetException("Время окончания тренировки должно быть позже времени начала.", StatusCodes.Status400BadRequest);
         }
 
         return description;

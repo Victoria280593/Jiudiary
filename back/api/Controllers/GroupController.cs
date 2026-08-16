@@ -20,19 +20,8 @@ public sealed class GroupController(GroupService groupService) : BaseController
     [HttpDelete("{groupId:guid}")]
     public async Task<IActionResult> DeleteGroup(Guid groupId, CancellationToken cancellationToken)
     {
-        try
-        {
-            await groupService.DeleteGroup(groupId, CurrentUser, cancellationToken);
-            return NoContent();
-        }
-        catch (UnauthorizedAccessException exception)
-        {
-            return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
-        }
-        catch (InvalidOperationException exception)
-        {
-            return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
-        }
+        await groupService.DeleteGroup(groupId, CurrentUser, cancellationToken);
+        return NoContent();
     }
 
     [HttpPost]
@@ -49,22 +38,5 @@ public sealed class GroupController(GroupService groupService) : BaseController
 
     [HttpPut("{groupId:guid}")]
     public async Task<ActionResult<UpdateGroupOutputModel>> UpdateGroup(Guid groupId, UpdateGroupInputModel inputModel, CancellationToken cancellationToken)
-    {
-        try
-        {
-            return Ok(await groupService.UpdateGroup(groupId, inputModel, CurrentUser, cancellationToken));
-        }
-        catch (UnauthorizedAccessException exception)
-        {
-            return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
-        }
-        catch (InvalidOperationException exception)
-        {
-            return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
-        }
-        catch (ArgumentException exception)
-        {
-            return BadRequest(new { error = exception.Message });
-        }
-    }
+        => Ok(await groupService.UpdateGroup(groupId, inputModel, CurrentUser, cancellationToken));
 }
