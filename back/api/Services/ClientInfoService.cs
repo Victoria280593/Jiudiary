@@ -1,6 +1,7 @@
 using JiuDiary.Database;
 using JiuDiary.Database.Entities;
 using JiuDiary.Models.ClientInfo;
+using JiraDiary.AspCore.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace JiuDiary.Api.Services;
@@ -33,23 +34,23 @@ public sealed class ClientInfoService(JiuDiaryDbContext dbContext, ILogger<Clien
 
         if (string.IsNullOrWhiteSpace(inputModel.FirstName) || inputModel.FirstName.Trim().Length > 200)
         {
-            throw new ArgumentException("Имя обязательно и должно содержать не более 200 символов.", nameof(inputModel.FirstName));
+            throw new AspNetException("Имя обязательно и должно содержать не более 200 символов.", StatusCodes.Status400BadRequest);
         }
 
         if (string.IsNullOrWhiteSpace(inputModel.LastName) || inputModel.LastName.Trim().Length > 200)
         {
-            throw new ArgumentException("Фамилия обязательна и должна содержать не более 200 символов.", nameof(inputModel.LastName));
+            throw new AspNetException("Фамилия обязательна и должна содержать не более 200 символов.", StatusCodes.Status400BadRequest);
         }
 
         if (inputModel.MiddleName?.Trim().Length > 200)
         {
-            throw new ArgumentException("Отчество должно содержать не более 200 символов.", nameof(inputModel.MiddleName));
+            throw new AspNetException("Отчество должно содержать не более 200 символов.", StatusCodes.Status400BadRequest);
         }
 
         if (inputModel.BeltId.HasValue &&
             !await dbContext.Belts.AnyAsync(x => x.Id == inputModel.BeltId.Value, cancellationToken))
         {
-            throw new ArgumentException("Выбранный пояс не существует.", nameof(inputModel.BeltId));
+            throw new AspNetException("Выбранный пояс не существует.", StatusCodes.Status400BadRequest);
         }
 
         var clientInfo = await dbContext.ClientInfos

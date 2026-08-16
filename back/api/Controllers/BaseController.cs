@@ -1,4 +1,5 @@
 using JiuDiary.Api.Auth;
+using JiraDiary.AspCore.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JiuDiary.Api.Controllers;
@@ -14,7 +15,9 @@ public abstract class BaseController : ControllerBase
     protected AuthenticatedUser CurrentUser =>
         TryGetCurrentUser(out var user)
             ? user
-            : throw new UnauthorizedAccessException("Не удалось получить данные авторизованного пользователя.");
+            : throw new AspNetException(
+                "Не удалось получить данные авторизованного пользователя.",
+                StatusCodes.Status401Unauthorized);
 
     protected bool TryGetCurrentUser(out AuthenticatedUser user)
     {

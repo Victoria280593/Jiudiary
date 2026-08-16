@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\libs\JiraDiary.AspCore\JiraDiary.AspCore.csproj" />
     <ProjectReference Include="..\libs\DataBase\JiuDiary.DataBase.csproj" />
     <ProjectReference Include="..\libs\Extensions\JiuDiary.Extensions.csproj" />
     <ProjectReference Include="..\libs\models\JiuDiary.Models.csproj" />

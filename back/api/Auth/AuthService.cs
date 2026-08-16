@@ -5,6 +5,7 @@ using JiuDiary.Database;
 using JiuDiary.Database.Entities;
 using JiuDiary.Database.Enums;
 using JiuDiary.Models.Auth;
+using JiraDiary.AspCore.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -51,7 +52,9 @@ public sealed class AuthService(
 
         if (role is null)
         {
-            throw new InvalidOperationException($"В базе данных не найдена роль {requestedRoleName} с идентификатором {(int)requestedRole}.");
+            throw new AspNetException(
+                $"В базе данных не найдена роль {requestedRoleName} с идентификатором {(int)requestedRole}.",
+                StatusCodes.Status500InternalServerError);
         }
 
         var user = new User

@@ -46,15 +46,7 @@ public sealed class AuthController(IAuthService authService) : BaseController
             });
         }
 
-        UserOutputModel? user;
-        try
-        {
-            user = await authService.RegisterAsync(request, cancellationToken);
-        }
-        catch (InvalidOperationException exception)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { error = exception.Message });
-        }
+        var user = await authService.RegisterAsync(request, cancellationToken);
 
         return user is null
             ? Conflict(new { error = "Пользователь с таким логином уже существует." })
