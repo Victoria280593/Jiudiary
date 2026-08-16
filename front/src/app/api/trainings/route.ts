@@ -11,8 +11,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Пользователь не авторизован." }, { status: 401 });
   }
 
-  const groupId = new URL(request.url).searchParams.get("groupId") ?? undefined;
-  const trainings = await getBackendTrainings(session.accessToken, groupId);
+  const groupIds = new URL(request.url).searchParams.getAll("groupIds");
+  const trainings = await getBackendTrainings(session.accessToken, groupIds);
 
   return trainings
     ? NextResponse.json(trainings, { headers: { "Cache-Control": "no-store" } })
