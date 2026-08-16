@@ -19,14 +19,12 @@ export function StudentTrainerRequestButton({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>();
 
-  const disabled = status === "Pending" || status === "Accepted";
-  const label = status === "Pending"
+  const disabled = status === "Pending" || status === "Accepted" || status === "Rejected";
+  const label = status === "Pending" || status === "Rejected"
     ? "Заявка отправлена"
     : status === "Accepted"
       ? "Вы присоединились"
-      : status === "Rejected"
-        ? "Отправить повторно"
-        : "Присоединиться";
+      : "Присоединиться";
 
   function closeModal() {
     if (!isSubmitting) dialogRef.current?.close();
