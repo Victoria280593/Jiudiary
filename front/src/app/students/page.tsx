@@ -165,6 +165,14 @@ export default async function StudentsPage({
             }`}
           >
             <span>Заявки</span>
+            {pendingRequests.length > 0 && (
+              <span
+                aria-label={`Входящих заявок: ${pendingRequests.length}`}
+                className="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 text-[0.65rem] font-bold leading-none text-white shadow-sm"
+              >
+                {pendingRequests.length}
+              </span>
+            )}
           </Link>
         </nav>
 
