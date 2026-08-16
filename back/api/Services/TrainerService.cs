@@ -5,6 +5,7 @@ using JiuDiary.Api.Auth;
 using JiuDiary.Extensions;
 using JiuDiary.Extensions.Models;
 using JiuDiary.Models.Trainer;
+using JiraDiary.AspCore.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace JiuDiary.Api.Services;
@@ -52,7 +53,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             cancellationToken);
         if (!coachExists)
         {
-            throw new KeyNotFoundException("Тренер не найден.");
+            throw new AspNetException("Тренер не найден.", StatusCodes.Status404NotFound);
         }
 
         var isAlreadyStudent = await dbContext.CoachStudents.AnyAsync(
@@ -60,7 +61,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             cancellationToken);
         if (isAlreadyStudent)
         {
-            throw new InvalidOperationException("Вы уже являетесь учеником этого тренера.");
+            throw new AspNetException("Вы уже являетесь учеником этого тренера.", StatusCodes.Status409Conflict);
         }
 
         var hasActiveRequest = await dbContext.StudentsRequests.AnyAsync(
@@ -69,7 +70,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
                        !request.IsDeleted, cancellationToken);
         if (hasActiveRequest)
         {
-            throw new InvalidOperationException("Заявка этому тренеру уже отправлена или уже принята.");
+            throw new AspNetException("Заявка этому тренеру уже отправлена или уже принята.", StatusCodes.Status409Conflict);
         }
 
         var request = new StudentRequest
@@ -172,7 +173,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         EnsureRole(coach, UserRolesEnum.Coach);
         if (status is not (StudentRequestStatusEnum.Accepted or StudentRequestStatusEnum.Rejected))
         {
-            throw new ArgumentException("Заявку можно только принять или отклонить.", nameof(status));
+            throw new AspNetException("Заявку можно только принять или отклонить.", StatusCodes.Status400BadRequest);
         }
 
         var request = await dbContext.StudentsRequests.SingleOrDefaultAsync(
@@ -184,7 +185,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             cancellationToken);
         if (request is null)
         {
-            throw new KeyNotFoundException("Заявка не найдена.");
+            throw new AspNetException("Заявка не найдена.", StatusCodes.Status404NotFound);
         }
 
         if (status == StudentRequestStatusEnum.Accepted)
@@ -225,7 +226,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
     {
         if (user.Role is not (UserRolesEnum.Coach or UserRolesEnum.Student))
         {
-            throw new UnauthorizedAccessException("Удалить заявку может только тренер или ученик.");
+            throw new AspNetException("Удалить заявку может только тренер или ученик.", StatusCodes.Status403Forbidden);
         }
 
         var request = await dbContext.StudentsRequests.SingleOrDefaultAsync(
@@ -297,7 +298,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             .SingleOrDefaultAsync(cancellationToken);
         if (!studentClientInfoId.HasValue)
         {
-            throw new KeyNotFoundException("Ученик не найден или его профиль не заполнен.");
+            throw new AspNetException("Ученик не найден или его профиль не заполнен.", StatusCodes.Status404NotFound);
         }
 
         var coachGroupIds = await dbContext.CoachGroups
@@ -308,7 +309,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         var requestedGroupIds = inputModel.GroupIds.Distinct().ToList();
         if (requestedGroupIds.Except(coachGroupIds).Any())
         {
-            throw new ArgumentException("Можно назначить только группы текущего тренера.", nameof(inputModel.GroupIds));
+            throw new AspNetException("Можно назначить только группы текущего тренера.", StatusCodes.Status400BadRequest);
         }
 
         var existingAssignments = await dbContext.StudentGroups
@@ -371,7 +372,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
     {
         if (user.Role != role)
         {
-            throw new UnauthorizedAccessException("Недостаточно прав для выполнения операции.");
+            throw new AspNetException("Недостаточно прав для выполнения операции.", StatusCodes.Status403Forbidden);
         }
     }
 }

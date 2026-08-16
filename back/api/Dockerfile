@@ -4,6 +4,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY ["api/JiuDiary.Api.csproj", "api/"]
+COPY ["libs/JiraDiary.AspCore/JiraDiary.AspCore.csproj", "libs/JiraDiary.AspCore/"]
 COPY ["libs/DataBase/JiuDiary.DataBase.csproj", "libs/DataBase/"]
 COPY ["libs/Extensions/JiuDiary.Extensions.csproj", "libs/Extensions/"]
 COPY ["libs/models/JiuDiary.Models.csproj", "libs/models/"]

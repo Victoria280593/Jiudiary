@@ -98,20 +98,7 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
         Guid studentId,
         UpdateStudentGroupsInputModel inputModel,
         CancellationToken cancellationToken)
-    {
-        try
-        {
-            return Ok(await trainerService.UpdateCoachStudentGroupsAsync(CurrentUser, studentId, inputModel, cancellationToken));
-        }
-        catch (ArgumentException exception)
-        {
-            return BadRequest(new { error = exception.Message });
-        }
-        catch (KeyNotFoundException exception)
-        {
-            return NotFound(new { error = exception.Message });
-        }
-    }
+        => Ok(await trainerService.UpdateCoachStudentGroupsAsync(CurrentUser, studentId, inputModel, cancellationToken));
 
     [HttpDelete("students/{studentId:guid}")]
     [Authorize(Roles = nameof(UserRolesEnum.Coach))]

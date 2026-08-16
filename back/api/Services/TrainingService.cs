@@ -27,7 +27,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         }
         else
         {
-            throw new UnauthorizedAccessException("Получать тренировки может только тренер или ученик.");
+            throw new AspNetException("Получать тренировки может только тренер или ученик.", StatusCodes.Status403Forbidden);
         }
 
         if (groupId.HasValue)
