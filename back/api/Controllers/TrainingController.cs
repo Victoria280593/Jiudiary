@@ -12,8 +12,10 @@ namespace JiuDiary.Api.Controllers;
 public sealed class TrainingController(TrainingService trainingService) : BaseController
 {
     [HttpGet]
-    public async Task<ActionResult<List<TrainingOutputModel>>> GetTrainings([FromQuery] Guid? groupId, CancellationToken cancellationToken)
-        => Ok(await trainingService.GetTrainings(CurrentUser, groupId, cancellationToken));
+    public async Task<ActionResult<List<TrainingOutputModel>>> GetTrainings(
+        [FromQuery] List<Guid>? groupIds,
+        CancellationToken cancellationToken)
+        => Ok(await trainingService.GetTrainings(CurrentUser, groupIds, cancellationToken));
 
     [HttpPost]
     public async Task<ActionResult<TrainingOutputModel>> CreateTraining(CreateTrainingInputModel inputModel, CancellationToken cancellationToken)

@@ -68,7 +68,7 @@ export function TrainingCalendar({
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [isDayPanelOpen, setIsDayPanelOpen] = useState(false);
   const { groups, status: groupsStatus, error: groupsError } = useGroups();
-  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [visibleTrainings, setVisibleTrainings] = useState(trainings);
   const [trainingsError, setTrainingsError] = useState<string>();
   const latestTrainingRequestRef = useRef(0);
@@ -163,14 +163,14 @@ export function TrainingCalendar({
     });
   };
 
-  const selectGroup = async (groupId: string) => {
+  const selectGroups = async (groupIds: string[]) => {
     const requestId = latestTrainingRequestRef.current + 1;
     latestTrainingRequestRef.current = requestId;
-    setSelectedGroupId(groupId);
+    setSelectedGroupIds(groupIds);
     setTrainingsError(undefined);
 
     try {
-      const loadedTrainings = await getTrainings(groupId || undefined);
+      const loadedTrainings = await getTrainings(groupIds);
       if (latestTrainingRequestRef.current === requestId) {
         setVisibleTrainings(loadedTrainings);
       }
@@ -179,6 +179,14 @@ export function TrainingCalendar({
         setTrainingsError(error instanceof Error ? error.message : "Не удалось загрузить тренировки.");
       }
     }
+  };
+
+  const toggleGroup = (groupId: string) => {
+    const nextGroupIds = selectedGroupIds.includes(groupId)
+      ? selectedGroupIds.filter((selectedGroupId) => selectedGroupId !== groupId)
+      : [...selectedGroupIds, groupId];
+
+    void selectGroups(nextGroupIds);
   };
 
   return (
@@ -263,10 +271,10 @@ export function TrainingCalendar({
                   <>
                     <button
                       type="button"
-                      onClick={() => void selectGroup("")}
-                      aria-pressed={selectedGroupId === ""}
+                      onClick={() => void selectGroups([])}
+                      aria-pressed={selectedGroupIds.length === 0}
                       className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition duration-200 ease-out ${
-                        selectedGroupId === ""
+                        selectedGroupIds.length === 0
                           ? "bg-accent text-white shadow-[0_10px_24px_-16px_rgba(131,93,57,0.8)]"
                           : "bg-surface-muted text-muted hover:-translate-y-0.5 hover:bg-accent-soft hover:text-accent-foreground"
                       }`}
@@ -274,13 +282,13 @@ export function TrainingCalendar({
                       Все группы
                     </button>
                     {groups.map((group) => {
-                      const selected = selectedGroupId === group.id;
+                      const selected = selectedGroupIds.includes(group.id);
                       const colorStyle = getGroupColorStyle(group.colorName);
                       return (
                         <button
                           key={group.id}
                           type="button"
-                          onClick={() => void selectGroup(group.id)}
+                          onClick={() => toggleGroup(group.id)}
                           aria-pressed={selected}
                           className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition duration-200 ease-out hover:-translate-y-0.5 ${
                             selected

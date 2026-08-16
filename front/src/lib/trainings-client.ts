@@ -19,8 +19,10 @@ type TrainingResponse = {
   endTime: string;
 };
 
-export async function getTrainings(groupId?: string): Promise<CalendarTraining[]> {
-  const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : "";
+export async function getTrainings(groupIds: string[] = []): Promise<CalendarTraining[]> {
+  const searchParams = new URLSearchParams();
+  groupIds.forEach((groupId) => searchParams.append("groupIds", groupId));
+  const query = searchParams.size > 0 ? `?${searchParams.toString()}` : "";
   const response = await fetch(`/api/trainings${query}`, { cache: "no-store" });
 
   if (!response.ok) {

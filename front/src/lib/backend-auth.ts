@@ -824,9 +824,11 @@ export async function updateBackendTraining(
   }
 }
 
-export async function getBackendTrainings(accessToken: string, groupId?: string): Promise<BackendTraining[] | null> {
+export async function getBackendTrainings(accessToken: string, groupIds: string[] = []): Promise<BackendTraining[] | null> {
   try {
-    const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : "";
+    const searchParams = new URLSearchParams();
+    groupIds.forEach((groupId) => searchParams.append("groupIds", groupId));
+    const query = searchParams.size > 0 ? `?${searchParams.toString()}` : "";
     const response = await fetch(`${backendUrl}/api/trainings${query}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: "no-store",
