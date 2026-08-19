@@ -22,9 +22,12 @@ public sealed class TrainingController(TrainingService trainingService) : BaseCo
         => Ok(await trainingService.CreateTraining(inputModel, CurrentUser, cancellationToken));
 
     [HttpDelete("{trainingId:guid}")]
-    public async Task<ActionResult> DeleteTraining(Guid trainingId, CancellationToken cancellationToken)
+    public async Task<ActionResult> DeleteTraining(
+        Guid trainingId,
+        CancellationToken cancellationToken,
+        [FromQuery] bool deleteAllAfterThis = false)
     {
-        await trainingService.DeleteTraining(trainingId, CurrentUser, cancellationToken);
+        await trainingService.DeleteTraining(trainingId, deleteAllAfterThis, CurrentUser, cancellationToken);
         return NoContent();
     }
 

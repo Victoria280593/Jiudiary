@@ -90,9 +90,38 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             EndTime = DateTime.SpecifyKind(inputModel.EndTime, DateTimeKind.Unspecified)
         };
 
-        dbContext.Trainings.Add(training);
+        var trainings = new List<Training> { training };
+        if (inputModel.RepeatEveryWeek)
+        {
+            var nextYearStart = new DateTime(training.StartTime.Year + 1, 1, 1);
+            var repeatedStartTime = training.StartTime.AddDays(7);
+            var repeatedEndTime = training.EndTime.AddDays(7);
+
+            while (repeatedStartTime < nextYearStart)
+            {
+                trainings.Add(new Training
+                {
+                    Id = Guid.NewGuid(),
+                    CoachId = group.CoachId,
+                    GroupId = group.GroupId,
+                    Description = null,
+                    StartTime = repeatedStartTime,
+                    EndTime = repeatedEndTime
+                });
+
+                repeatedStartTime = repeatedStartTime.AddDays(7);
+                repeatedEndTime = repeatedEndTime.AddDays(7);
+            }
+        }
+
+        dbContext.Trainings.AddRange(trainings);
         await dbContext.SaveChangesAsync(cancellationToken);
-        logger.LogInformation("Тренировка создана. UserId: {UserId} | GroupId: {GroupId} | TrainingId: {TrainingId}", user.Id, training.GroupId, training.Id);
+        logger.LogInformation(
+            "Тренировка создана. UserId: {UserId} | GroupId: {GroupId} | TrainingId: {TrainingId} | TrainingsCreated: {TrainingsCreated}",
+            user.Id,
+            training.GroupId,
+            training.Id,
+            trainings.Count);
 
         return new TrainingOutputModel
         {
@@ -172,7 +201,11 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         };
     }
 
-    public async Task DeleteTraining(Guid trainingId, AuthenticatedUser user, CancellationToken cancellationToken)
+    public async Task DeleteTraining(
+        Guid trainingId,
+        bool deleteAllAfterThis,
+        AuthenticatedUser user,
+        CancellationToken cancellationToken)
     {
         EnsureCoach(user, "Удалять тренировки может только тренер.");
 
@@ -200,9 +233,30 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             throw new AspNetException("Тренировка не принадлежит текущему тренеру.", StatusCodes.Status403Forbidden);
         }
 
-        dbContext.Trainings.Remove(training.Entity);
+        var trainingsToDelete = new List<Training> { training.Entity };
+        if (deleteAllAfterThis)
+        {
+            var laterTrainings = await dbContext.Trainings
+                .Where(candidate =>
+                    candidate.Id != training.Entity.Id &&
+                    candidate.CoachId == training.Entity.CoachId &&
+                    candidate.GroupId == training.Entity.GroupId &&
+                    candidate.StartTime >= training.Entity.StartTime)
+                .ToListAsync(cancellationToken);
+
+            trainingsToDelete.AddRange(laterTrainings.Where(candidate =>
+                candidate.StartTime.DayOfWeek == training.Entity.StartTime.DayOfWeek &&
+                candidate.StartTime.TimeOfDay == training.Entity.StartTime.TimeOfDay));
+        }
+
+        dbContext.Trainings.RemoveRange(trainingsToDelete);
         await dbContext.SaveChangesAsync(cancellationToken);
-        logger.LogInformation("Тренировка удалена. UserId: {UserId} | TrainingId: {TrainingId}", user.Id, trainingId);
+        logger.LogInformation(
+            "Тренировка удалена. UserId: {UserId} | TrainingId: {TrainingId} | DeleteAllAfterThis: {DeleteAllAfterThis} | TrainingsDeleted: {TrainingsDeleted}",
+            user.Id,
+            trainingId,
+            deleteAllAfterThis,
+            trainingsToDelete.Count);
     }
 
     private static void EnsureCoach(AuthenticatedUser user, string message)
