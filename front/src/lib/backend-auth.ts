@@ -761,6 +761,7 @@ export type BackendTrainingInput = {
   description: string | null;
   startTime: string;
   endTime: string;
+  repeatEveryWeek?: boolean;
 };
 
 export async function createBackendTraining(
@@ -850,9 +851,14 @@ export type DeleteBackendTrainingResult =
   | { ok: true }
   | { ok: false; status: number; error: string };
 
-export async function deleteBackendTraining(accessToken: string, trainingId: string): Promise<DeleteBackendTrainingResult> {
+export async function deleteBackendTraining(
+  accessToken: string,
+  trainingId: string,
+  deleteAllAfterThis = false
+): Promise<DeleteBackendTrainingResult> {
   try {
-    const response = await fetch(`${backendUrl}/api/trainings/${encodeURIComponent(trainingId)}`, {
+    const query = deleteAllAfterThis ? "?deleteAllAfterThis=true" : "";
+    const response = await fetch(`${backendUrl}/api/trainings/${encodeURIComponent(trainingId)}${query}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: "no-store",

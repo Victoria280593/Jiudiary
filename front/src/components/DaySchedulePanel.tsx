@@ -6,6 +6,7 @@ import { CreateTrainingForm } from "@/components/CreateTrainingForm";
 import { formatTime } from "@/lib/format";
 import { getGroupColorStyle } from "@/lib/group-colors";
 import { deleteTraining } from "@/lib/trainings-client";
+import { errorClass } from "@/lib/ui";
 import styles from "./DaySchedulePanel.module.css";
 
 type DayTraining = {
@@ -53,7 +54,7 @@ function TrainingFormModal({
   dateKey: string;
   training?: DayTraining;
   onClose: () => void;
-  onSaved: (training: SavedTraining) => void;
+  onSaved: (training: SavedTraining, repeatEveryWeek?: boolean) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const isEditing = Boolean(training);
@@ -124,14 +125,16 @@ export function DaySchedulePanel({
   onDateChange: (dateKey: string) => void;
   linkBase?: string;
   showCreateForm?: boolean;
-  onTrainingDeleted?: (trainingId: string) => void;
-  onTrainingSaved?: (training: SavedTraining) => void;
+  onTrainingDeleted?: (trainingId: string, deleteAllAfterThis?: boolean) => void;
+  onTrainingSaved?: (training: SavedTraining, repeatEveryWeek?: boolean) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const deleteDialogRef = useRef<HTMLDialogElement>(null);
   const [selectedGroup, setSelectedGroup] = useState("");
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [editingTraining, setEditingTraining] = useState<DayTraining>();
   const [openMenuId, setOpenMenuId] = useState<string>();
+  const [deleteTarget, setDeleteTarget] = useState<DayTraining>();
   const [deletingTrainingId, setDeletingTrainingId] = useState<string>();
   const [deleteError, setDeleteError] = useState<string>();
 
@@ -202,14 +205,30 @@ export function DaySchedulePanel({
     onDateChange(`${year}-${month}-${day}`);
   }
 
-  async function handleDeleteTraining(trainingId: string) {
-    setDeletingTrainingId(trainingId);
+  function openDeleteDialog(training: DayTraining) {
+    setDeleteTarget(training);
     setDeleteError(undefined);
     setOpenMenuId(undefined);
+    deleteDialogRef.current?.showModal();
+  }
+
+  function closeDeleteDialog() {
+    if (deletingTrainingId) return;
+    deleteDialogRef.current?.close();
+    setDeleteTarget(undefined);
+  }
+
+  async function confirmDeleteTraining(deleteAllAfterThis: boolean) {
+    if (!deleteTarget) return;
+    const trainingId = deleteTarget.id;
+    setDeletingTrainingId(trainingId);
+    setDeleteError(undefined);
 
     try {
-      await deleteTraining(trainingId);
-      onTrainingDeleted?.(trainingId);
+      await deleteTraining(trainingId, deleteAllAfterThis);
+      onTrainingDeleted?.(trainingId, deleteAllAfterThis);
+      deleteDialogRef.current?.close();
+      setDeleteTarget(undefined);
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : "Не удалось удалить тренировку.");
     } finally {
@@ -303,10 +322,6 @@ export function DaySchedulePanel({
             </div>
           )}
 
-          {deleteError && (
-            <p role="alert" className="mb-4 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">{deleteError}</p>
-          )}
-
           <div className="flex flex-col gap-3">
             {visibleTrainings.length > 0 ? (
               visibleTrainings.map((training) => {
@@ -380,7 +395,7 @@ export function DaySchedulePanel({
                             <button
                               type="button"
                               role="menuitem"
-                              onClick={() => void handleDeleteTraining(training.id)}
+                              onClick={() => openDeleteDialog(training)}
                               className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm font-medium text-danger transition hover:bg-danger-soft"
                             >
                               Удалить
@@ -419,8 +434,8 @@ export function DaySchedulePanel({
         <TrainingFormModal
           dateKey={dateKey}
           onClose={() => setIsCreateFormOpen(false)}
-          onSaved={(training) => {
-            onTrainingSaved?.(training);
+          onSaved={(training, repeatEveryWeek) => {
+            onTrainingSaved?.(training, repeatEveryWeek);
             setIsCreateFormOpen(false);
           }}
         />
@@ -436,6 +451,54 @@ export function DaySchedulePanel({
           }}
         />
       )}
+
+      <dialog
+        ref={deleteDialogRef}
+        onCancel={(event) => {
+          event.preventDefault();
+          closeDeleteDialog();
+        }}
+        className="m-auto w-[min(92vw,30rem)] rounded-2xl border border-border bg-white p-0 text-foreground shadow-[0_30px_80px_-28px_rgba(49,35,24,0.55)] backdrop:bg-black/30"
+      >
+        <div className="border-b border-border px-5 py-4 sm:px-6">
+          <h2 className="text-xl font-semibold">Удалить тренировку?</h2>
+          {deleteTarget && (
+            <p className="mt-1 text-sm text-muted">
+              {deleteTarget.title || "Тренировка"} · {formatTime(deleteTarget.date)}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-3 px-5 py-5 sm:px-6">
+          {deleteError && <p className={errorClass}>{deleteError}</p>}
+          <p className="text-sm leading-6 text-muted">
+            Тренировка может быть частью еженедельной серии. Выберите, что удалить.
+          </p>
+          <button
+            type="button"
+            onClick={() => void confirmDeleteTraining(false)}
+            disabled={Boolean(deletingTrainingId)}
+            className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-surface-muted disabled:opacity-50"
+          >
+            Только эту тренировку
+          </button>
+          <button
+            type="button"
+            onClick={() => void confirmDeleteTraining(true)}
+            disabled={Boolean(deletingTrainingId)}
+            className="rounded-xl bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-danger/90 disabled:opacity-60"
+          >
+            {deletingTrainingId ? "Удаление…" : "Эту и все следующие в серии"}
+          </button>
+          <button
+            type="button"
+            onClick={closeDeleteDialog}
+            disabled={Boolean(deletingTrainingId)}
+            className="rounded-xl px-4 py-2.5 text-sm font-medium text-muted transition hover:bg-surface-muted disabled:opacity-50"
+          >
+            Отмена
+          </button>
+        </div>
+      </dialog>
     </dialog>
   );
 }

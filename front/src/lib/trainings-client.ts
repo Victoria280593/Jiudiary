@@ -42,8 +42,11 @@ export async function getTrainings(groupIds: string[] = []): Promise<CalendarTra
   }));
 }
 
-export async function deleteTraining(trainingId: string): Promise<void> {
-  const response = await fetch(`/api/trainings?trainingId=${encodeURIComponent(trainingId)}`, {
+export async function deleteTraining(trainingId: string, deleteAllAfterThis = false): Promise<void> {
+  const searchParams = new URLSearchParams({ trainingId });
+  if (deleteAllAfterThis) searchParams.set("deleteAllAfterThis", "true");
+
+  const response = await fetch(`/api/trainings?${searchParams.toString()}`, {
     method: "DELETE",
     cache: "no-store",
   });

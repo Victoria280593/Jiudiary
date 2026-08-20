@@ -136,15 +136,23 @@ export function TrainingCalendar({
     if (calendarView === "week") setWeekStart(startOfWeek(nextDate));
   };
 
-  const saveVisibleTraining = (training: {
-    id: string;
-    groupId: string;
-    groupName: string;
-    groupColorName: string;
-    description: string | null;
-    startTime: string;
-    endTime: string;
-  }) => {
+  const saveVisibleTraining = (
+    training: {
+      id: string;
+      groupId: string;
+      groupName: string;
+      groupColorName: string;
+      description: string | null;
+      startTime: string;
+      endTime: string;
+    },
+    repeatEveryWeek?: boolean
+  ) => {
+    if (repeatEveryWeek) {
+      void selectGroups(selectedGroupIds);
+      return;
+    }
+
     const nextTraining: TrainingItem = {
       id: training.id,
       groupId: training.groupId,
@@ -432,7 +440,11 @@ export function TrainingCalendar({
             trainings={trainingsByDay.get(selectedDay) ?? []}
             onDateChange={showRelativeDay}
             onClose={() => setIsDayPanelOpen(false)}
-            onTrainingDeleted={(trainingId) => {
+            onTrainingDeleted={(trainingId, deleteAllAfterThis) => {
+              if (deleteAllAfterThis) {
+                void selectGroups(selectedGroupIds);
+                return;
+              }
               setVisibleTrainings((current) => current.filter((training) => training.id !== trainingId));
             }}
             onTrainingSaved={saveVisibleTraining}
