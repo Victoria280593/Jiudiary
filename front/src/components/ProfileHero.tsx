@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   changeCurrentClientBeltAction,
@@ -28,25 +28,14 @@ export function ProfileHero({
   age: number | null;
   belt: Belt | null;
 }) {
-  const router = useRouter();
   const liveBelt = useLiveBelt(belt);
-  const [isEditingBelt, setIsEditingBelt] = useState(false);
-  const [state, formAction, isPending] = useActionState<FormState, FormData>(
-    changeCurrentClientBeltAction,
-    undefined
-  );
-  const availableBelts = age === null
+  const [isBeltModalOpen, setIsBeltModalOpen] = useState(false);
+  const ageAvailableBelts = age === null
     ? (Object.keys(BELT_LABELS) as Belt[])
     : beltsForAge(age);
-
-  useEffect(() => {
-    if (!state?.success) return;
-
-    notifyBeltUpdated(state.belt ?? null);
-    router.refresh();
-    const closeEditorTimeout = window.setTimeout(() => setIsEditingBelt(false), 0);
-    return () => window.clearTimeout(closeEditorTimeout);
-  }, [router, state]);
+  const availableBelts = liveBelt && !ageAvailableBelts.includes(liveBelt)
+    ? [liveBelt, ...ageAvailableBelts]
+    : ageAvailableBelts;
 
   return (
     <section className="card-shadow overflow-hidden rounded-2xl border border-border bg-surface">
@@ -76,7 +65,7 @@ export function ProfileHero({
               )}
               <button
                 type="button"
-                onClick={() => setIsEditingBelt((value) => !value)}
+                onClick={() => setIsBeltModalOpen(true)}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted transition hover:border-accent/40 hover:text-accent"
                 aria-label="Изменить текущий пояс"
                 title="Изменить текущий пояс"
@@ -84,41 +73,129 @@ export function ProfileHero({
                 <PencilIcon />
               </button>
             </div>
-
-            {isEditingBelt && (
-              <form action={formAction} className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <input type="hidden" name="clientInfoId" value={clientInfoId} />
-                <select name="belt" defaultValue={liveBelt ?? ""} className={inputClass}>
-                  <option value="">Без пояса</option>
-                  {availableBelts.map((availableBelt) => (
-                    <option key={availableBelt} value={availableBelt}>
-                      {BELT_LABELS[availableBelt]}
-                    </option>
-                  ))}
-                </select>
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    disabled={isPending}
-                    className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-60"
-                  >
-                    {isPending ? "Сохраняем…" : "Сохранить"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingBelt(false)}
-                    className="rounded-md border border-border px-3 py-2 text-sm text-muted transition hover:text-foreground"
-                  >
-                    Отмена
-                  </button>
-                </div>
-                {state?.error && <p className="text-xs text-danger">{state.error}</p>}
-              </form>
-            )}
           </div>
         </div>
       </div>
+
+      {isBeltModalOpen && (
+        <CurrentBeltModal
+          clientInfoId={clientInfoId}
+          currentBelt={liveBelt}
+          availableBelts={availableBelts}
+          onClose={() => setIsBeltModalOpen(false)}
+        />
+      )}
     </section>
+  );
+}
+
+function CurrentBeltModal({
+  clientInfoId,
+  currentBelt,
+  availableBelts,
+  onClose,
+}: {
+  clientInfoId: string;
+  currentBelt: Belt | null;
+  availableBelts: Belt[];
+  onClose: () => void;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const router = useRouter();
+  const [state, formAction, isPending] = useActionState<FormState, FormData>(
+    changeCurrentClientBeltAction,
+    undefined
+  );
+
+  useEffect(() => {
+    if (dialogRef.current && !dialogRef.current.open) {
+      dialogRef.current.showModal();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!state?.success) return;
+
+    notifyBeltUpdated(state.belt ?? null);
+    dialogRef.current?.close();
+    router.refresh();
+  }, [router, state]);
+
+  function closeModal() {
+    if (!isPending) dialogRef.current?.close();
+  }
+
+  return (
+    <dialog
+      ref={dialogRef}
+      onClose={onClose}
+      onCancel={(event) => {
+        if (isPending) event.preventDefault();
+      }}
+      onClick={(event) => {
+        if (event.target === dialogRef.current) closeModal();
+      }}
+      className="m-auto w-[min(92vw,30rem)] rounded-2xl border border-border bg-white p-0 text-foreground shadow-[0_30px_80px_-28px_rgba(49,35,24,0.55)] backdrop:bg-black/30 backdrop:backdrop-blur-[2px]"
+    >
+      <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
+        <h3 className="text-xl font-semibold tracking-[-0.025em]">Смена текущего пояса</h3>
+        <button
+          type="button"
+          onClick={closeModal}
+          disabled={isPending}
+          aria-label="Закрыть"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full text-xl text-muted transition hover:bg-surface-muted hover:text-foreground disabled:opacity-50"
+        >
+          ×
+        </button>
+      </div>
+
+      <form action={formAction} className="flex flex-col gap-4 px-5 py-5 sm:px-6">
+        <input type="hidden" name="clientInfoId" value={clientInfoId} />
+
+        {state?.error && (
+          <p className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">{state.error}</p>
+        )}
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="current-belt" className="text-sm font-medium text-foreground/80">
+            Текущий пояс
+          </label>
+          <select
+            id="current-belt"
+            name="belt"
+            defaultValue={currentBelt ?? ""}
+            autoFocus
+            className={inputClass}
+          >
+            <option value="">Без пояса</option>
+            {availableBelts.map((availableBelt) => (
+              <option key={availableBelt} value={availableBelt}>
+                {BELT_LABELS[availableBelt]}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-1">
+          <button
+            type="button"
+            onClick={closeModal}
+            disabled={isPending}
+            className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium transition hover:bg-surface-muted disabled:opacity-50"
+          >
+            Отмена
+          </button>
+          <button
+            type="submit"
+            disabled={isPending}
+            className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60"
+          >
+            {isPending ? "Сохраняем…" : "Сохранить"}
+          </button>
+        </div>
+      </form>
+    </dialog>
   );
 }
 

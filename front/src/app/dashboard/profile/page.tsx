@@ -50,7 +50,7 @@ export default async function ProfilePage() {
 
       {user.role === "COACH" && <CoachGroupsCard />}
 
-      <Card title="Стена хранения поясов БЖЖ">
+      <Card>
         <ClientBeltsCard
           clientInfoId={clientInfo.id}
           clientBelts={clientBelts}
