@@ -20,15 +20,49 @@ public sealed class ClientBeltController(ClientBeltService clientBeltService) : 
         return Ok(await clientBeltService.GetAsync(clientInfoId, CurrentUser, cancellationToken));
     }
 
-    [HttpPut("current")]
+    [HttpPost]
     [ProducesResponseType<ClientBeltOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ClientBeltOutputModel>> Change(
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ClientBeltOutputModel>> Create(
         Guid clientInfoId,
-        ChangeClientBeltInputModel inputModel,
+        SaveClientBeltInputModel inputModel,
         CancellationToken cancellationToken)
     {
-        return Ok(await clientBeltService.ChangeAsync(
+        return Ok(await clientBeltService.CreateAsync(
+            clientInfoId,
+            inputModel,
+            CurrentUser,
+            cancellationToken));
+    }
+
+    [HttpPut("{clientBeltId:guid}")]
+    [ProducesResponseType<ClientBeltOutputModel>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ClientBeltOutputModel>> Update(
+        Guid clientInfoId,
+        Guid clientBeltId,
+        SaveClientBeltInputModel inputModel,
+        CancellationToken cancellationToken)
+    {
+        return Ok(await clientBeltService.UpdateAsync(
+            clientInfoId,
+            clientBeltId,
+            inputModel,
+            CurrentUser,
+            cancellationToken));
+    }
+
+    [HttpPut("current")]
+    [ProducesResponseType<CurrentBeltOutputModel>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<CurrentBeltOutputModel>> ChangeCurrent(
+        Guid clientInfoId,
+        ChangeCurrentBeltInputModel inputModel,
+        CancellationToken cancellationToken)
+    {
+        return Ok(await clientBeltService.ChangeCurrentAsync(
             clientInfoId,
             inputModel,
             CurrentUser,

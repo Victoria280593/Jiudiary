@@ -1,35 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  changeCurrentClientBeltAction,
+  type FormState,
+} from "@/app/actions/profile";
 import { Avatar } from "@/components/Avatar";
 import { BeltBadge } from "@/components/BeltBadge";
-import { useLiveBelt } from "@/components/LiveBelt";
+import { notifyBeltUpdated, useLiveBelt } from "@/components/LiveBelt";
+import { BELT_LABELS, beltsForAge } from "@/lib/belt";
+import { inputClass } from "@/lib/ui";
 import type { Belt } from "@prisma/client";
 
-const STRIPE_OPTIONS = [1, 2, 3, 4] as const;
-
-function toDateInputValue(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
 export function ProfileHero({
+  clientInfoId,
   name,
   roleLabel,
   avatarUrl,
   age,
   belt,
 }: {
+  clientInfoId: string;
   name: string;
   roleLabel: string;
   avatarUrl: string | null;
   age: number | null;
   belt: Belt | null;
 }) {
+  const router = useRouter();
   const liveBelt = useLiveBelt(belt);
-  const [beltReceivedDate, setBeltReceivedDate] = useState("");
-  const [stripesCount, setStripesCount] = useState<number | null>(null);
-  const [stripeReceivedDate, setStripeReceivedDate] = useState("");
-  const todayValue = toDateInputValue(new Date());
+  const [isEditingBelt, setIsEditingBelt] = useState(false);
+  const [state, formAction, isPending] = useActionState<FormState, FormData>(
+    changeCurrentClientBeltAction,
+    undefined
+  );
+  const availableBelts = age === null
+    ? (Object.keys(BELT_LABELS) as Belt[])
+    : beltsForAge(age);
+
+  useEffect(() => {
+    if (!state?.success) return;
+
+    notifyBeltUpdated(state.belt ?? null);
+    router.refresh();
+    const closeEditorTimeout = window.setTimeout(() => setIsEditingBelt(false), 0);
+    return () => window.clearTimeout(closeEditorTimeout);
+  }, [router, state]);
 
   return (
     <section className="card-shadow overflow-hidden rounded-2xl border border-border bg-surface">
@@ -50,56 +67,65 @@ export function ProfileHero({
 
           {age !== null && <p className="mt-3 text-sm text-muted">Возраст: {age}</p>}
 
-          {liveBelt && (
-            <div className="mt-4 flex flex-col items-center gap-2 sm:items-start">
-              <BeltBadge belt={liveBelt} />
-
-              <label className="flex items-center gap-1.5 text-xs text-muted">
-                Получен
-                <input
-                  type="date"
-                  value={beltReceivedDate}
-                  onChange={(event) => setBeltReceivedDate(event.target.value)}
-                  max={todayValue}
-                  className="rounded-md border border-border/70 bg-surface px-1.5 py-0.5 text-xs text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-                />
-              </label>
-
-              <div className="flex items-center gap-2 text-xs text-muted">
-                <span>Страйп</span>
-                <div role="group" aria-label="Количество страйпов" className="flex gap-1">
-                  {STRIPE_OPTIONS.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => setStripesCount((current) => (current === option ? null : option))}
-                      aria-pressed={stripesCount === option}
-                      className={`flex h-6 w-6 items-center justify-center rounded-full border text-[0.7rem] font-semibold transition ${
-                        stripesCount === option
-                          ? "border-accent bg-accent text-white"
-                          : "border-border/70 bg-surface text-muted hover:border-accent/40 hover:text-foreground"
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <label className="flex items-center gap-1.5 text-xs text-muted">
-                Получен
-                <input
-                  type="date"
-                  value={stripeReceivedDate}
-                  onChange={(event) => setStripeReceivedDate(event.target.value)}
-                  max={todayValue}
-                  className="rounded-md border border-border/70 bg-surface px-1.5 py-0.5 text-xs text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-                />
-              </label>
+          <div className="mt-4 flex flex-col items-center gap-2 sm:items-start">
+            <div className="flex items-center gap-2">
+              {liveBelt ? (
+                <BeltBadge belt={liveBelt} />
+              ) : (
+                <span className="text-sm text-muted">Текущий пояс не выбран</span>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsEditingBelt((value) => !value)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted transition hover:border-accent/40 hover:text-accent"
+                aria-label="Изменить текущий пояс"
+                title="Изменить текущий пояс"
+              >
+                <PencilIcon />
+              </button>
             </div>
-          )}
+
+            {isEditingBelt && (
+              <form action={formAction} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input type="hidden" name="clientInfoId" value={clientInfoId} />
+                <select name="belt" defaultValue={liveBelt ?? ""} className={inputClass}>
+                  <option value="">Без пояса</option>
+                  {availableBelts.map((availableBelt) => (
+                    <option key={availableBelt} value={availableBelt}>
+                      {BELT_LABELS[availableBelt]}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={isPending}
+                    className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-60"
+                  >
+                    {isPending ? "Сохраняем…" : "Сохранить"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingBelt(false)}
+                    className="rounded-md border border-border px-3 py-2 text-sm text-muted transition hover:text-foreground"
+                  >
+                    Отмена
+                  </button>
+                </div>
+                {state?.error && <p className="text-xs text-danger">{state.error}</p>}
+              </form>
+            )}
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="m15.2 5.2 3.6 3.6M6 18l2.1-4.9L16.8 4.4a1.7 1.7 0 0 1 2.4 0l.4.4a1.7 1.7 0 0 1 0 2.4l-8.7 8.7L6 18Zm0 0 4.1-1" />
+    </svg>
   );
 }

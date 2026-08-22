@@ -47,12 +47,6 @@ public sealed class ClientInfoService(JiuDiaryDbContext dbContext, ILogger<Clien
             throw new AspNetException("Отчество должно содержать не более 200 символов.", StatusCodes.Status400BadRequest);
         }
 
-        if (inputModel.BeltId.HasValue &&
-            !await dbContext.Belts.AnyAsync(x => x.Id == inputModel.BeltId.Value, cancellationToken))
-        {
-            throw new AspNetException("Выбранный пояс не существует.", StatusCodes.Status400BadRequest);
-        }
-
         var clientInfo = await dbContext.ClientInfos
             .SingleOrDefaultAsync(x => x.UserId == userId, cancellationToken);
 
@@ -66,8 +60,6 @@ public sealed class ClientInfoService(JiuDiaryDbContext dbContext, ILogger<Clien
         clientInfo.LastName = inputModel.LastName.Trim();
         clientInfo.MiddleName = string.IsNullOrWhiteSpace(inputModel.MiddleName) ? null : inputModel.MiddleName.Trim();
         clientInfo.BirthDate = inputModel.BirthDate;
-        clientInfo.BeltId = inputModel.BeltId;
-
         await dbContext.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Информация клиента обновлена. UserId: {UserId}", userId);
         return await GetAsync(userId, cancellationToken);

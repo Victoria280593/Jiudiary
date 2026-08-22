@@ -25,6 +25,9 @@ CREATE TABLE [dbo].[ClientBelts]
         FOREIGN KEY ([BeltId])
         REFERENCES [dbo].[Belts] ([Id]),
 
+    CONSTRAINT [UQ_ClientBelts_ClientInfoId_BeltId]
+        UNIQUE ([ClientInfoId], [BeltId]),
+
     CONSTRAINT [CK_ClientBelts_StripesCount]
         CHECK ([StripesCount] >= 0)
 );

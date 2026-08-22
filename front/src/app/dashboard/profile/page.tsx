@@ -40,6 +40,7 @@ export default async function ProfilePage() {
       </div>
 
       <ProfileHero
+        clientInfoId={clientInfo.id}
         name={user.name}
         roleLabel={ROLE_LABELS[user.role]}
         avatarUrl={user.avatarUrl}
@@ -52,8 +53,6 @@ export default async function ProfilePage() {
       <Card title="Стена хранения поясов БЖЖ">
         <ClientBeltsCard
           clientInfoId={clientInfo.id}
-          birthDate={user.birthDate}
-          currentBelt={user.belt}
           clientBelts={clientBelts}
         />
       </Card>
@@ -65,7 +64,6 @@ export default async function ProfilePage() {
           lastName={user.lastName}
           middleName={user.middleName}
           birthDate={user.birthDate}
-          belt={user.belt}
         />
       </Card>
 

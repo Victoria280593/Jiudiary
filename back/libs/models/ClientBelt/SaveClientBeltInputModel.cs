@@ -1,6 +1,6 @@
 namespace JiuDiary.Models.ClientBelt;
 
-public sealed class ChangeClientBeltInputModel
+public sealed class SaveClientBeltInputModel
 {
     public int BeltId { get; set; }
 

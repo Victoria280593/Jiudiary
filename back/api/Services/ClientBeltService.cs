@@ -22,14 +22,7 @@ public sealed class ClientBeltService(JiuDiaryDbContext dbContext, ILogger<Clien
             .Where(clientBelt => clientBelt.ClientInfoId == clientInfoId)
             .OrderByDescending(clientBelt => clientBelt.ReceivedDate)
             .ThenByDescending(clientBelt => clientBelt.BeltId)
-            .Select(clientBelt => new ClientBeltOutputModel
-            {
-                Id = clientBelt.Id,
-                BeltId = clientBelt.BeltId,
-                BeltName = clientBelt.Belt.Name,
-                ReceivedDate = clientBelt.ReceivedDate,
-                StripesCount = clientBelt.StripesCount
-            })
+            .Select(ToOutputModel())
             .ToListAsync(cancellationToken);
 
         logger.LogInformation(
@@ -40,11 +33,163 @@ public sealed class ClientBeltService(JiuDiaryDbContext dbContext, ILogger<Clien
         return clientBelts;
     }
 
-    public async Task<ClientBeltOutputModel> ChangeAsync(
+    public async Task<ClientBeltOutputModel> CreateAsync(
         Guid clientInfoId,
-        ChangeClientBeltInputModel inputModel,
+        SaveClientBeltInputModel inputModel,
         AuthenticatedUser user,
         CancellationToken cancellationToken)
+    {
+        await EnsureAccessAsync(clientInfoId, user, cancellationToken);
+        ValidateStoredBelt(inputModel);
+        await EnsureBeltExistsAsync(inputModel.BeltId, cancellationToken);
+
+        if (await dbContext.ClientBelts.AnyAsync(
+                item => item.ClientInfoId == clientInfoId && item.BeltId == inputModel.BeltId,
+                cancellationToken))
+        {
+            throw new AspNetException(
+                "Пояс этого цвета уже добавлен в историю клиента.",
+                StatusCodes.Status409Conflict);
+        }
+
+        var clientBelt = new ClientBelt
+        {
+            ClientInfoId = clientInfoId,
+            BeltId = inputModel.BeltId,
+            ReceivedDate = inputModel.ReceivedDate,
+            StripesCount = inputModel.StripesCount
+        };
+
+        dbContext.ClientBelts.Add(clientBelt);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Пояс добавлен в историю клиента. ClientInfoId: {ClientInfoId} | BeltId: {BeltId}",
+            clientInfoId,
+            inputModel.BeltId);
+
+        return await GetByIdAsync(clientInfoId, clientBelt.Id, cancellationToken);
+    }
+
+    public async Task<ClientBeltOutputModel> UpdateAsync(
+        Guid clientInfoId,
+        Guid clientBeltId,
+        SaveClientBeltInputModel inputModel,
+        AuthenticatedUser user,
+        CancellationToken cancellationToken)
+    {
+        await EnsureAccessAsync(clientInfoId, user, cancellationToken);
+        ValidateStoredBelt(inputModel);
+        await EnsureBeltExistsAsync(inputModel.BeltId, cancellationToken);
+
+        var clientBelt = await dbContext.ClientBelts.SingleOrDefaultAsync(
+            item => item.Id == clientBeltId && item.ClientInfoId == clientInfoId,
+            cancellationToken);
+
+        if (clientBelt is null)
+        {
+            throw new AspNetException("Запись о поясе не найдена.", StatusCodes.Status404NotFound);
+        }
+
+        if (await dbContext.ClientBelts.AnyAsync(
+                item => item.ClientInfoId == clientInfoId &&
+                        item.BeltId == inputModel.BeltId &&
+                        item.Id != clientBeltId,
+                cancellationToken))
+        {
+            throw new AspNetException(
+                "Пояс этого цвета уже добавлен в историю клиента.",
+                StatusCodes.Status409Conflict);
+        }
+
+        clientBelt.BeltId = inputModel.BeltId;
+        clientBelt.ReceivedDate = inputModel.ReceivedDate;
+        clientBelt.StripesCount = inputModel.StripesCount;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Запись о поясе изменена. ClientInfoId: {ClientInfoId} | ClientBeltId: {ClientBeltId}",
+            clientInfoId,
+            clientBeltId);
+
+        return await GetByIdAsync(clientInfoId, clientBeltId, cancellationToken);
+    }
+
+    public async Task<CurrentBeltOutputModel> ChangeCurrentAsync(
+        Guid clientInfoId,
+        ChangeCurrentBeltInputModel inputModel,
+        AuthenticatedUser user,
+        CancellationToken cancellationToken)
+    {
+        var clientInfo = await GetClientInfoAsync(clientInfoId, cancellationToken);
+        EnsureAccess(clientInfo, user);
+
+        Belt? belt = null;
+        if (inputModel.BeltId.HasValue)
+        {
+            belt = await dbContext.Belts.SingleOrDefaultAsync(
+                item => item.Id == inputModel.BeltId.Value,
+                cancellationToken);
+
+            if (belt is null)
+            {
+                throw new AspNetException("Выбранный пояс не существует.", StatusCodes.Status400BadRequest);
+            }
+        }
+
+        clientInfo!.BeltId = inputModel.BeltId;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Текущий пояс клиента изменён. ClientInfoId: {ClientInfoId} | BeltId: {BeltId}",
+            clientInfoId,
+            inputModel.BeltId);
+
+        return new CurrentBeltOutputModel
+        {
+            BeltId = belt?.Id,
+            BeltName = belt?.Name
+        };
+    }
+
+    private async Task<ClientBeltOutputModel> GetByIdAsync(
+        Guid clientInfoId,
+        Guid clientBeltId,
+        CancellationToken cancellationToken)
+    {
+        return await dbContext.ClientBelts
+            .AsNoTracking()
+            .Where(item => item.ClientInfoId == clientInfoId && item.Id == clientBeltId)
+            .Select(ToOutputModel())
+            .SingleAsync(cancellationToken);
+    }
+
+    private async Task EnsureAccessAsync(
+        Guid clientInfoId,
+        AuthenticatedUser user,
+        CancellationToken cancellationToken)
+    {
+        var clientInfo = await GetClientInfoAsync(clientInfoId, cancellationToken);
+        EnsureAccess(clientInfo, user);
+    }
+
+    private Task<ClientInfo?> GetClientInfoAsync(Guid clientInfoId, CancellationToken cancellationToken)
+    {
+        return dbContext.ClientInfos.SingleOrDefaultAsync(
+            item => item.Id == clientInfoId,
+            cancellationToken);
+    }
+
+    private async Task EnsureBeltExistsAsync(int beltId, CancellationToken cancellationToken)
+    {
+        if (!await dbContext.Belts.AnyAsync(item => item.Id == beltId, cancellationToken))
+        {
+            throw new AspNetException("Выбранный пояс не существует.", StatusCodes.Status400BadRequest);
+        }
+    }
+
+    private static void ValidateStoredBelt(SaveClientBeltInputModel inputModel)
     {
         if (inputModel.StripesCount < 0)
         {
@@ -59,71 +204,17 @@ public sealed class ClientBeltService(JiuDiaryDbContext dbContext, ILogger<Clien
                 "Дата получения пояса не может быть в будущем.",
                 StatusCodes.Status400BadRequest);
         }
+    }
 
-        var clientInfo = await dbContext.ClientInfos
-            .SingleOrDefaultAsync(item => item.Id == clientInfoId, cancellationToken);
-
-        EnsureAccess(clientInfo, user);
-
-        var belt = await dbContext.Belts
-            .SingleOrDefaultAsync(item => item.Id == inputModel.BeltId, cancellationToken);
-
-        if (belt is null)
-        {
-            throw new AspNetException("Выбранный пояс не существует.", StatusCodes.Status400BadRequest);
-        }
-
-        ClientBelt? clientBelt = null;
-        if (clientInfo!.BeltId == inputModel.BeltId)
-        {
-            clientBelt = await dbContext.ClientBelts
-                .Where(item => item.ClientInfoId == clientInfoId && item.BeltId == inputModel.BeltId)
-                .OrderByDescending(item => item.ReceivedDate)
-                .FirstOrDefaultAsync(cancellationToken);
-        }
-
-        if (clientBelt is null)
-        {
-            clientBelt = new ClientBelt
-            {
-                ClientInfoId = clientInfoId,
-                BeltId = inputModel.BeltId
-            };
-            dbContext.ClientBelts.Add(clientBelt);
-        }
-
-        clientBelt.ReceivedDate = inputModel.ReceivedDate;
-        clientBelt.StripesCount = inputModel.StripesCount;
-        clientInfo.BeltId = inputModel.BeltId;
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        logger.LogInformation(
-            "Пояс клиента изменён. ClientInfoId: {ClientInfoId} | BeltId: {BeltId}",
-            clientInfoId,
-            inputModel.BeltId);
-
-        return new ClientBeltOutputModel
+    private static System.Linq.Expressions.Expression<Func<ClientBelt, ClientBeltOutputModel>> ToOutputModel() =>
+        clientBelt => new ClientBeltOutputModel
         {
             Id = clientBelt.Id,
             BeltId = clientBelt.BeltId,
-            BeltName = belt.Name,
+            BeltName = clientBelt.Belt.Name,
             ReceivedDate = clientBelt.ReceivedDate,
             StripesCount = clientBelt.StripesCount
         };
-    }
-
-    private async Task EnsureAccessAsync(
-        Guid clientInfoId,
-        AuthenticatedUser user,
-        CancellationToken cancellationToken)
-    {
-        var clientInfo = await dbContext.ClientInfos
-            .AsNoTracking()
-            .SingleOrDefaultAsync(item => item.Id == clientInfoId, cancellationToken);
-
-        EnsureAccess(clientInfo, user);
-    }
 
     private static void EnsureAccess(ClientInfo? clientInfo, AuthenticatedUser user)
     {

@@ -37,6 +37,11 @@ export type BackendClientBelt = {
   stripesCount: number;
 };
 
+export type BackendCurrentBelt = {
+  beltId: number | null;
+  beltName: string | null;
+};
+
 export type BackendGroup = {
   id: string;
   name: string;
@@ -219,6 +224,16 @@ function isBackendClientBelt(value: unknown): value is BackendClientBelt {
     typeof clientBelt.beltName === "string" &&
     (clientBelt.receivedDate === null || typeof clientBelt.receivedDate === "string") &&
     typeof clientBelt.stripesCount === "number"
+  );
+}
+
+function isBackendCurrentBelt(value: unknown): value is BackendCurrentBelt {
+  if (!value || typeof value !== "object") return false;
+
+  const currentBelt = value as Partial<BackendCurrentBelt>;
+  return (
+    (currentBelt.beltId === null || typeof currentBelt.beltId === "number") &&
+    (currentBelt.beltName === null || typeof currentBelt.beltName === "string")
   );
 }
 
@@ -420,20 +435,30 @@ export async function getBackendClientBelts(
   }
 }
 
-export type ChangeBackendClientBeltResult =
+export type SaveBackendClientBeltResult =
   | { ok: true; clientBelt: BackendClientBelt }
   | { ok: false; error: string };
 
-export async function changeBackendClientBelt(
+type StoredClientBeltInput = {
+  beltId: number;
+  receivedDate: string | null;
+  stripesCount: number;
+};
+
+async function saveBackendClientBelt(
   accessToken: string,
   clientInfoId: string,
-  input: { beltId: number; receivedDate: string | null; stripesCount: number }
-): Promise<ChangeBackendClientBeltResult> {
+  clientBeltId: string | null,
+  input: StoredClientBeltInput
+): Promise<SaveBackendClientBeltResult> {
   try {
+    const path = clientBeltId
+      ? `/api/client-info/${encodeURIComponent(clientInfoId)}/belts/${encodeURIComponent(clientBeltId)}`
+      : `/api/client-info/${encodeURIComponent(clientInfoId)}/belts`;
     const response = await fetch(
-      `${backendUrl}/api/client-info/${encodeURIComponent(clientInfoId)}/belts/current`,
+      `${backendUrl}${path}`,
       {
-        method: "PUT",
+        method: clientBeltId ? "PUT" : "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
@@ -453,6 +478,61 @@ export async function changeBackendClientBelt(
     return isBackendClientBelt(clientBelt)
       ? { ok: true, clientBelt }
       : { ok: false, error: "Сервер вернул некорректные данные пояса." };
+  } catch {
+    return { ok: false, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export function createBackendClientBelt(
+  accessToken: string,
+  clientInfoId: string,
+  input: StoredClientBeltInput
+): Promise<SaveBackendClientBeltResult> {
+  return saveBackendClientBelt(accessToken, clientInfoId, null, input);
+}
+
+export function updateBackendClientBelt(
+  accessToken: string,
+  clientInfoId: string,
+  clientBeltId: string,
+  input: StoredClientBeltInput
+): Promise<SaveBackendClientBeltResult> {
+  return saveBackendClientBelt(accessToken, clientInfoId, clientBeltId, input);
+}
+
+export type ChangeBackendCurrentBeltResult =
+  | { ok: true; currentBelt: BackendCurrentBelt }
+  | { ok: false; error: string };
+
+export async function changeBackendCurrentBelt(
+  accessToken: string,
+  clientInfoId: string,
+  beltId: number | null
+): Promise<ChangeBackendCurrentBeltResult> {
+  try {
+    const response = await fetch(
+      `${backendUrl}/api/client-info/${encodeURIComponent(clientInfoId)}/belts/current`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ beltId }),
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      }
+    );
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, error: result?.error ?? "Не удалось изменить текущий пояс." };
+    }
+
+    const currentBelt: unknown = await response.json();
+    return isBackendCurrentBelt(currentBelt)
+      ? { ok: true, currentBelt }
+      : { ok: false, error: "Сервер вернул некорректные данные текущего пояса." };
   } catch {
     return { ok: false, error: "Не удалось подключиться к серверу." };
   }
@@ -691,7 +771,6 @@ export async function updateBackendClientInfo(
     lastName: string;
     middleName: string | null;
     birthDate: string | null;
-    beltId: number | null;
   }
 ): Promise<BackendClientInfo | null> {
   try {

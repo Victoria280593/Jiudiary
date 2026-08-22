@@ -2,9 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { BELT_ID_BY_NAME } from "@/lib/belt";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
-import type { Belt } from "@prisma/client";
 
 type ClientInfoResponse = {
   id: string;
@@ -26,13 +24,11 @@ export function AthleteProfileForm({
   lastName,
   middleName,
   birthDate,
-  belt,
 }: {
   firstName: string;
   lastName: string;
   middleName: string | null;
   birthDate: Date | null;
-  belt: Belt | null;
 }) {
   const router = useRouter();
   const [state, setState] = useState<{ error?: string; success?: boolean }>();
@@ -41,9 +37,6 @@ export function AthleteProfileForm({
   const [lastNameValue, setLastNameValue] = useState(lastName);
   const [middleNameValue, setMiddleNameValue] = useState(middleName ?? "");
   const [birthDateValue, setBirthDateValue] = useState(toDateInputValue(birthDate));
-  const [beltIdValue, setBeltIdValue] = useState<number | null>(
-    belt ? BELT_ID_BY_NAME[belt] : null
-  );
 
   useEffect(() => {
     let cancelled = false;
@@ -61,7 +54,6 @@ export function AthleteProfileForm({
         setLastNameValue(clientInfo.lastName);
         setMiddleNameValue(clientInfo.middleName ?? "");
         setBirthDateValue(clientInfo.birthDate ?? "");
-        setBeltIdValue(clientInfo.beltId);
       } catch {
         // Server-rendered values remain visible if the API is temporarily unavailable.
       }
@@ -71,7 +63,7 @@ export function AthleteProfileForm({
     return () => {
       cancelled = true;
     };
-  }, [belt]);
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -94,7 +86,6 @@ export function AthleteProfileForm({
           lastName: lastNameValue.trim(),
           middleName: middleNameValue.trim() || null,
           birthDate: birthDateValue || null,
-          beltId: beltIdValue,
         }),
         cache: "no-store",
       });
@@ -110,7 +101,6 @@ export function AthleteProfileForm({
       setLastNameValue(savedClientInfo.lastName);
       setMiddleNameValue(savedClientInfo.middleName ?? "");
       setBirthDateValue(savedClientInfo.birthDate ?? "");
-      setBeltIdValue(savedClientInfo.beltId);
       setState({ success: true });
       router.refresh();
     } catch {
