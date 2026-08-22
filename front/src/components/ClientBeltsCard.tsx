@@ -40,6 +40,10 @@ export function ClientBeltsCard({
     () => new Set(clientBelts.map((clientBelt) => clientBelt.beltId)),
     [clientBelts]
   );
+  const sortedClientBelts = useMemo(
+    () => [...clientBelts].sort((left, right) => right.beltId - left.beltId),
+    [clientBelts]
+  );
   const availableBelts = allBelts.filter((belt) => {
     const beltId = BELT_ID_BY_NAME[belt];
     return beltId === editingClientBelt?.beltId || !storedBeltIds.has(beltId);
@@ -71,7 +75,7 @@ export function ClientBeltsCard({
             <span className="sr-only">Действия</span>
           </div>
           <ul className="divide-y divide-border">
-            {clientBelts.map((clientBelt) => {
+            {sortedClientBelts.map((clientBelt) => {
               const belt = BELT_BY_ID[clientBelt.beltId];
               if (!belt) return null;
 
