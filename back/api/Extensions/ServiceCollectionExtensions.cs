@@ -11,6 +11,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ClientInfoService>();
+        services.AddScoped<ClientBeltService>();
         services.AddScoped<GroupService>();
         services.AddScoped<TrainingService>();
         services.AddScoped<TrainerService>();

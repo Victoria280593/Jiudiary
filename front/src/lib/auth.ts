@@ -9,31 +9,9 @@ import {
   logoutFromBackend,
   type BackendSession,
 } from "@/lib/backend-auth";
-import { BELT_LABELS } from "@/lib/belt";
+import { BELT_BY_ID, BELT_LABELS } from "@/lib/belt";
 import type { Belt } from "@prisma/client";
 import { REFRESH_COOKIE_NAME, SESSION_COOKIE_NAME } from "@/lib/auth-constants";
-
-const BELT_BY_ID: Record<number, Belt> = {
-  1: "WHITE",
-  2: "GREY_WHITE",
-  3: "GREY",
-  4: "GREY_BLACK",
-  5: "YELLOW_WHITE",
-  6: "YELLOW",
-  7: "YELLOW_BLACK",
-  8: "ORANGE_WHITE",
-  9: "ORANGE",
-  10: "ORANGE_BLACK",
-  11: "GREEN_WHITE",
-  12: "GREEN",
-  13: "GREEN_BLACK",
-  14: "BLUE",
-  15: "PURPLE",
-  16: "BROWN",
-  17: "BLACK",
-  18: "BLACK_RED",
-  19: "RED",
-};
 
 function normalizeText(value: string): string {
   return value.normalize("NFC").trim().toLocaleLowerCase("ru-RU");

@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { BELT_LABELS, beltsForAge, calculateAge } from "@/lib/belt";
-import { notifyBeltUpdated } from "@/components/LiveBelt";
+import { BELT_ID_BY_NAME } from "@/lib/belt";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
 import type { Belt } from "@prisma/client";
 
 type ClientInfoResponse = {
+  id: string;
   firstName: string;
   lastName: string;
   middleName: string | null;
@@ -15,32 +15,6 @@ type ClientInfoResponse = {
   beltId: number | null;
   beltName: string | null;
 };
-
-const BELT_BY_ID: Record<number, Belt> = {
-  1: "WHITE",
-  2: "GREY_WHITE",
-  3: "GREY",
-  4: "GREY_BLACK",
-  5: "YELLOW_WHITE",
-  6: "YELLOW",
-  7: "YELLOW_BLACK",
-  8: "ORANGE_WHITE",
-  9: "ORANGE",
-  10: "ORANGE_BLACK",
-  11: "GREEN_WHITE",
-  12: "GREEN",
-  13: "GREEN_BLACK",
-  14: "BLUE",
-  15: "PURPLE",
-  16: "BROWN",
-  17: "BLACK",
-  18: "BLACK_RED",
-  19: "RED",
-};
-
-const BELT_ID_BY_NAME = Object.fromEntries(
-  Object.entries(BELT_BY_ID).map(([id, name]) => [name, Number(id)])
-) as Record<Belt, number>;
 
 function toDateInputValue(date: Date | null): string {
   if (!date) return "";
@@ -67,7 +41,9 @@ export function AthleteProfileForm({
   const [lastNameValue, setLastNameValue] = useState(lastName);
   const [middleNameValue, setMiddleNameValue] = useState(middleName ?? "");
   const [birthDateValue, setBirthDateValue] = useState(toDateInputValue(birthDate));
-  const [selectedBelt, setSelectedBelt] = useState<Belt | "">(belt ?? "");
+  const [beltIdValue, setBeltIdValue] = useState<number | null>(
+    belt ? BELT_ID_BY_NAME[belt] : null
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -85,7 +61,7 @@ export function AthleteProfileForm({
         setLastNameValue(clientInfo.lastName);
         setMiddleNameValue(clientInfo.middleName ?? "");
         setBirthDateValue(clientInfo.birthDate ?? "");
-        setSelectedBelt(BELT_BY_ID[clientInfo.beltId ?? 0] ?? belt ?? "");
+        setBeltIdValue(clientInfo.beltId);
       } catch {
         // Server-rendered values remain visible if the API is temporarily unavailable.
       }
@@ -96,15 +72,6 @@ export function AthleteProfileForm({
       cancelled = true;
     };
   }, [belt]);
-
-  const availableBelts = useMemo(() => {
-    if (!birthDateValue) return null; // возраст неизвестен — не ограничиваем выбор
-    const parsed = new Date(birthDateValue);
-    if (Number.isNaN(parsed.getTime())) return null;
-    return beltsForAge(calculateAge(parsed));
-  }, [birthDateValue]);
-
-  const beltOptions = availableBelts ?? (Object.keys(BELT_LABELS) as Belt[]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -127,7 +94,7 @@ export function AthleteProfileForm({
           lastName: lastNameValue.trim(),
           middleName: middleNameValue.trim() || null,
           birthDate: birthDateValue || null,
-          beltId: selectedBelt ? BELT_ID_BY_NAME[selectedBelt] : null,
+          beltId: beltIdValue,
         }),
         cache: "no-store",
       });
@@ -139,13 +106,11 @@ export function AthleteProfileForm({
       }
 
       const savedClientInfo: ClientInfoResponse = await response.json();
-      const savedBelt = BELT_BY_ID[savedClientInfo.beltId ?? 0] ?? null;
       setFirstNameValue(savedClientInfo.firstName);
       setLastNameValue(savedClientInfo.lastName);
       setMiddleNameValue(savedClientInfo.middleName ?? "");
       setBirthDateValue(savedClientInfo.birthDate ?? "");
-      setSelectedBelt(savedBelt ?? "");
-      notifyBeltUpdated(savedBelt);
+      setBeltIdValue(savedClientInfo.beltId);
       setState({ success: true });
       router.refresh();
     } catch {
@@ -225,34 +190,6 @@ export function AthleteProfileForm({
               className={inputClass}
             />
           </div>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="belt" className={labelClass}>
-            Пояс
-          </label>
-          <select
-            id="belt"
-            name="belt"
-            value={selectedBelt}
-            onChange={(e) => setSelectedBelt(e.target.value as Belt | "")}
-            className={inputClass}
-          >
-            <option value="">
-              Без пояса
-            </option>
-            {beltOptions.map((b) => (
-              <option key={b} value={b}>
-                {BELT_LABELS[b]}
-              </option>
-            ))}
-          </select>
-          {!birthDateValue && (
-            <p className="text-xs text-muted">
-              Укажите дату рождения, чтобы видеть только пояса, доступные для этого возраста
-              (детская или взрослая система IBJJF).
-            </p>
-          )}
         </div>
 
         <button

@@ -76,6 +76,7 @@ public sealed class ClientInfoService(JiuDiaryDbContext dbContext, ILogger<Clien
     private static System.Linq.Expressions.Expression<Func<ClientInfo, ClientInfoOutputModel>> ToOutputModelExpression() =>
         clientInfo => new ClientInfoOutputModel
         {
+            Id = clientInfo.Id,
             FirstName = clientInfo.FirstName,
             LastName = clientInfo.LastName,
             MiddleName = clientInfo.MiddleName,

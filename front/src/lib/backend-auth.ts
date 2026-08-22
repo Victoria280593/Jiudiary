@@ -20,12 +20,21 @@ export type BackendSession = {
 };
 
 export type BackendClientInfo = {
+  id: string;
   firstName: string;
   lastName: string;
   middleName: string | null;
   birthDate: string | null;
   beltId: number | null;
   beltName: string | null;
+};
+
+export type BackendClientBelt = {
+  id: string;
+  beltId: number;
+  beltName: string;
+  receivedDate: string | null;
+  stripesCount: number;
 };
 
 export type BackendGroup = {
@@ -200,6 +209,19 @@ function isBackendStudent(value: unknown): value is BackendStudent {
   );
 }
 
+function isBackendClientBelt(value: unknown): value is BackendClientBelt {
+  if (!value || typeof value !== "object") return false;
+
+  const clientBelt = value as Partial<BackendClientBelt>;
+  return (
+    typeof clientBelt.id === "string" &&
+    typeof clientBelt.beltId === "number" &&
+    typeof clientBelt.beltName === "string" &&
+    (clientBelt.receivedDate === null || typeof clientBelt.receivedDate === "string") &&
+    typeof clientBelt.stripesCount === "number"
+  );
+}
+
 export type LoginResult =
   | { ok: true; session: BackendSession }
   | { ok: false; error: string };
@@ -370,6 +392,69 @@ export async function getBackendClientInfo(accessToken: string): Promise<Backend
     return (await response.json()) as BackendClientInfo;
   } catch {
     return null;
+  }
+}
+
+export async function getBackendClientBelts(
+  accessToken: string,
+  clientInfoId: string
+): Promise<BackendClientBelt[] | null> {
+  try {
+    const response = await fetch(
+      `${backendUrl}/api/client-info/${encodeURIComponent(clientInfoId)}/belts`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      }
+    );
+
+    if (!response.ok) return null;
+
+    const clientBelts: unknown = await response.json();
+    return Array.isArray(clientBelts) && clientBelts.every(isBackendClientBelt)
+      ? clientBelts
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export type ChangeBackendClientBeltResult =
+  | { ok: true; clientBelt: BackendClientBelt }
+  | { ok: false; error: string };
+
+export async function changeBackendClientBelt(
+  accessToken: string,
+  clientInfoId: string,
+  input: { beltId: number; receivedDate: string | null; stripesCount: number }
+): Promise<ChangeBackendClientBeltResult> {
+  try {
+    const response = await fetch(
+      `${backendUrl}/api/client-info/${encodeURIComponent(clientInfoId)}/belts/current`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(input),
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      }
+    );
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, error: result?.error ?? "Не удалось сохранить пояс." };
+    }
+
+    const clientBelt: unknown = await response.json();
+    return isBackendClientBelt(clientBelt)
+      ? { ok: true, clientBelt }
+      : { ok: false, error: "Сервер вернул некорректные данные пояса." };
+  } catch {
+    return { ok: false, error: "Не удалось подключиться к серверу." };
   }
 }
 

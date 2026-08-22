@@ -73,4 +73,6 @@ public sealed class ClientInfo
     public ICollection<Training> Trainings { get; set; } = [];
 
     public ICollection<StudentGroup> StudentGroups { get; set; } = [];
+
+    public ICollection<ClientBelt> ClientBelts { get; set; } = [];
 }

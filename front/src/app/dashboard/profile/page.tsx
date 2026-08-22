@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getSession } from "@/lib/auth";
+import { getBackendClientBelts, getBackendClientInfo } from "@/lib/backend-auth";
 import { AthleteProfileForm } from "@/components/AthleteProfileForm";
 import { Card } from "@/components/Card";
 import { ProfileHero } from "@/components/ProfileHero";
 import { CoachGroupsCard } from "@/components/CoachGroupsCard";
+import { ClientBeltsCard } from "@/components/ClientBeltsCard";
 import { calculateAge } from "@/lib/belt";
 import type { Role } from "@prisma/client";
 
@@ -15,8 +17,16 @@ const ROLE_LABELS: Record<Role, string> = {
 };
 
 export default async function ProfilePage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const [user, clientInfo] = await Promise.all([
+    getCurrentUser(),
+    getBackendClientInfo(session.accessToken),
+  ]);
+  if (!user || !clientInfo) redirect("/login");
+
+  const clientBelts = await getBackendClientBelts(session.accessToken, clientInfo.id) ?? [];
 
   return (
     <div className="flex flex-col gap-5">
@@ -38,6 +48,15 @@ export default async function ProfilePage() {
       />
 
       {user.role === "COACH" && <CoachGroupsCard />}
+
+      <Card title="Стена хранения поясов БЖЖ">
+        <ClientBeltsCard
+          clientInfoId={clientInfo.id}
+          birthDate={user.birthDate}
+          currentBelt={user.belt}
+          clientBelts={clientBelts}
+        />
+      </Card>
 
       <Card title="Данные">
         <AthleteProfileForm
