@@ -32,6 +32,8 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
 
     public DbSet<Training> Trainings => Set<Training>();
 
+    public DbSet<ClientTraining> ClientTrainings => Set<ClientTraining>();
+
     public DbSet<StudentRequest> StudentsRequests => Set<StudentRequest>();
 
     public DbSet<CoachStudent> CoachStudents => Set<CoachStudent>();
@@ -80,6 +82,19 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
                 .WithMany(group => group.StudentGroups)
                 .HasForeignKey(item => item.GroupId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ClientTraining>(entity =>
+        {
+            entity.HasOne(item => item.ClientInfo)
+                .WithMany(clientInfo => clientInfo.ClientTrainings)
+                .HasForeignKey(item => item.ClientInfoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(item => item.Training)
+                .WithMany(training => training.ClientTrainings)
+                .HasForeignKey(item => item.TrainingId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

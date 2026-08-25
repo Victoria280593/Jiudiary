@@ -67,6 +67,13 @@ export type BackendTraining = {
   endTime: string;
 };
 
+export type BackendClientTraining = {
+  id: string;
+  trainingId: string;
+  rounds: number | null;
+  createdAt: string;
+};
+
 export type BackendTrainer = {
   id: string;
   name: string;
@@ -224,6 +231,18 @@ function isBackendClientBelt(value: unknown): value is BackendClientBelt {
     typeof clientBelt.beltName === "string" &&
     (clientBelt.receivedDate === null || typeof clientBelt.receivedDate === "string") &&
     typeof clientBelt.stripesCount === "number"
+  );
+}
+
+function isBackendClientTraining(value: unknown): value is BackendClientTraining {
+  if (!value || typeof value !== "object") return false;
+
+  const clientTraining = value as Partial<BackendClientTraining>;
+  return (
+    typeof clientTraining.id === "string" &&
+    typeof clientTraining.trainingId === "string" &&
+    (clientTraining.rounds === null || typeof clientTraining.rounds === "number") &&
+    typeof clientTraining.createdAt === "string"
   );
 }
 
@@ -1008,6 +1027,72 @@ export async function getBackendTrainings(accessToken: string, groupIds: string[
       : null;
   } catch {
     return null;
+  }
+}
+
+export async function getBackendClientTrainings(
+  accessToken: string,
+  year: number,
+  month: number
+): Promise<BackendClientTraining[] | null> {
+  try {
+    const searchParams = new URLSearchParams({
+      year: String(year),
+      month: String(month),
+    });
+    const response = await fetch(`${backendUrl}/api/trainings/client?${searchParams.toString()}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) return null;
+
+    const clientTrainings: unknown = await response.json();
+    return Array.isArray(clientTrainings) && clientTrainings.every(isBackendClientTraining)
+      ? clientTrainings
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export type SaveBackendClientTrainingResult =
+  | { ok: true; clientTraining: BackendClientTraining }
+  | { ok: false; status: number; error: string };
+
+export async function saveBackendClientTraining(
+  accessToken: string,
+  trainingId: string,
+  rounds: number | null
+): Promise<SaveBackendClientTrainingResult> {
+  try {
+    const response = await fetch(`${backendUrl}/api/trainings/client/${encodeURIComponent(trainingId)}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ rounds }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return {
+        ok: false,
+        status: response.status,
+        error: result?.error ?? "Не удалось отметить тренировку.",
+      };
+    }
+
+    const clientTraining: unknown = await response.json();
+    return isBackendClientTraining(clientTraining)
+      ? { ok: true, clientTraining }
+      : { ok: false, status: 502, error: "Сервер вернул некорректные данные тренировки." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
   }
 }
 

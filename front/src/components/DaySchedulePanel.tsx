@@ -3,6 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CreateTrainingForm } from "@/components/CreateTrainingForm";
+import {
+  type ClientTraining,
+  saveClientTraining,
+} from "@/lib/client-trainings-client";
 import { formatTime } from "@/lib/format";
 import { getGroupColorStyle } from "@/lib/group-colors";
 import { deleteTraining } from "@/lib/trainings-client";
@@ -109,6 +113,109 @@ function TrainingFormModal({
   );
 }
 
+function ClientTrainingModal({
+  training,
+  clientTraining,
+  onClose,
+  onSaved,
+}: {
+  training: DayTraining;
+  clientTraining?: ClientTraining;
+  onClose: () => void;
+  onSaved: (clientTraining: ClientTraining) => void;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [rounds, setRounds] = useState(clientTraining?.rounds ?? 0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string>();
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
+
+  async function save() {
+    setIsSaving(true);
+    setError(undefined);
+    try {
+      onSaved(await saveClientTraining(training.id, rounds));
+      onClose();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Не удалось отметить тренировку.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="client-training-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!isSaving) onClose();
+      }}
+      className={`${styles.createModal} fixed inset-0 m-auto w-[calc(100%-1.5rem)] max-w-md rounded-[1.5rem] border border-border/70 bg-[#fbfaf8] p-0 text-foreground shadow-[0_30px_90px_-24px_rgba(43,36,29,0.55)] backdrop:bg-[#302820]/55 backdrop:backdrop-blur-[2px]`}
+    >
+      <div className="p-5 sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h3 id="client-training-title" className="text-lg font-semibold">Отметить тренировку</h3>
+            <p className="mt-1 truncate text-sm text-muted">{training.groupName || training.title || "Тренировка"}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSaving}
+            aria-label="Закрыть"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-muted shadow-sm transition hover:text-foreground disabled:opacity-50"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
+              <path strokeLinecap="round" d="m6 6 12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="mt-7">
+          <p className="text-center text-sm font-medium text-muted">Количество раундов</p>
+          <div className="mt-4 grid grid-cols-[3.5rem_minmax(0,1fr)_3.5rem] items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setRounds((current) => Math.max(0, current - 1))}
+              disabled={rounds === 0 || isSaving}
+              aria-label="Уменьшить количество раундов"
+              className="h-14 rounded-2xl border border-border bg-white text-2xl font-light transition hover:bg-surface-muted disabled:opacity-40"
+            >
+              −
+            </button>
+            <output className="text-center text-4xl font-semibold tabular-nums" aria-live="polite">{rounds}</output>
+            <button
+              type="button"
+              onClick={() => setRounds((current) => current + 1)}
+              disabled={isSaving}
+              aria-label="Увеличить количество раундов"
+              className="h-14 rounded-2xl bg-accent text-2xl font-light text-white transition hover:bg-accent-hover disabled:opacity-50"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        {error && <p className={`${errorClass} mt-5`}>{error}</p>}
+        <button
+          type="button"
+          onClick={() => void save()}
+          disabled={isSaving}
+          className="mt-7 min-h-12 w-full rounded-2xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60"
+        >
+          {isSaving ? "Сохранение…" : "Сохранить"}
+        </button>
+      </div>
+    </dialog>
+  );
+}
+
 export function DaySchedulePanel({
   dateKey,
   trainings,
@@ -116,6 +223,10 @@ export function DaySchedulePanel({
   onDateChange,
   linkBase = "/dashboard/coach/trainings",
   showCreateForm = true,
+  clientTrainings,
+  clientTrainingsLoading = false,
+  clientTrainingsError,
+  onClientTrainingSaved,
   onTrainingDeleted,
   onTrainingSaved,
 }: {
@@ -125,6 +236,10 @@ export function DaySchedulePanel({
   onDateChange: (dateKey: string) => void;
   linkBase?: string;
   showCreateForm?: boolean;
+  clientTrainings: Record<string, ClientTraining>;
+  clientTrainingsLoading?: boolean;
+  clientTrainingsError?: string;
+  onClientTrainingSaved: (clientTraining: ClientTraining) => void;
   onTrainingDeleted?: (trainingId: string, deleteAllAfterThis?: boolean) => void;
   onTrainingSaved?: (training: SavedTraining, repeatEveryWeek?: boolean) => void;
 }) {
@@ -133,6 +248,7 @@ export function DaySchedulePanel({
   const [selectedGroup, setSelectedGroup] = useState("");
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [editingTraining, setEditingTraining] = useState<DayTraining>();
+  const [markingTraining, setMarkingTraining] = useState<DayTraining>();
   const [openMenuId, setOpenMenuId] = useState<string>();
   const [deleteTarget, setDeleteTarget] = useState<DayTraining>();
   const [deletingTrainingId, setDeletingTrainingId] = useState<string>();
@@ -322,6 +438,8 @@ export function DaySchedulePanel({
             </div>
           )}
 
+          {clientTrainingsError && <p className={`${errorClass} mb-4`}>{clientTrainingsError}</p>}
+
           <div className="flex flex-col gap-3">
             {visibleTrainings.length > 0 ? (
               visibleTrainings.map((training) => {
@@ -366,21 +484,37 @@ export function DaySchedulePanel({
                       )}
                     </div>
 
-                    {showCreateForm && (
-                      <div data-training-menu className="absolute right-2 top-2 z-10 sm:right-4 sm:top-4">
-                        <button
-                          type="button"
-                          onClick={() => setOpenMenuId((current) => current === training.id ? undefined : training.id)}
-                          aria-label={`Действия с тренировкой «${training.title || "Тренировка"}»`}
-                          aria-expanded={openMenuId === training.id}
-                          aria-haspopup="menu"
-                          className="flex h-9 w-9 items-center justify-center rounded-full text-lg tracking-[0.12em] text-muted transition hover:bg-surface-muted hover:text-foreground"
-                        >
-                          <span aria-hidden="true" className="-translate-y-1">…</span>
-                        </button>
+                    <div data-training-menu className="absolute right-2 top-2 z-10 sm:right-4 sm:top-4">
+                      <button
+                        type="button"
+                        onClick={() => setOpenMenuId((current) => current === training.id ? undefined : training.id)}
+                        aria-label={`Действия с тренировкой «${training.title || "Тренировка"}»`}
+                        aria-expanded={openMenuId === training.id}
+                        aria-haspopup="menu"
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-lg tracking-[0.12em] text-muted transition hover:bg-surface-muted hover:text-foreground"
+                      >
+                        <span aria-hidden="true" className="-translate-y-1">…</span>
+                      </button>
 
-                        {openMenuId === training.id && (
-                          <div role="menu" className="absolute right-0 top-10 z-20 w-48 overflow-hidden rounded-xl border border-border/70 bg-white p-1.5 shadow-[0_18px_45px_-18px_rgba(43,36,29,0.42)]">
+                      {openMenuId === training.id && (
+                        <div role="menu" className="absolute right-0 top-10 z-20 w-48 overflow-hidden rounded-xl border border-border/70 bg-white p-1.5 shadow-[0_18px_45px_-18px_rgba(43,36,29,0.42)]">
+                          <button
+                            type="button"
+                            role="menuitem"
+                            disabled={clientTrainingsLoading}
+                            onClick={() => {
+                              setMarkingTraining(training);
+                              setOpenMenuId(undefined);
+                            }}
+                            className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm text-foreground transition hover:bg-surface-muted disabled:text-muted"
+                          >
+                            {clientTrainingsLoading
+                              ? "Загрузка отметки…"
+                              : clientTrainings[training.id]
+                                ? "Изменить отметку"
+                                : "Отметить тренировку"}
+                          </button>
+                          {showCreateForm && (
                             <button
                               type="button"
                               role="menuitem"
@@ -392,6 +526,8 @@ export function DaySchedulePanel({
                             >
                               Редактировать
                             </button>
+                          )}
+                          {showCreateForm && (
                             <button
                               type="button"
                               role="menuitem"
@@ -400,10 +536,10 @@ export function DaySchedulePanel({
                             >
                               Удалить
                             </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </article>
                 );
               })
@@ -449,6 +585,15 @@ export function DaySchedulePanel({
             onTrainingSaved?.(training);
             setEditingTraining(undefined);
           }}
+        />
+      )}
+      {markingTraining && (
+        <ClientTrainingModal
+          key={markingTraining.id}
+          training={markingTraining}
+          clientTraining={clientTrainings[markingTraining.id]}
+          onClose={() => setMarkingTraining(undefined)}
+          onSaved={onClientTrainingSaved}
         />
       )}
 

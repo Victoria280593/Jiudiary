@@ -2,6 +2,7 @@ using JiuDiary.Api.Auth;
 using JiuDiary.Database;
 using JiuDiary.Database.Entities;
 using JiuDiary.Database.Enums;
+using JiuDiary.Models.ClientTraining;
 using JiuDiary.Models.Training;
 using JiraDiary.AspCore.Exceptions;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,84 @@ namespace JiuDiary.Api.Services;
 
 public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<TrainingService> logger)
 {
+    /// <summary>
+    /// Получает отметки текущего клиента о тренировках за указанный календарный месяц.
+    /// </summary>
+    public async Task<List<ClientTrainingOutputModel>> GetClientTrainingsForMonth(int year, int month, AuthenticatedUser user, CancellationToken cancellationToken)
+    {
+        EnsureClientTrainingRole(user);
+        var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
+        var monthStart = CreateMonthStart(year, month);
+        var nextMonthStart = year == 9999 && month == 12 ? DateTime.MaxValue : monthStart.AddMonths(1);
+
+        var clientTrainings = await dbContext.ClientTrainings
+            .AsNoTracking()
+            .Where(item => item.ClientInfoId == clientInfoId && item.Training.StartTime >= monthStart && item.Training.StartTime < nextMonthStart)
+            .OrderBy(item => item.Training.StartTime)
+            .Select(item => new ClientTrainingOutputModel
+            {
+                Id = item.Id,
+                TrainingId = item.TrainingId,
+                Rounds = item.Rounds,
+                CreatedAt = item.CreatedAt
+            })
+            .ToListAsync(cancellationToken);
+
+        logger.LogInformation("Отметки о тренировках клиента получены. UserId: {UserId} | Year: {Year} | Month: {Month} | Count: {Count}", user.Id, year, month, clientTrainings.Count);
+        return clientTrainings;
+    }
+
+    /// <summary>
+    /// Создаёт или обновляет отметку текущего клиента о доступной ему тренировке.
+    /// </summary>
+    public async Task<ClientTrainingOutputModel> SaveClientTraining(Guid trainingId, SaveClientTrainingInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
+    {
+        EnsureClientTrainingRole(user);
+        if (trainingId == Guid.Empty)
+        {
+            throw new AspNetException("Необходимо указать тренировку.", StatusCodes.Status400BadRequest);
+        }
+
+        if (inputModel.Rounds < 0)
+        {
+            throw new AspNetException("Количество раундов не может быть отрицательным.", StatusCodes.Status400BadRequest);
+        }
+
+        var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
+        if (!await GetAccessibleTrainings(user).AnyAsync(training => training.Id == trainingId, cancellationToken))
+        {
+            throw new AspNetException("Тренировка не найдена или недоступна.", StatusCodes.Status404NotFound);
+        }
+
+        var clientTraining = await dbContext.ClientTrainings.SingleOrDefaultAsync(item => item.ClientInfoId == clientInfoId && item.TrainingId == trainingId, cancellationToken);
+        if (clientTraining is null)
+        {
+            clientTraining = new ClientTraining
+            {
+                ClientInfoId = clientInfoId,
+                TrainingId = trainingId,
+                Rounds = inputModel.Rounds,
+                CreatedAt = DateTime.UtcNow
+            };
+            dbContext.ClientTrainings.Add(clientTraining);
+        }
+        else
+        {
+            clientTraining.Rounds = inputModel.Rounds;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Отметка о тренировке клиента сохранена. UserId: {UserId} | TrainingId: {TrainingId} | Rounds: {Rounds}", user.Id, trainingId, inputModel.Rounds);
+
+        return new ClientTrainingOutputModel
+        {
+            Id = clientTraining.Id,
+            TrainingId = clientTraining.TrainingId,
+            Rounds = clientTraining.Rounds,
+            CreatedAt = clientTraining.CreatedAt
+        };
+    }
+
     public async Task<List<TrainingOutputModel>> GetTrainings(
         AuthenticatedUser user,
         IReadOnlyCollection<Guid>? groupIds,
@@ -264,6 +343,40 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         if (user.Role != UserRolesEnum.Coach)
         {
             throw new AspNetException(message, StatusCodes.Status403Forbidden);
+        }
+    }
+
+    private IQueryable<Training> GetAccessibleTrainings(AuthenticatedUser user)
+    {
+        return user.Role switch
+        {
+            UserRolesEnum.Coach => dbContext.Trainings.Where(training => training.Coach.UserId == user.Id),
+            UserRolesEnum.Student => dbContext.Trainings.Where(training => training.Group.StudentGroups.Any(studentGroup => studentGroup.Student.UserId == user.Id)),
+            _ => throw new AspNetException("Отмечать тренировки может только тренер или ученик.", StatusCodes.Status403Forbidden)
+        };
+    }
+
+    private async Task<Guid> GetCurrentClientInfoId(AuthenticatedUser user, CancellationToken cancellationToken)
+    {
+        var clientInfoId = await dbContext.ClientInfos.AsNoTracking().Where(clientInfo => clientInfo.UserId == user.Id).Select(clientInfo => (Guid?)clientInfo.Id).SingleOrDefaultAsync(cancellationToken);
+        return clientInfoId ?? throw new AspNetException("Профиль клиента не найден.", StatusCodes.Status404NotFound);
+    }
+
+    private static DateTime CreateMonthStart(int year, int month)
+    {
+        if (year is < 1 or > 9999 || month is < 1 or > 12)
+        {
+            throw new AspNetException("Необходимо указать корректные год и месяц.", StatusCodes.Status400BadRequest);
+        }
+
+        return new DateTime(year, month, 1);
+    }
+
+    private static void EnsureClientTrainingRole(AuthenticatedUser user)
+    {
+        if (user.Role is not UserRolesEnum.Coach and not UserRolesEnum.Student)
+        {
+            throw new AspNetException("Отмечать тренировки может только тренер или ученик.", StatusCodes.Status403Forbidden);
         }
     }
 

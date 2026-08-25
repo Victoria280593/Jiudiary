@@ -1,10 +1,14 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DaySchedulePanel } from "@/components/DaySchedulePanel";
 import { useGroups } from "@/components/GroupsProvider";
 import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, dateKey, addMonths } from "@/lib/calendar";
 import { getGroupColorStyle } from "@/lib/group-colors";
+import {
+  type ClientTraining,
+  getClientTrainings,
+} from "@/lib/client-trainings-client";
 import { getTrainings } from "@/lib/trainings-client";
 
 type TrainingItem = { id: string; groupId?: string; title: string; date: string; endDate?: string; groupName?: string; coachName?: string; groupColorName?: string };
@@ -72,6 +76,50 @@ export function TrainingCalendar({
   const [visibleTrainings, setVisibleTrainings] = useState(trainings);
   const [trainingsError, setTrainingsError] = useState<string>();
   const latestTrainingRequestRef = useRef(0);
+  const [clientTrainingsByMonth, setClientTrainingsByMonth] = useState<
+    Record<string, Record<string, ClientTraining>>
+  >({});
+  const [loadingClientTrainingMonths, setLoadingClientTrainingMonths] = useState<string[]>([]);
+  const [clientTrainingErrors, setClientTrainingErrors] = useState<Record<string, string>>({});
+  const requestedClientTrainingMonthsRef = useRef(new Set<string>());
+
+  const selectedMonthKey = selectedDay?.slice(0, 7);
+
+  useEffect(() => {
+    if (!isDayPanelOpen || !selectedMonthKey) return;
+    if (requestedClientTrainingMonthsRef.current.has(selectedMonthKey)) return;
+
+    requestedClientTrainingMonthsRef.current.add(selectedMonthKey);
+    setLoadingClientTrainingMonths((current) => [...current, selectedMonthKey]);
+    setClientTrainingErrors((current) => {
+      const next = { ...current };
+      delete next[selectedMonthKey];
+      return next;
+    });
+
+    const [year, month] = selectedMonthKey.split("-").map(Number);
+    void getClientTrainings(year, month)
+      .then((clientTrainings) => {
+        setClientTrainingsByMonth((current) => ({
+          ...current,
+          [selectedMonthKey]: Object.fromEntries(
+            clientTrainings.map((clientTraining) => [clientTraining.trainingId, clientTraining])
+          ),
+        }));
+      })
+      .catch((error) => {
+        requestedClientTrainingMonthsRef.current.delete(selectedMonthKey);
+        setClientTrainingErrors((current) => ({
+          ...current,
+          [selectedMonthKey]: error instanceof Error
+            ? error.message
+            : "Не удалось загрузить отметки о тренировках.",
+        }));
+      })
+      .finally(() => {
+        setLoadingClientTrainingMonths((current) => current.filter((key) => key !== selectedMonthKey));
+      });
+  }, [isDayPanelOpen, selectedMonthKey]);
 
   const parsedTrainings = useMemo(
     () => visibleTrainings.map((training) => ({ ...training, date: new Date(training.date), endDate: training.endDate ? new Date(training.endDate) : undefined })),
@@ -438,6 +486,19 @@ export function TrainingCalendar({
           <DaySchedulePanel
             dateKey={selectedDay}
             trainings={trainingsByDay.get(selectedDay) ?? []}
+            clientTrainings={selectedMonthKey ? clientTrainingsByMonth[selectedMonthKey] ?? {} : {}}
+            clientTrainingsLoading={Boolean(selectedMonthKey && loadingClientTrainingMonths.includes(selectedMonthKey))}
+            clientTrainingsError={selectedMonthKey ? clientTrainingErrors[selectedMonthKey] : undefined}
+            onClientTrainingSaved={(clientTraining) => {
+              if (!selectedMonthKey) return;
+              setClientTrainingsByMonth((current) => ({
+                ...current,
+                [selectedMonthKey]: {
+                  ...(current[selectedMonthKey] ?? {}),
+                  [clientTraining.trainingId]: clientTraining,
+                },
+              }));
+            }}
             onDateChange={showRelativeDay}
             onClose={() => setIsDayPanelOpen(false)}
             onTrainingDeleted={(trainingId, deleteAllAfterThis) => {

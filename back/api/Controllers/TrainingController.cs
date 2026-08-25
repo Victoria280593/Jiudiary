@@ -1,4 +1,5 @@
 using JiuDiary.Api.Services;
+using JiuDiary.Models.ClientTraining;
 using JiuDiary.Models.Training;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,25 @@ namespace JiuDiary.Api.Controllers;
 [Produces("application/json")]
 public sealed class TrainingController(TrainingService trainingService) : BaseController
 {
+    /// <summary>
+    /// Получает отметки текущего клиента о тренировках за выбранный месяц.
+    /// </summary>
+    [HttpGet("client")]
+    [ProducesResponseType<List<ClientTrainingOutputModel>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<List<ClientTrainingOutputModel>>> GetClientTrainingsForMonth([FromQuery] int year, [FromQuery] int month, CancellationToken cancellationToken)
+        => Ok(await trainingService.GetClientTrainingsForMonth(year, month, CurrentUser, cancellationToken));
+
+    /// <summary>
+    /// Создаёт или обновляет отметку текущего клиента о тренировке.
+    /// </summary>
+    [HttpPut("client/{trainingId:guid}")]
+    [ProducesResponseType<ClientTrainingOutputModel>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ClientTrainingOutputModel>> SaveClientTraining(Guid trainingId, SaveClientTrainingInputModel inputModel, CancellationToken cancellationToken)
+        => Ok(await trainingService.SaveClientTraining(trainingId, inputModel, CurrentUser, cancellationToken));
+
     [HttpGet]
     public async Task<ActionResult<List<TrainingOutputModel>>> GetTrainings(
         [FromQuery] List<Guid>? groupIds,

@@ -28,4 +28,6 @@ public sealed class Training
     public ClientInfo Coach { get; set; } = null!;
 
     public Group Group { get; set; } = null!;
+
+    public ICollection<ClientTraining> ClientTrainings { get; set; } = [];
 }
