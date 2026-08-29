@@ -23,6 +23,7 @@ export async function CoachHome({
     endDate: training.endTime,
     groupName: training.groupName,
     groupColorName: training.groupColorName,
+    clientTraining: training.clientTraining,
   }));
 
   return (

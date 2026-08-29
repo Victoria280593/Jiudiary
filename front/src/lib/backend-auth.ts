@@ -65,6 +65,7 @@ export type BackendTraining = {
   description: string | null;
   startTime: string;
   endTime: string;
+  clientTraining: BackendClientTraining | null;
 };
 
 export type BackendClientTraining = {
@@ -152,7 +153,8 @@ function isBackendTraining(value: unknown): value is BackendTraining {
     typeof training.groupColorName === "string" &&
     (training.description === null || typeof training.description === "string") &&
     typeof training.startTime === "string" &&
-    typeof training.endTime === "string"
+    typeof training.endTime === "string" &&
+    (training.clientTraining === null || isBackendClientTraining(training.clientTraining))
   );
 }
 
@@ -1024,33 +1026,6 @@ export async function getBackendTrainings(accessToken: string, groupIds: string[
     const trainings: unknown = await response.json();
     return Array.isArray(trainings) && trainings.every(isBackendTraining)
       ? trainings
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-export async function getBackendClientTrainings(
-  accessToken: string,
-  year: number,
-  month: number
-): Promise<BackendClientTraining[] | null> {
-  try {
-    const searchParams = new URLSearchParams({
-      year: String(year),
-      month: String(month),
-    });
-    const response = await fetch(`${backendUrl}/api/trainings/client?${searchParams.toString()}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      cache: "no-store",
-      signal: AbortSignal.timeout(5_000),
-    });
-
-    if (!response.ok) return null;
-
-    const clientTrainings: unknown = await response.json();
-    return Array.isArray(clientTrainings) && clientTrainings.every(isBackendClientTraining)
-      ? clientTrainings
       : null;
   } catch {
     return null;

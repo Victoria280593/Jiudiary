@@ -16,6 +16,7 @@ export default async function StudentDashboard() {
     endDate: training.endTime,
     groupName: training.groupName,
     groupColorName: training.groupColorName,
+    clientTraining: training.clientTraining,
   }));
 
   return (

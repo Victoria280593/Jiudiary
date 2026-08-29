@@ -1,3 +1,5 @@
+import type { ClientTraining } from "@/lib/client-trainings-client";
+
 export type CalendarTraining = {
   id: string;
   groupId: string;
@@ -6,6 +8,7 @@ export type CalendarTraining = {
   endDate: string;
   groupName: string;
   groupColorName: string;
+  clientTraining: ClientTraining | null;
 };
 
 type TrainingResponse = {
@@ -17,6 +20,7 @@ type TrainingResponse = {
   description: string | null;
   startTime: string;
   endTime: string;
+  clientTraining: ClientTraining | null;
 };
 
 export async function getTrainings(groupIds: string[] = []): Promise<CalendarTraining[]> {
@@ -39,6 +43,7 @@ export async function getTrainings(groupIds: string[] = []): Promise<CalendarTra
     endDate: training.endTime,
     groupName: training.groupName,
     groupColorName: training.groupColorName,
+    clientTraining: training.clientTraining,
   }));
 }
 

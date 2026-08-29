@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { DaySchedulePanel } from "@/components/DaySchedulePanel";
 import { useGroups } from "@/components/GroupsProvider";
 import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, dateKey, addMonths } from "@/lib/calendar";
 import { getGroupColorStyle } from "@/lib/group-colors";
-import {
-  type ClientTraining,
-  getClientTrainings,
-} from "@/lib/client-trainings-client";
+import type { ClientTraining } from "@/lib/client-trainings-client";
 import { getTrainings } from "@/lib/trainings-client";
 
-type TrainingItem = { id: string; groupId?: string; title: string; date: string; endDate?: string; groupName?: string; coachName?: string; groupColorName?: string };
+type TrainingItem = { id: string; groupId?: string; title: string; date: string; endDate?: string; groupName?: string; coachName?: string; groupColorName?: string; clientTraining?: ClientTraining | null };
 type CalendarView = "month" | "week";
 
 function ArrowIcon({ direction }: { direction: "left" | "right" }) {
@@ -19,6 +16,23 @@ function ArrowIcon({ direction }: { direction: "left" | "right" }) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d={direction === "left" ? "M15 18l-6-6 6-6" : "M9 6l6 6-6 6"} />
     </svg>
+  );
+}
+
+function TrainingIndicator({ training }: { training: Pick<TrainingItem, "groupColorName" | "clientTraining"> }) {
+  const colorStyle = getGroupColorStyle(training.groupColorName ?? "Brown");
+  if (!training.clientTraining) {
+    return <span className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${colorStyle.dot}`} aria-hidden="true" />;
+  }
+
+  const rounds = training.clientTraining.rounds;
+  return (
+    <span
+      title={rounds === null ? "Тренировка отмечена" : `Раундов: ${rounds}`}
+      className={`flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-[0.55rem] font-bold leading-none text-white shadow-sm sm:h-5 sm:min-w-5 sm:text-[0.65rem] ${colorStyle.dot}`}
+    >
+      {rounds ?? "✓"}
+    </span>
   );
 }
 
@@ -76,50 +90,6 @@ export function TrainingCalendar({
   const [visibleTrainings, setVisibleTrainings] = useState(trainings);
   const [trainingsError, setTrainingsError] = useState<string>();
   const latestTrainingRequestRef = useRef(0);
-  const [clientTrainingsByMonth, setClientTrainingsByMonth] = useState<
-    Record<string, Record<string, ClientTraining>>
-  >({});
-  const [loadingClientTrainingMonths, setLoadingClientTrainingMonths] = useState<string[]>([]);
-  const [clientTrainingErrors, setClientTrainingErrors] = useState<Record<string, string>>({});
-  const requestedClientTrainingMonthsRef = useRef(new Set<string>());
-
-  const selectedMonthKey = selectedDay?.slice(0, 7);
-
-  useEffect(() => {
-    if (!isDayPanelOpen || !selectedMonthKey) return;
-    if (requestedClientTrainingMonthsRef.current.has(selectedMonthKey)) return;
-
-    requestedClientTrainingMonthsRef.current.add(selectedMonthKey);
-    setLoadingClientTrainingMonths((current) => [...current, selectedMonthKey]);
-    setClientTrainingErrors((current) => {
-      const next = { ...current };
-      delete next[selectedMonthKey];
-      return next;
-    });
-
-    const [year, month] = selectedMonthKey.split("-").map(Number);
-    void getClientTrainings(year, month)
-      .then((clientTrainings) => {
-        setClientTrainingsByMonth((current) => ({
-          ...current,
-          [selectedMonthKey]: Object.fromEntries(
-            clientTrainings.map((clientTraining) => [clientTraining.trainingId, clientTraining])
-          ),
-        }));
-      })
-      .catch((error) => {
-        requestedClientTrainingMonthsRef.current.delete(selectedMonthKey);
-        setClientTrainingErrors((current) => ({
-          ...current,
-          [selectedMonthKey]: error instanceof Error
-            ? error.message
-            : "Не удалось загрузить отметки о тренировках.",
-        }));
-      })
-      .finally(() => {
-        setLoadingClientTrainingMonths((current) => current.filter((key) => key !== selectedMonthKey));
-      });
-  }, [isDayPanelOpen, selectedMonthKey]);
 
   const parsedTrainings = useMemo(
     () => visibleTrainings.map((training) => ({ ...training, date: new Date(training.date), endDate: training.endDate ? new Date(training.endDate) : undefined })),
@@ -209,12 +179,13 @@ export function TrainingCalendar({
       endDate: training.endTime,
       groupName: training.groupName,
       groupColorName: training.groupColorName,
+      clientTraining: null,
     };
 
     setVisibleTrainings((current) => {
       const exists = current.some((item) => item.id === training.id);
       return exists
-        ? current.map((item) => item.id === training.id ? nextTraining : item)
+        ? current.map((item) => item.id === training.id ? { ...nextTraining, clientTraining: item.clientTraining } : item)
         : [...current, nextTraining];
     });
   };
@@ -414,13 +385,7 @@ export function TrainingCalendar({
                                       {dayTrainings.length}
                                     </span>
                                   ) : (
-                                    dayTrainings.map((training) => (
-                                      <span
-                                        key={training.id}
-                                        className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
-                                        aria-hidden="true"
-                                      />
-                                    ))
+                                    dayTrainings.map((training) => <TrainingIndicator key={training.id} training={training} />)
                                   )}
                                 </span>
                               )}
@@ -462,13 +427,7 @@ export function TrainingCalendar({
                                 {dayTrainings.length}
                               </span>
                             ) : (
-                              dayTrainings.map((training) => (
-                                <span
-                                  key={training.id}
-                                  className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
-                                  aria-hidden="true"
-                                />
-                              ))
+                              dayTrainings.map((training) => <TrainingIndicator key={training.id} training={training} />)
                             )}
                           </span>
                         )}
@@ -486,18 +445,12 @@ export function TrainingCalendar({
           <DaySchedulePanel
             dateKey={selectedDay}
             trainings={trainingsByDay.get(selectedDay) ?? []}
-            clientTrainings={selectedMonthKey ? clientTrainingsByMonth[selectedMonthKey] ?? {} : {}}
-            clientTrainingsLoading={Boolean(selectedMonthKey && loadingClientTrainingMonths.includes(selectedMonthKey))}
-            clientTrainingsError={selectedMonthKey ? clientTrainingErrors[selectedMonthKey] : undefined}
             onClientTrainingSaved={(clientTraining) => {
-              if (!selectedMonthKey) return;
-              setClientTrainingsByMonth((current) => ({
-                ...current,
-                [selectedMonthKey]: {
-                  ...(current[selectedMonthKey] ?? {}),
-                  [clientTraining.trainingId]: clientTraining,
-                },
-              }));
+              setVisibleTrainings((current) => current.map((training) =>
+                training.id === clientTraining.trainingId
+                  ? { ...training, clientTraining }
+                  : training
+              ));
             }}
             onDateChange={showRelativeDay}
             onClose={() => setIsDayPanelOpen(false)}

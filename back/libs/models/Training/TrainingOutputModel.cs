@@ -1,3 +1,5 @@
+using JiuDiary.Models.ClientTraining;
+
 namespace JiuDiary.Models.Training;
 
 /// <summary>
@@ -20,4 +22,6 @@ public class TrainingOutputModel
     public DateTime StartTime { get; set; }
 
     public DateTime EndTime { get; set; }
+
+    public ClientTrainingOutputModel? ClientTraining { get; set; }
 }

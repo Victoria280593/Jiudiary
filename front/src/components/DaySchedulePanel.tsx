@@ -22,6 +22,7 @@ type DayTraining = {
   groupName?: string;
   coachName?: string;
   groupColorName?: string;
+  clientTraining?: ClientTraining | null;
 };
 
 type GroupFilter = {
@@ -223,9 +224,6 @@ export function DaySchedulePanel({
   onDateChange,
   linkBase = "/dashboard/coach/trainings",
   showCreateForm = true,
-  clientTrainings,
-  clientTrainingsLoading = false,
-  clientTrainingsError,
   onClientTrainingSaved,
   onTrainingDeleted,
   onTrainingSaved,
@@ -236,9 +234,6 @@ export function DaySchedulePanel({
   onDateChange: (dateKey: string) => void;
   linkBase?: string;
   showCreateForm?: boolean;
-  clientTrainings: Record<string, ClientTraining>;
-  clientTrainingsLoading?: boolean;
-  clientTrainingsError?: string;
   onClientTrainingSaved: (clientTraining: ClientTraining) => void;
   onTrainingDeleted?: (trainingId: string, deleteAllAfterThis?: boolean) => void;
   onTrainingSaved?: (training: SavedTraining, repeatEveryWeek?: boolean) => void;
@@ -438,8 +433,6 @@ export function DaySchedulePanel({
             </div>
           )}
 
-          {clientTrainingsError && <p className={`${errorClass} mb-4`}>{clientTrainingsError}</p>}
-
           <div className="flex flex-col gap-3">
             {visibleTrainings.length > 0 ? (
               visibleTrainings.map((training) => {
@@ -474,12 +467,22 @@ export function DaySchedulePanel({
                             {training.title || "Тренировка"}
                           </h3>
                           {training.coachName && <p className="mt-3 text-xs font-medium text-accent-foreground">Тренер: {training.coachName}</p>}
+                          {training.clientTraining && (
+                            <p className="mt-3 inline-flex rounded-full bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-foreground">
+                              {training.clientTraining.rounds === null ? "Тренировка отмечена" : `Раунды: ${training.clientTraining.rounds}`}
+                            </p>
+                          )}
                         </Link>
                       ) : (
                         <>
                           {training.groupName && <p className="truncate text-xs font-normal text-muted sm:text-sm">{training.groupName}</p>}
                           <h3 className={`${training.groupName ? "mt-1" : ""} whitespace-pre-wrap break-words text-sm font-semibold leading-5 sm:text-base sm:leading-6`}>{training.title || "Тренировка"}</h3>
                           {training.coachName && <p className="mt-3 text-xs font-medium text-accent-foreground">Тренер: {training.coachName}</p>}
+                          {training.clientTraining && (
+                            <p className="mt-3 inline-flex rounded-full bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-foreground">
+                              {training.clientTraining.rounds === null ? "Тренировка отмечена" : `Раунды: ${training.clientTraining.rounds}`}
+                            </p>
+                          )}
                         </>
                       )}
                     </div>
@@ -501,18 +504,13 @@ export function DaySchedulePanel({
                           <button
                             type="button"
                             role="menuitem"
-                            disabled={clientTrainingsLoading}
                             onClick={() => {
                               setMarkingTraining(training);
                               setOpenMenuId(undefined);
                             }}
-                            className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm text-foreground transition hover:bg-surface-muted disabled:text-muted"
+                            className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm text-foreground transition hover:bg-surface-muted"
                           >
-                            {clientTrainingsLoading
-                              ? "Загрузка отметки…"
-                              : clientTrainings[training.id]
-                                ? "Изменить отметку"
-                                : "Отметить тренировку"}
+                            {training.clientTraining ? "Изменить отметку" : "Отметить тренировку"}
                           </button>
                           {showCreateForm && (
                             <button
@@ -591,7 +589,7 @@ export function DaySchedulePanel({
         <ClientTrainingModal
           key={markingTraining.id}
           training={markingTraining}
-          clientTraining={clientTrainings[markingTraining.id]}
+          clientTraining={markingTraining.clientTraining ?? undefined}
           onClose={() => setMarkingTraining(undefined)}
           onSaved={onClientTrainingSaved}
         />

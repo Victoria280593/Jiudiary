@@ -12,33 +12,6 @@ namespace JiuDiary.Api.Services;
 public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<TrainingService> logger)
 {
     /// <summary>
-    /// Получает отметки текущего клиента о тренировках за указанный календарный месяц.
-    /// </summary>
-    public async Task<List<ClientTrainingOutputModel>> GetClientTrainingsForMonth(int year, int month, AuthenticatedUser user, CancellationToken cancellationToken)
-    {
-        EnsureClientTrainingRole(user);
-        var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
-        var monthStart = CreateMonthStart(year, month);
-        var nextMonthStart = year == 9999 && month == 12 ? DateTime.MaxValue : monthStart.AddMonths(1);
-
-        var clientTrainings = await dbContext.ClientTrainings
-            .AsNoTracking()
-            .Where(item => item.ClientInfoId == clientInfoId && item.Training.StartTime >= monthStart && item.Training.StartTime < nextMonthStart)
-            .OrderBy(item => item.Training.StartTime)
-            .Select(item => new ClientTrainingOutputModel
-            {
-                Id = item.Id,
-                TrainingId = item.TrainingId,
-                Rounds = item.Rounds,
-                CreatedAt = item.CreatedAt
-            })
-            .ToListAsync(cancellationToken);
-
-        logger.LogInformation("Отметки о тренировках клиента получены. UserId: {UserId} | Year: {Year} | Month: {Month} | Count: {Count}", user.Id, year, month, clientTrainings.Count);
-        return clientTrainings;
-    }
-
-    /// <summary>
     /// Создаёт или обновляет отметку текущего клиента о доступной ему тренировке.
     /// </summary>
     public async Task<ClientTrainingOutputModel> SaveClientTraining(Guid trainingId, SaveClientTrainingInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
@@ -89,10 +62,10 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         };
     }
 
-    public async Task<List<TrainingOutputModel>> GetTrainings(
-        AuthenticatedUser user,
-        IReadOnlyCollection<Guid>? groupIds,
-        CancellationToken cancellationToken)
+    /// <summary>
+    /// Получает доступные пользователю тренировки вместе с его отметками.
+    /// </summary>
+    public async Task<List<TrainingOutputModel>> GetTrainings(AuthenticatedUser user, IReadOnlyCollection<Guid>? groupIds, CancellationToken cancellationToken)
     {
         IQueryable<Training> trainings;
         if (user.Role == UserRolesEnum.Coach)
@@ -128,7 +101,17 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
                 GroupColorName = training.Group.Color.Name,
                 Description = training.Description,
                 StartTime = training.StartTime,
-                EndTime = training.EndTime
+                EndTime = training.EndTime,
+                ClientTraining = training.ClientTrainings
+                    .Where(clientTraining => clientTraining.ClientInfo.UserId == user.Id)
+                    .Select(clientTraining => new ClientTrainingOutputModel
+                    {
+                        Id = clientTraining.Id,
+                        TrainingId = clientTraining.TrainingId,
+                        Rounds = clientTraining.Rounds,
+                        CreatedAt = clientTraining.CreatedAt
+                    })
+                    .FirstOrDefault()
             })
             .ToListAsync(cancellationToken);
 
@@ -360,16 +343,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
     {
         var clientInfoId = await dbContext.ClientInfos.AsNoTracking().Where(clientInfo => clientInfo.UserId == user.Id).Select(clientInfo => (Guid?)clientInfo.Id).SingleOrDefaultAsync(cancellationToken);
         return clientInfoId ?? throw new AspNetException("Профиль клиента не найден.", StatusCodes.Status404NotFound);
-    }
-
-    private static DateTime CreateMonthStart(int year, int month)
-    {
-        if (year is < 1 or > 9999 || month is < 1 or > 12)
-        {
-            throw new AspNetException("Необходимо указать корректные год и месяц.", StatusCodes.Status400BadRequest);
-        }
-
-        return new DateTime(year, month, 1);
     }
 
     private static void EnsureClientTrainingRole(AuthenticatedUser user)
