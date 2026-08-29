@@ -10,6 +10,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddServices(this IServiceCollection services)
     {
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<AnalyticsService>();
         services.AddScoped<ClientInfoService>();
         services.AddScoped<ClientBeltService>();
         services.AddScoped<GroupService>();

@@ -1,5 +1,6 @@
 import "server-only";
 import type { Role } from "@prisma/client";
+import type { FightAnalytics } from "@/lib/analytics-client";
 
 const backendUrl = (process.env.BACKEND_URL || "http://localhost:5136").replace(/\/$/, "");
 
@@ -245,6 +246,23 @@ function isBackendClientTraining(value: unknown): value is BackendClientTraining
     typeof clientTraining.trainingId === "string" &&
     (clientTraining.rounds === null || typeof clientTraining.rounds === "number") &&
     typeof clientTraining.createdAt === "string"
+  );
+}
+
+function isFightAnalytics(value: unknown): value is FightAnalytics {
+  if (!value || typeof value !== "object") return false;
+
+  const analytics = value as Partial<FightAnalytics>;
+  return (
+    typeof analytics.fromDate === "string" &&
+    typeof analytics.toDate === "string" &&
+    typeof analytics.fightsCount === "number" &&
+    Array.isArray(analytics.points) &&
+    analytics.points.every((point) =>
+      Boolean(point) &&
+      typeof point.date === "string" &&
+      typeof point.fightsCount === "number"
+    )
   );
 }
 
@@ -1027,6 +1045,24 @@ export async function getBackendTrainings(accessToken: string, groupIds: string[
     return Array.isArray(trainings) && trainings.every(isBackendTraining)
       ? trainings
       : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getBackendFightAnalytics(accessToken: string, fromDate: string, toDate: string): Promise<FightAnalytics | null> {
+  try {
+    const searchParams = new URLSearchParams({ fromDate, toDate });
+    const response = await fetch(`${backendUrl}/api/analytics/fights?${searchParams.toString()}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) return null;
+
+    const analytics: unknown = await response.json();
+    return isFightAnalytics(analytics) ? analytics : null;
   } catch {
     return null;
   }
