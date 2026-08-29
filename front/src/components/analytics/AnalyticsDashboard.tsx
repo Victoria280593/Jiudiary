@@ -37,12 +37,17 @@ const presets = [
 ] satisfies { id: PeriodPreset; label: string }[];
 
 function presetPeriod(preset: PeriodPreset) {
-  const end = new Date();
+  const today = new Date();
   const start = preset === "currentWeek"
-    ? startOfWeek(end)
+    ? startOfWeek(today)
     : preset === "currentMonth"
-      ? new Date(end.getFullYear(), end.getMonth(), 1)
-      : new Date(end.getFullYear(), 0, 1);
+      ? new Date(today.getFullYear(), today.getMonth(), 1)
+      : new Date(today.getFullYear(), 0, 1);
+  const end = preset === "currentWeek"
+    ? addDays(start, 6)
+    : preset === "currentMonth"
+      ? new Date(today.getFullYear(), today.getMonth() + 1, 0)
+      : new Date(today.getFullYear(), 11, 31);
   return { fromDate: toIsoDate(start), toDate: toIsoDate(end) };
 }
 

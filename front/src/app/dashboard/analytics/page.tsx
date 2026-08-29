@@ -20,8 +20,9 @@ export default async function AnalyticsPage() {
   const session = await getSession();
   if (!session || !["COACH", "STUDENT"].includes(session.user.role)) redirect("/dashboard");
 
-  const toDate = new Date();
-  const fromDate = startOfWeek(toDate);
+  const fromDate = startOfWeek(new Date());
+  const toDate = new Date(fromDate);
+  toDate.setDate(toDate.getDate() + 6);
   const analytics = await getBackendFightAnalytics(session.accessToken, toIsoDate(fromDate), toIsoDate(toDate));
 
   if (!analytics) {
