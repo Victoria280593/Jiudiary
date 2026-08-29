@@ -4,6 +4,7 @@ import { Avatar } from "@/components/Avatar";
 import { Card } from "@/components/Card";
 import {
   StudentRequestDeleteButton,
+  StudentTrainerRemoveButton,
   StudentTrainerRequestButton,
 } from "@/components/StudentTrainerRequestButton";
 import { getSession } from "@/lib/auth";
@@ -48,7 +49,6 @@ export default async function StudentCoachPage({
   ]);
 
   const latestRequestByCoach = new Map<string, BackendStudentRequestStatus>();
-  const activeCoachIds = new Set((myTrainers ?? []).map((trainer) => trainer.id));
   for (const request of myRequests ?? []) {
     if (!latestRequestByCoach.has(request.coachId)) {
       latestRequestByCoach.set(request.coachId, request.status);
@@ -76,11 +76,12 @@ export default async function StudentCoachPage({
             {myTrainers.map((trainer) => (
               <div key={trainer.id} className="flex items-center gap-3 rounded-2xl bg-surface-muted/65 p-4">
                 <Avatar src={null} name={trainer.name} size={46} />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-foreground">{trainer.name}</p>
                   <p className="truncate text-sm text-muted">{trainer.login}</p>
                   {trainer.beltName && <p className="text-xs text-muted">Пояс: {trainer.beltName}</p>}
                 </div>
+                <StudentTrainerRemoveButton coachId={trainer.id} coachName={trainer.name} />
               </div>
             ))}
           </div>
@@ -151,12 +152,7 @@ export default async function StudentCoachPage({
                   <StudentTrainerRequestButton
                     coachId={trainer.id}
                     coachName={trainer.name}
-                    status={
-                      latestRequestByCoach.get(trainer.id) === "Accepted" &&
-                      !activeCoachIds.has(trainer.id)
-                        ? undefined
-                        : latestRequestByCoach.get(trainer.id)
-                    }
+                    status={latestRequestByCoach.get(trainer.id)}
                   />
                 </div>
               ))}

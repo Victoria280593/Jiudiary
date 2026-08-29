@@ -4,6 +4,7 @@ import {
   createBackendStudentRequest,
   deleteBackendStudentRequest,
   removeBackendCoachStudent,
+  removeBackendStudentTrainer,
   resolveBackendStudentRequest,
   updateBackendCoachStudentGroups,
 } from "@/lib/backend-auth";
@@ -82,11 +83,19 @@ export async function DELETE(request: Request) {
   }
 
   const input = (await request.json().catch(() => null)) as {
+    coachId?: string;
     requestId?: string;
     studentId?: string;
   } | null;
   if (input?.requestId) {
     const result = await deleteBackendStudentRequest(session.accessToken, input.requestId);
+    return result.ok
+      ? new NextResponse(null, { status: 204 })
+      : NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  if (session.user.role === "STUDENT" && input?.coachId) {
+    const result = await removeBackendStudentTrainer(session.accessToken, input.coachId);
     return result.ok
       ? new NextResponse(null, { status: 204 })
       : NextResponse.json({ error: result.error }, { status: result.status });

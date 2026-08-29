@@ -760,6 +760,34 @@ export async function removeBackendCoachStudent(
   }
 }
 
+export async function removeBackendStudentTrainer(
+  accessToken: string,
+  coachId: string
+): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  try {
+    const response = await fetch(
+      `${backendUrl}/api/trainers/my/${encodeURIComponent(coachId)}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      }
+    );
+
+    if (response.ok) return { ok: true };
+
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    return {
+      ok: false,
+      status: response.status,
+      error: result?.error ?? "Не удалось открепиться от тренера.",
+    };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
 export async function updateBackendCoachStudentGroups(
   accessToken: string,
   studentId: string,

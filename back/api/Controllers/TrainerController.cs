@@ -13,6 +13,9 @@ namespace JiuDiary.Api.Controllers;
 [Produces("application/json")]
 public sealed class TrainerController(TrainerService trainerService) : BaseController
 {
+    /// <summary>
+    /// Получает доступных для подачи заявки тренеров, исключая уже прикреплённых.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = nameof(UserRolesEnum.Student))]
     [ProducesResponseType<PagedResult<TrainerOutputModel>>(StatusCodes.Status200OK)]
@@ -20,7 +23,7 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<PagedResult<TrainerOutputModel>>> GetTrainers([FromQuery] Filter filter, CancellationToken cancellationToken)
     {
-        return Ok(await trainerService.GetTrainersAsync(filter, cancellationToken));
+        return Ok(await trainerService.GetTrainersAsync(CurrentUser, filter, cancellationToken));
     }
 
     [HttpPost("{coachId:guid}/students/requests")]
@@ -46,6 +49,19 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
     public async Task<ActionResult<List<TrainerOutputModel>>> GetStudentTrainers(CancellationToken cancellationToken)
     {
         return Ok(await trainerService.GetStudentTrainersAsync(CurrentUser, cancellationToken));
+    }
+
+    /// <summary>
+    /// Открепляет текущего ученика от выбранного тренера.
+    /// </summary>
+    [HttpDelete("my/{coachId:guid}")]
+    [Authorize(Roles = nameof(UserRolesEnum.Student))]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RemoveStudentTrainer(Guid coachId, CancellationToken cancellationToken)
+    {
+        var removed = await trainerService.RemoveStudentTrainerAsync(CurrentUser, coachId, cancellationToken);
+        return removed ? NoContent() : NotFound(new { error = "Связь с тренером не найдена." });
     }
 
     [HttpGet("students/requests")]

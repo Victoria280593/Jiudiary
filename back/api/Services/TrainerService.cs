@@ -12,11 +12,15 @@ namespace JiuDiary.Api.Services;
 
 public sealed class TrainerService(JiuDiaryDbContext dbContext)
 {
-    public Task<PagedResult<TrainerOutputModel>> GetTrainersAsync(Filter filter, CancellationToken cancellationToken)
+    /// <summary>
+    /// Получает доступных для подачи заявки тренеров, исключая уже прикреплённых к ученику.
+    /// </summary>
+    public Task<PagedResult<TrainerOutputModel>> GetTrainersAsync(AuthenticatedUser student, Filter filter, CancellationToken cancellationToken)
     {
+        EnsureRole(student, UserRolesEnum.Student);
         var trainers = dbContext.Users
             .AsNoTracking()
-            .Where(user => user.IsActive && user.RoleId == (int)UserRolesEnum.Coach)
+            .Where(user => user.IsActive && user.RoleId == (int)UserRolesEnum.Coach && !user.Students.Any(item => item.StudentId == student.Id))
             .ApplySearch(
                 filter.Search,
                 search => user => (user.ClientInfo != null &&
@@ -248,9 +252,22 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
     public async Task<bool> RemoveCoachStudentAsync(AuthenticatedUser coach, Guid studentId, CancellationToken cancellationToken)
     {
         EnsureRole(coach, UserRolesEnum.Coach);
+        return await RemoveCoachStudentLinkAsync(coach.Id, studentId, cancellationToken);
+    }
 
+    /// <summary>
+    /// Открепляет текущего ученика от тренера и удаляет назначения в его группы.
+    /// </summary>
+    public async Task<bool> RemoveStudentTrainerAsync(AuthenticatedUser student, Guid coachId, CancellationToken cancellationToken)
+    {
+        EnsureRole(student, UserRolesEnum.Student);
+        return await RemoveCoachStudentLinkAsync(coachId, student.Id, cancellationToken);
+    }
+
+    private async Task<bool> RemoveCoachStudentLinkAsync(Guid coachId, Guid studentId, CancellationToken cancellationToken)
+    {
         var links = await dbContext.CoachStudents
-            .Where(item => item.CoachId == coach.Id && item.StudentId == studentId)
+            .Where(item => item.CoachId == coachId && item.StudentId == studentId)
             .ToListAsync(cancellationToken);
         if (links.Count == 0)
         {
@@ -265,7 +282,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         if (studentClientInfoId.HasValue)
         {
             var coachGroupIds = dbContext.CoachGroups
-                .Where(item => item.Coach.UserId == coach.Id)
+                .Where(item => item.Coach.UserId == coachId)
                 .Select(item => item.GroupId);
             var assignments = await dbContext.StudentGroups
                 .Where(item => item.StudentId == studentClientInfoId.Value && coachGroupIds.Contains(item.GroupId))
@@ -274,7 +291,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         }
 
         var requests = await dbContext.StudentsRequests
-            .Where(item => item.CoachId == coach.Id && item.StudentId == studentId)
+            .Where(item => item.CoachId == coachId && item.StudentId == studentId)
             .ToListAsync(cancellationToken);
         dbContext.StudentsRequests.RemoveRange(requests);
 
