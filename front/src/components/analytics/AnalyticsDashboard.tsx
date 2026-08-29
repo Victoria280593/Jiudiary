@@ -16,6 +16,7 @@ const FightTrendChart = dynamic(() => import("./FightTrendChart"), {
 });
 
 type GroupBy = "day" | "week" | "month";
+type PeriodPreset = "currentWeek" | "currentMonth" | "currentYear";
 
 const groupLabels: Record<GroupBy, string> = {
   day: "По дням",
@@ -30,11 +31,20 @@ const groupDescriptions: Record<GroupBy, string> = {
 };
 
 const presets = [
-  { label: "7 дней", days: 7 },
-  { label: "30 дней", days: 30 },
-  { label: "3 месяца", days: 90 },
-  { label: "Год", days: 365 },
-];
+  { id: "currentWeek", label: "За текущую неделю" },
+  { id: "currentMonth", label: "За текущий месяц" },
+  { id: "currentYear", label: "За текущий год" },
+] satisfies { id: PeriodPreset; label: string }[];
+
+function presetPeriod(preset: PeriodPreset) {
+  const end = new Date();
+  const start = preset === "currentWeek"
+    ? startOfWeek(end)
+    : preset === "currentMonth"
+      ? new Date(end.getFullYear(), end.getMonth(), 1)
+      : new Date(end.getFullYear(), 0, 1);
+  return { fromDate: toIsoDate(start), toDate: toIsoDate(end) };
+}
 
 function toDate(value: string) {
   return new Date(`${value}T00:00:00`);
@@ -135,12 +145,13 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
   const [fromDate, setFromDate] = useState(initialAnalytics.fromDate);
   const [toDateValue, setToDateValue] = useState(initialAnalytics.toDate);
   const [groupBy, setGroupBy] = useState<GroupBy>(() => recommendedGroup(initialAnalytics.fromDate, initialAnalytics.toDate));
+  const [selectedPreset, setSelectedPreset] = useState<PeriodPreset | undefined>("currentWeek");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>();
   const availableGroupOptions = useMemo(() => availableGroups(analytics.fromDate, analytics.toDate), [analytics.fromDate, analytics.toDate]);
   const chartPoints = useMemo(() => aggregatePoints(analytics, groupBy), [analytics, groupBy]);
 
-  async function loadPeriod(nextFromDate: string, nextToDate: string) {
+  async function loadPeriod(nextFromDate: string, nextToDate: string, nextPreset?: PeriodPreset) {
     if (!nextFromDate || !nextToDate || nextFromDate > nextToDate) {
       setError("Укажите корректный период.");
       return;
@@ -153,6 +164,7 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
       setAnalytics(result);
       setFromDate(result.fromDate);
       setToDateValue(result.toDate);
+      setSelectedPreset(nextPreset);
       setGroupBy((currentGroup) => {
         const nextGroups = availableGroups(result.fromDate, result.toDate);
         return nextGroups.includes(currentGroup) ? currentGroup : recommendedGroup(result.fromDate, result.toDate);
@@ -164,17 +176,16 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
     }
   }
 
-  function applyPreset(days: number) {
-    const end = new Date();
-    const start = addDays(end, -(days - 1));
-    void loadPeriod(toIsoDate(start), toIsoDate(end));
+  function applyPreset(preset: PeriodPreset) {
+    const period = presetPeriod(preset);
+    void loadPeriod(period.fromDate, period.toDate, preset);
   }
 
   const periodTitle = `${new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "short", year: "numeric" }).format(toDate(analytics.fromDate))} — ${new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "short", year: "numeric" }).format(toDate(analytics.toDate))}`;
   const summaryCards = [
     { label: "Всего схваток", description: "за всё время", value: analytics.allTimeFightsCount },
-    { label: "Схватки за период", description: periodTitle, value: analytics.periodFightsCount },
     { label: "Среднее за тренировку", description: "за всё время", value: formatAverage(analytics.allTimeAverageFightsPerTraining) },
+    { label: "Схватки за период", description: periodTitle, value: analytics.periodFightsCount },
     { label: "Среднее за тренировку", description: "за выбранный период", value: formatAverage(analytics.periodAverageFightsPerTraining) },
   ];
 
@@ -205,7 +216,7 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
 
       <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Быстрый выбор периода">
         {presets.map((preset) => (
-          <button key={preset.days} type="button" onClick={() => applyPreset(preset.days)} disabled={isLoading} className="min-h-9 shrink-0 rounded-full border border-border bg-white px-4 text-xs font-semibold text-muted transition hover:border-accent/35 hover:bg-accent-soft hover:text-accent-foreground disabled:opacity-50">
+          <button key={preset.id} type="button" onClick={() => applyPreset(preset.id)} disabled={isLoading} aria-pressed={selectedPreset === preset.id} className={`min-h-9 shrink-0 rounded-full border px-4 text-xs font-semibold transition disabled:opacity-50 ${selectedPreset === preset.id ? "border-accent/40 bg-accent-soft text-accent-foreground" : "border-border bg-white text-muted hover:border-accent/35 hover:bg-accent-soft hover:text-accent-foreground"}`}>
             {preset.label}
           </button>
         ))}
@@ -223,9 +234,9 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
             <div className="flex items-start gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent"><FightsIcon /></span>
               <div className="min-w-0">
-                <p className="text-sm font-medium leading-5 text-muted">{card.label}</p>
+                <p className="text-base font-semibold leading-5 text-foreground">{card.label}</p>
                 <p className="mt-0.5 text-xs leading-4 text-muted/80">
-                  {index === 1 ? <><span className="sm:hidden">за выбранный период</span><span className="hidden sm:inline">{card.description}</span></> : card.description}
+                  {index === 2 ? <><span className="sm:hidden">за выбранный период</span><span className="hidden sm:inline">{card.description}</span></> : card.description}
                 </p>
               </div>
             </div>

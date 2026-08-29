@@ -10,13 +10,18 @@ function toIsoDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
+function startOfWeek(date: Date) {
+  const result = new Date(date);
+  result.setDate(result.getDate() - ((result.getDay() + 6) % 7));
+  return result;
+}
+
 export default async function AnalyticsPage() {
   const session = await getSession();
   if (!session || !["COACH", "STUDENT"].includes(session.user.role)) redirect("/dashboard");
 
   const toDate = new Date();
-  const fromDate = new Date(toDate);
-  fromDate.setDate(fromDate.getDate() - 29);
+  const fromDate = startOfWeek(toDate);
   const analytics = await getBackendFightAnalytics(session.accessToken, toIsoDate(fromDate), toIsoDate(toDate));
 
   if (!analytics) {
