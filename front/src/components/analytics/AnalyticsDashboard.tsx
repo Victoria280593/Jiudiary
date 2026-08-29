@@ -23,6 +23,12 @@ const groupLabels: Record<GroupBy, string> = {
   month: "По месяцам",
 };
 
+const groupDescriptions: Record<GroupBy, string> = {
+  day: "Детальная динамика по каждому дню",
+  week: "Суммарное количество за каждую неделю",
+  month: "Суммарное количество за каждый месяц",
+};
+
 const presets = [
   { label: "7 дней", days: 7 },
   { label: "30 дней", days: 30 },
@@ -53,9 +59,21 @@ function startOfWeek(date: Date) {
   return result;
 }
 
+function periodDays(fromDate: string, toDateValue: string) {
+  return Math.round((toDate(toDateValue).getTime() - toDate(fromDate).getTime()) / 86_400_000) + 1;
+}
+
+function availableGroups(fromDate: string, toDateValue: string): GroupBy[] {
+  const days = periodDays(fromDate, toDateValue);
+  if (days <= 14) return ["day"];
+  if (days <= 60) return ["day", "week"];
+  if (days <= 180) return ["week", "month"];
+  return ["month"];
+}
+
 function recommendedGroup(fromDate: string, toDateValue: string): GroupBy {
-  const days = Math.round((toDate(toDateValue).getTime() - toDate(fromDate).getTime()) / 86_400_000) + 1;
-  if (days <= 45) return "day";
+  const days = periodDays(fromDate, toDateValue);
+  if (days <= 30) return "day";
   if (days <= 180) return "week";
   return "month";
 }
@@ -115,6 +133,7 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
   const [groupBy, setGroupBy] = useState<GroupBy>(() => recommendedGroup(initialAnalytics.fromDate, initialAnalytics.toDate));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>();
+  const availableGroupOptions = useMemo(() => availableGroups(analytics.fromDate, analytics.toDate), [analytics.fromDate, analytics.toDate]);
   const chartPoints = useMemo(() => aggregatePoints(analytics, groupBy), [analytics, groupBy]);
 
   async function loadPeriod(nextFromDate: string, nextToDate: string) {
@@ -130,7 +149,10 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
       setAnalytics(result);
       setFromDate(result.fromDate);
       setToDateValue(result.toDate);
-      setGroupBy(recommendedGroup(result.fromDate, result.toDate));
+      setGroupBy((currentGroup) => {
+        const nextGroups = availableGroups(result.fromDate, result.toDate);
+        return nextGroups.includes(currentGroup) ? currentGroup : recommendedGroup(result.fromDate, result.toDate);
+      });
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Не удалось загрузить аналитику схваток.");
     } finally {
@@ -199,15 +221,17 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
         </article>
 
         <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="text-base font-semibold text-foreground sm:text-lg">Схватки по периодам</h2>
-              <p className="mt-1 text-xs text-muted">Динамика количества отмеченных раундов</p>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Схватки {groupLabels[groupBy].toLowerCase()}</h2>
+              <p className="mt-1 text-xs text-muted">{groupDescriptions[groupBy]}</p>
             </div>
-            <label className="sr-only" htmlFor="analytics-group-by">Группировка графика</label>
-            <select id="analytics-group-by" value={groupBy} onChange={(event) => setGroupBy(event.target.value as GroupBy)} className="h-10 rounded-xl border border-border bg-white px-3 text-sm font-medium text-foreground outline-none transition focus:border-accent/55 focus:ring-2 focus:ring-accent/10">
-              {(Object.keys(groupLabels) as GroupBy[]).map((key) => <option key={key} value={key}>{groupLabels[key]}</option>)}
-            </select>
+            <div className="min-w-0 sm:min-w-44">
+              <label className="mb-1.5 block text-xs font-medium text-muted" htmlFor="analytics-group-by">Детализация</label>
+              <select id="analytics-group-by" value={groupBy} onChange={(event) => setGroupBy(event.target.value as GroupBy)} disabled={availableGroupOptions.length === 1} className="h-10 w-full rounded-xl border border-border bg-white px-3 text-sm font-medium text-foreground outline-none transition focus:border-accent/55 focus:ring-2 focus:ring-accent/10 disabled:cursor-default disabled:bg-surface-muted disabled:text-muted">
+                {availableGroupOptions.map((key) => <option key={key} value={key}>{groupLabels[key]}</option>)}
+              </select>
+            </div>
           </div>
 
           <div className={`relative mt-5 h-64 transition-opacity sm:h-80 ${isLoading ? "opacity-45" : "opacity-100"}`}>
