@@ -6,7 +6,10 @@ export type FightAnalyticsPoint = {
 export type FightAnalytics = {
   fromDate: string;
   toDate: string;
-  fightsCount: number;
+  allTimeFightsCount: number;
+  periodFightsCount: number;
+  allTimeAverageFightsPerTraining: number;
+  periodAverageFightsPerTraining: number;
   points: FightAnalyticsPoint[];
 };
 

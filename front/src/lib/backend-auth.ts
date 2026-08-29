@@ -256,7 +256,10 @@ function isFightAnalytics(value: unknown): value is FightAnalytics {
   return (
     typeof analytics.fromDate === "string" &&
     typeof analytics.toDate === "string" &&
-    typeof analytics.fightsCount === "number" &&
+    typeof analytics.allTimeFightsCount === "number" &&
+    typeof analytics.periodFightsCount === "number" &&
+    typeof analytics.allTimeAverageFightsPerTraining === "number" &&
+    typeof analytics.periodAverageFightsPerTraining === "number" &&
     Array.isArray(analytics.points) &&
     analytics.points.every((point) =>
       Boolean(point) &&

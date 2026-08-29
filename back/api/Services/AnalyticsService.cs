@@ -28,10 +28,22 @@ public sealed class AnalyticsService(JiuDiaryDbContext dbContext, ILogger<Analyt
             .Select(group => new
             {
                 Date = group.Key,
-                FightsCount = group.Sum(clientTraining => clientTraining.Rounds ?? 0)
+                FightsCount = group.Sum(clientTraining => clientTraining.Rounds ?? 0),
+                TrainingsCount = group.Count(clientTraining => clientTraining.Rounds.HasValue)
             })
             .OrderBy(item => item.Date)
             .ToListAsync(cancellationToken);
+
+        var allTimeTotals = await dbContext.ClientTrainings
+            .AsNoTracking()
+            .Where(clientTraining => clientTraining.ClientInfo.UserId == user.Id)
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                FightsCount = group.Sum(clientTraining => clientTraining.Rounds ?? 0),
+                TrainingsCount = group.Count(clientTraining => clientTraining.Rounds.HasValue)
+            })
+            .SingleOrDefaultAsync(cancellationToken);
 
         var points = dailyFights.Select(item => new FightAnalyticsPointOutputModel
         {
@@ -39,17 +51,24 @@ public sealed class AnalyticsService(JiuDiaryDbContext dbContext, ILogger<Analyt
             FightsCount = item.FightsCount
         }).ToList();
 
+        var periodFightsCount = dailyFights.Sum(item => item.FightsCount);
+        var periodTrainingsCount = dailyFights.Sum(item => item.TrainingsCount);
         var result = new FightAnalyticsOutputModel
         {
             FromDate = fromDate,
             ToDate = toDate,
-            FightsCount = points.Sum(point => point.FightsCount),
+            AllTimeFightsCount = allTimeTotals?.FightsCount ?? 0,
+            PeriodFightsCount = periodFightsCount,
+            AllTimeAverageFightsPerTraining = CalculateAverage(allTimeTotals?.FightsCount ?? 0, allTimeTotals?.TrainingsCount ?? 0),
+            PeriodAverageFightsPerTraining = CalculateAverage(periodFightsCount, periodTrainingsCount),
             Points = points
         };
 
-        logger.LogInformation("Аналитика схваток получена. UserId: {UserId} | FromDate: {FromDate} | ToDate: {ToDate} | FightsCount: {FightsCount}", user.Id, fromDate, toDate, result.FightsCount);
+        logger.LogInformation("Аналитика схваток получена. UserId: {UserId} | FromDate: {FromDate} | ToDate: {ToDate} | AllTimeFightsCount: {AllTimeFightsCount} | PeriodFightsCount: {PeriodFightsCount}", user.Id, fromDate, toDate, result.AllTimeFightsCount, result.PeriodFightsCount);
         return result;
     }
+
+    private static decimal CalculateAverage(int fightsCount, int trainingsCount) => trainingsCount == 0 ? 0 : Math.Round((decimal)fightsCount / trainingsCount, 1, MidpointRounding.AwayFromZero);
 
     private static void ValidatePeriod(DateOnly fromDate, DateOnly toDate)
     {
