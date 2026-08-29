@@ -19,23 +19,6 @@ function ArrowIcon({ direction }: { direction: "left" | "right" }) {
   );
 }
 
-function TrainingIndicator({ training }: { training: Pick<TrainingItem, "groupColorName" | "clientTraining"> }) {
-  const colorStyle = getGroupColorStyle(training.groupColorName ?? "Brown");
-  if (!training.clientTraining) {
-    return <span className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${colorStyle.dot}`} aria-hidden="true" />;
-  }
-
-  const rounds = training.clientTraining.rounds;
-  return (
-    <span
-      title={rounds === null ? "Тренировка отмечена" : `Раундов: ${rounds}`}
-      className={`flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-[0.55rem] font-bold leading-none text-white shadow-sm sm:h-5 sm:min-w-5 sm:text-[0.65rem] ${colorStyle.dot}`}
-    >
-      {rounds ?? "✓"}
-    </span>
-  );
-}
-
 function addDays(date: Date, amount: number) {
   const next = new Date(date);
   next.setDate(next.getDate() + amount);
@@ -385,7 +368,13 @@ export function TrainingCalendar({
                                       {dayTrainings.length}
                                     </span>
                                   ) : (
-                                    dayTrainings.map((training) => <TrainingIndicator key={training.id} training={training} />)
+                                    dayTrainings.map((training) => (
+                                      <span
+                                        key={training.id}
+                                        className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
+                                        aria-hidden="true"
+                                      />
+                                    ))
                                   )}
                                 </span>
                               )}
@@ -427,7 +416,13 @@ export function TrainingCalendar({
                                 {dayTrainings.length}
                               </span>
                             ) : (
-                              dayTrainings.map((training) => <TrainingIndicator key={training.id} training={training} />)
+                              dayTrainings.map((training) => (
+                                <span
+                                  key={training.id}
+                                  className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm sm:h-3.5 sm:w-3.5 ${getGroupColorStyle(training.groupColorName ?? "Brown").dot}`}
+                                  aria-hidden="true"
+                                />
+                              ))
                             )}
                           </span>
                         )}
