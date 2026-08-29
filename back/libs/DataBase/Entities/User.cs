@@ -9,7 +9,7 @@ namespace JiuDiary.Database.Entities;
 /// </summary>
 [Table("Users")]
 [Index(nameof(Login), nameof(RoleId), IsUnique = true)]
-public sealed class User
+public sealed class User : IAuditable
 {
     /// <summary>
     /// Уникальный идентификатор пользователя.
@@ -41,6 +41,10 @@ public sealed class User
     /// </summary>
     [ForeignKey(nameof(Role))]
     public int RoleId { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
 
     /// <summary>
     /// Назначенная пользователю роль.

@@ -9,7 +9,7 @@ namespace JiuDiary.Database.Entities;
 /// </summary>
 [Table("ClientInfo")]
 [Index(nameof(UserId), IsUnique = true)]
-public sealed class ClientInfo
+public sealed class ClientInfo : IAuditable
 {
     /// <summary>
     /// Идентификатор пользователя и первичный ключ записи.
@@ -60,6 +60,10 @@ public sealed class ClientInfo
     /// </summary>
     [ForeignKey(nameof(Belt))]
     public int? BeltId { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
 
     /// <summary>
     /// Пользователь, которому принадлежит информация.

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace JiuDiary.Database.Entities;
 
 [Table("ClientBelts")]
-public sealed class ClientBelt
+public sealed class ClientBelt : IAuditable
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -19,6 +19,10 @@ public sealed class ClientBelt
     public DateOnly? ReceivedDate { get; set; }
 
     public int StripesCount { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
 
     public ClientInfo ClientInfo { get; set; } = null!;
 

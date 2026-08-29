@@ -40,8 +40,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             {
                 ClientInfoId = clientInfoId,
                 TrainingId = trainingId,
-                Rounds = inputModel.Rounds,
-                CreatedAt = DateTime.UtcNow
+                Rounds = inputModel.Rounds
             };
             dbContext.ClientTrainings.Add(clientTraining);
         }

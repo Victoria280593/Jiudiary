@@ -40,6 +40,22 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
 
     public DbSet<StudentGroup> StudentGroups => Set<StudentGroup>();
 
+    public override int SaveChanges() => SaveChanges(true);
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        ApplyAuditableDates();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => SaveChangesAsync(true, cancellationToken);
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        ApplyAuditableDates();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -96,5 +112,23 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
                 .HasForeignKey(item => item.TrainingId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+    }
+
+    private void ApplyAuditableDates()
+    {
+        var now = DateTime.Now;
+        foreach (var entry in ChangeTracker.Entries<IAuditable>())
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedAt = now;
+                entry.Entity.UpdatedAt = null;
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Property(nameof(IAuditable.CreatedAt)).IsModified = false;
+                entry.Entity.UpdatedAt = now;
+            }
+        }
     }
 }
