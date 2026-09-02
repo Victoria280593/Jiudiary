@@ -73,6 +73,7 @@ export type BackendClientTraining = {
   id: string;
   trainingId: string;
   rounds: number | null;
+  attended: boolean;
   createdAt: string;
 };
 
@@ -245,6 +246,7 @@ function isBackendClientTraining(value: unknown): value is BackendClientTraining
     typeof clientTraining.id === "string" &&
     typeof clientTraining.trainingId === "string" &&
     (clientTraining.rounds === null || typeof clientTraining.rounds === "number") &&
+    typeof clientTraining.attended === "boolean" &&
     typeof clientTraining.createdAt === "string"
   );
 }
@@ -1106,7 +1108,8 @@ export type SaveBackendClientTrainingResult =
 export async function saveBackendClientTraining(
   accessToken: string,
   trainingId: string,
-  rounds: number | null
+  rounds: number | null,
+  attended: boolean
 ): Promise<SaveBackendClientTrainingResult> {
   try {
     const response = await fetch(`${backendUrl}/api/trainings/client/${encodeURIComponent(trainingId)}`, {
@@ -1115,7 +1118,7 @@ export async function saveBackendClientTraining(
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ rounds }),
+      body: JSON.stringify({ rounds, attended }),
       cache: "no-store",
       signal: AbortSignal.timeout(5_000),
     });

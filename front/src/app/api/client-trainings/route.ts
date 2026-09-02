@@ -14,20 +14,23 @@ export async function PUT(request: Request) {
   const input = (await request.json().catch(() => null)) as {
     trainingId?: unknown;
     rounds?: unknown;
+    attended?: unknown;
   } | null;
   if (
     !input ||
     typeof input.trainingId !== "string" ||
     !Number.isInteger(input.rounds) ||
-    Number(input.rounds) < 0
+    Number(input.rounds) < 0 ||
+    typeof input.attended !== "boolean"
   ) {
-    return NextResponse.json({ error: "Укажите тренировку и корректное количество раундов." }, { status: 400 });
+    return NextResponse.json({ error: "Укажите тренировку, корректное количество раундов и отметку посещения." }, { status: 400 });
   }
 
   const result = await saveBackendClientTraining(
     session.accessToken,
     input.trainingId,
-    Number(input.rounds)
+    Number(input.rounds),
+    input.attended
   );
   return result.ok
     ? NextResponse.json(result.clientTraining)

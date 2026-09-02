@@ -41,6 +41,16 @@ type SavedTraining = {
   endTime: string;
 };
 
+function clientTrainingBadge(clientTraining: ClientTraining) {
+  if (clientTraining.rounds) {
+    return { label: `Раунды: ${clientTraining.rounds}`, className: "bg-accent-soft text-accent-foreground" };
+  }
+  if (clientTraining.attended) {
+    return { label: "Посетил", className: "bg-success-soft text-success" };
+  }
+  return { label: "Не посетил", className: "bg-danger-soft text-danger" };
+}
+
 function localDateTimeValue(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -127,8 +137,13 @@ function ClientTrainingModal({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [rounds, setRounds] = useState(clientTraining?.rounds ?? 0);
+  const [manualAttended, setManualAttended] = useState(clientTraining?.attended ?? false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
+
+  // При раундах > 0 посещение проставляется автоматически и недоступно для ручного снятия.
+  // Вручную отметку можно ставить/снимать только пока раундов ещё нет.
+  const attended = rounds > 0 ? true : manualAttended;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -140,7 +155,7 @@ function ClientTrainingModal({
     setIsSaving(true);
     setError(undefined);
     try {
-      onSaved(await saveClientTraining(training.id, rounds));
+      onSaved(await saveClientTraining(training.id, rounds, attended));
       onClose();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Не удалось отметить тренировку.");
@@ -202,6 +217,21 @@ function ClientTrainingModal({
             </button>
           </div>
         </div>
+
+        <label
+          className={`mt-5 flex items-center gap-3 rounded-2xl border border-border bg-white px-4 py-3 ${rounds > 0 ? "opacity-60" : "cursor-pointer hover:bg-surface-muted"}`}
+        >
+          <input
+            type="checkbox"
+            checked={attended}
+            disabled={rounds > 0 || isSaving}
+            onChange={(event) => setManualAttended(event.target.checked)}
+            className="h-4 w-4 rounded border-border text-accent focus:ring-1 focus:ring-accent"
+          />
+          <span className="text-sm font-medium text-foreground">
+            Посетил{rounds > 0 && <span className="ml-1 font-normal text-muted">— проставлено автоматически по раундам</span>}
+          </span>
+        </label>
 
         {error && <p className={`${errorClass} mt-5`}>{error}</p>}
         <button
@@ -468,8 +498,8 @@ export function DaySchedulePanel({
                           </h3>
                           {training.coachName && <p className="mt-3 text-xs font-medium text-accent-foreground">Тренер: {training.coachName}</p>}
                           {training.clientTraining && (
-                            <p className="mt-3 inline-flex rounded-full bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-foreground">
-                              {training.clientTraining.rounds === null ? "Тренировка отмечена" : `Раунды: ${training.clientTraining.rounds}`}
+                            <p className={`mt-3 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${clientTrainingBadge(training.clientTraining).className}`}>
+                              {clientTrainingBadge(training.clientTraining).label}
                             </p>
                           )}
                         </Link>
@@ -479,8 +509,8 @@ export function DaySchedulePanel({
                           <h3 className={`${training.groupName ? "mt-1" : ""} whitespace-pre-wrap break-words text-sm font-semibold leading-5 sm:text-base sm:leading-6`}>{training.title || "Тренировка"}</h3>
                           {training.coachName && <p className="mt-3 text-xs font-medium text-accent-foreground">Тренер: {training.coachName}</p>}
                           {training.clientTraining && (
-                            <p className="mt-3 inline-flex rounded-full bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-foreground">
-                              {training.clientTraining.rounds === null ? "Тренировка отмечена" : `Раунды: ${training.clientTraining.rounds}`}
+                            <p className={`mt-3 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${clientTrainingBadge(training.clientTraining).className}`}>
+                              {clientTrainingBadge(training.clientTraining).label}
                             </p>
                           )}
                         </>

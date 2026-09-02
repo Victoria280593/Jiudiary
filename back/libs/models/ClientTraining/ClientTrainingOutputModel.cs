@@ -8,5 +8,7 @@ public sealed class ClientTrainingOutputModel
 
     public int? Rounds { get; set; }
 
+    public bool Attended { get; set; }
+
     public DateTime CreatedAt { get; set; }
 }
