@@ -24,8 +24,6 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
 
     public DbSet<Submission> Submissions => Set<Submission>();
 
-    public DbSet<SubmissionAlias> SubmissionAliases => Set<SubmissionAlias>();
-
     public DbSet<Group> Groups => Set<Group>();
 
     public DbSet<GroupColor> Colors => Set<GroupColor>();

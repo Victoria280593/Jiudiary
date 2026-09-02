@@ -6,10 +6,11 @@ namespace JiuDiary.Database.Entities;
 
 /// <summary>
 /// Приём (болевой или удушающий) из библиотеки известных названий БЖЖ.
+/// Каноническое название хранится на английском; варианты написания (в т.ч. русские)
+/// для поиска описаны в submissions.json.
 /// </summary>
 [Table("Submissions")]
 [Index(nameof(Name), IsUnique = true)]
-[Index(nameof(NameEn), IsUnique = true)]
 public sealed class Submission
 {
     [Key]
@@ -19,16 +20,4 @@ public sealed class Submission
     [Required]
     [MaxLength(150)]
     public string Name { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Каноническое англоязычное название приёма (для отображения и поиска).
-    /// </summary>
-    [Required]
-    [MaxLength(150)]
-    public string NameEn { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Дополнительные варианты написания приёма (транслитерации, сленг, устаревшие названия) — только для поиска.
-    /// </summary>
-    public ICollection<SubmissionAlias> Aliases { get; set; } = [];
 }
