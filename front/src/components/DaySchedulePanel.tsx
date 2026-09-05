@@ -247,7 +247,6 @@ function ClientTrainingModal({
   const [manualAttended, setManualAttended] = useState(Boolean(clientTraining));
   const [submissions, setSubmissions] = useState<ClientTrainingSubmission[]>(clientTraining?.submissions ?? []);
   const [isSubmissionSearchOpen, setIsSubmissionSearchOpen] = useState(false);
-  const [changingSubmissionId, setChangingSubmissionId] = useState<number>();
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -269,7 +268,31 @@ function ClientTrainingModal({
         setError("Отметьте посещение или укажите количество раундов.");
         return;
       }
-      onSaved(await saveClientTraining(training.id, rounds));
+
+      const savedTraining = await saveClientTraining(training.id, rounds);
+      const persistedSubmissions = new Map(savedTraining.submissions.map((submission) => [submission.submissionId, submission]));
+      const draftSubmissionIds = new Set(submissions.map((submission) => submission.submissionId));
+
+      const saveSubmissions = submissions.map(async (submission) => {
+        const persistedSubmission = persistedSubmissions.get(submission.submissionId);
+        if (!persistedSubmission) {
+          const addedSubmission = await addClientTrainingSubmission(training.id, submission.submissionId);
+          return submission.count === addedSubmission.count
+            ? addedSubmission
+            : updateClientTrainingSubmission(training.id, submission.submissionId, submission.count);
+        }
+
+        return submission.count === persistedSubmission.count
+          ? persistedSubmission
+          : updateClientTrainingSubmission(training.id, submission.submissionId, submission.count);
+      });
+      const deleteSubmissions = savedTraining.submissions
+        .filter((submission) => !draftSubmissionIds.has(submission.submissionId))
+        .map((submission) => deleteClientTrainingSubmission(training.id, submission.submissionId));
+      const savedSubmissions = await Promise.all(saveSubmissions);
+      await Promise.all(deleteSubmissions);
+
+      onSaved({ ...savedTraining, submissions: savedSubmissions.sort((left, right) => left.submissionId - right.submissionId) });
       onClose();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Не удалось отметить тренировку.");
@@ -279,42 +302,20 @@ function ClientTrainingModal({
   }
 
   async function addSubmission(submission: SubmissionSearchResult) {
-    setChangingSubmissionId(submission.id);
     setError(undefined);
-    try {
-      const addedSubmission = await addClientTrainingSubmission(training.id, submission.id);
-      setSubmissions((current) => [...current, addedSubmission].sort((left, right) => left.submissionId - right.submissionId));
-      setManualAttended(true);
-    } finally {
-      setChangingSubmissionId(undefined);
-    }
+    setSubmissions((current) => [...current, { submissionId: submission.id, nameRu: submission.nameRu, nameEn: submission.nameEn, count: 1 }].sort((left, right) => left.submissionId - right.submissionId));
+    setManualAttended(true);
   }
 
-  async function changeSubmissionCount(submission: ClientTrainingSubmission, count: number) {
+  function changeSubmissionCount(submission: ClientTrainingSubmission, count: number) {
     if (count <= 0) return;
-    setChangingSubmissionId(submission.submissionId);
     setError(undefined);
-    try {
-      const updatedSubmission = await updateClientTrainingSubmission(training.id, submission.submissionId, count);
-      setSubmissions((current) => current.map((item) => item.submissionId === updatedSubmission.submissionId ? updatedSubmission : item));
-    } catch (updateError) {
-      setError(updateError instanceof Error ? updateError.message : "Не удалось изменить количество приёмов.");
-    } finally {
-      setChangingSubmissionId(undefined);
-    }
+    setSubmissions((current) => current.map((item) => item.submissionId === submission.submissionId ? { ...item, count } : item));
   }
 
-  async function removeSubmission(submissionId: number) {
-    setChangingSubmissionId(submissionId);
+  function removeSubmission(submissionId: number) {
     setError(undefined);
-    try {
-      await deleteClientTrainingSubmission(training.id, submissionId);
-      setSubmissions((current) => current.filter((submission) => submission.submissionId !== submissionId));
-    } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Не удалось удалить приём.");
-    } finally {
-      setChangingSubmissionId(undefined);
-    }
+    setSubmissions((current) => current.filter((submission) => submission.submissionId !== submissionId));
   }
 
   return (
@@ -392,27 +393,24 @@ function ClientTrainingModal({
 
           {submissions.length > 0 && (
             <div className="mt-4 space-y-2.5">
-              {submissions.map((submission) => {
-                const isChanging = changingSubmissionId === submission.submissionId;
-                return (
+              {submissions.map((submission) => (
                   <div key={submission.submissionId} className="grid grid-cols-[minmax(0,1fr)_2.75rem_2rem_2.75rem_2.5rem] items-center gap-2 rounded-2xl border border-border bg-white px-3 py-2.5 shadow-[0_8px_22px_-20px_rgba(86,61,38,0.42)]">
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold">{submission.nameRu}</span>
                       <span className="mt-0.5 block truncate text-xs text-muted">{submission.nameEn}</span>
                     </span>
-                    <button type="button" onClick={() => void changeSubmissionCount(submission, submission.count - 1)} disabled={isChanging || submission.count <= 1} aria-label={`Уменьшить количество «${submission.nameRu}»`} className="h-10 rounded-xl border border-border bg-white text-xl transition hover:bg-surface-muted disabled:opacity-35">−</button>
+                    <button type="button" onClick={() => changeSubmissionCount(submission, submission.count - 1)} disabled={isSaving || submission.count <= 1} aria-label={`Уменьшить количество «${submission.nameRu}»`} className="h-10 rounded-xl border border-border bg-white text-xl transition hover:bg-surface-muted disabled:opacity-35">−</button>
                     <output className="text-center text-lg font-semibold tabular-nums" aria-live="polite">{submission.count}</output>
-                    <button type="button" onClick={() => void changeSubmissionCount(submission, submission.count + 1)} disabled={isChanging} aria-label={`Увеличить количество «${submission.nameRu}»`} className="h-10 rounded-xl bg-accent text-xl text-white transition hover:bg-accent-hover disabled:opacity-50">+</button>
-                    <button type="button" onClick={() => void removeSubmission(submission.submissionId)} disabled={isChanging} aria-label={`Удалить «${submission.nameRu}»`} className="flex h-10 items-center justify-center rounded-xl text-danger transition hover:bg-danger-soft disabled:opacity-50">
+                    <button type="button" onClick={() => changeSubmissionCount(submission, submission.count + 1)} disabled={isSaving} aria-label={`Увеличить количество «${submission.nameRu}»`} className="h-10 rounded-xl bg-accent text-xl text-white transition hover:bg-accent-hover disabled:opacity-50">+</button>
+                    <button type="button" onClick={() => removeSubmission(submission.submissionId)} disabled={isSaving} aria-label={`Удалить «${submission.nameRu}»`} className="flex h-10 items-center justify-center rounded-xl text-danger transition hover:bg-danger-soft disabled:opacity-50">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5m4-5v5" /></svg>
                     </button>
                   </div>
-                );
-              })}
+              ))}
             </div>
           )}
 
-          <button type="button" onClick={() => setIsSubmissionSearchOpen(true)} disabled={isSaving || changingSubmissionId !== undefined} className="mt-4 flex min-h-14 w-full items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-white/45 text-sm font-semibold text-accent-foreground transition hover:border-accent/50 hover:bg-accent-soft/35 disabled:opacity-50">
+          <button type="button" onClick={() => setIsSubmissionSearchOpen(true)} disabled={isSaving} className="mt-4 flex min-h-14 w-full items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-white/45 text-sm font-semibold text-accent-foreground transition hover:border-accent/50 hover:bg-accent-soft/35 disabled:opacity-50">
             <span className="text-2xl font-light" aria-hidden="true">+</span>
             Добавить сабмишен
           </button>
@@ -422,7 +420,7 @@ function ClientTrainingModal({
         <button
           type="button"
           onClick={() => void save()}
-          disabled={isSaving || changingSubmissionId !== undefined || !attended}
+          disabled={isSaving || !attended}
           className="mt-7 min-h-12 w-full rounded-2xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60"
         >
           {isSaving ? "Сохранение…" : "Сохранить"}
@@ -676,7 +674,7 @@ export function DaySchedulePanel({
                       )}
                     </time>
 
-                    <div className="min-w-0 px-4 py-4 pr-12 sm:px-6 sm:py-5 sm:pr-16">
+                    <div className={`min-w-0 px-4 py-4 sm:px-6 sm:py-5 ${showCreateForm ? "pr-24 sm:pr-28" : "pr-16 sm:pr-20"}`}>
                       {linkBase ? (
                         <Link href={`${linkBase}/${training.id}`} className="group block rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
                           {training.groupName && <p className="truncate text-xs font-normal text-muted sm:text-sm">{training.groupName}</p>}
@@ -704,54 +702,53 @@ export function DaySchedulePanel({
                       )}
                     </div>
 
-                    <div data-training-menu className="absolute right-2 top-2 z-10 sm:right-4 sm:top-4">
+                    <div data-training-menu className="absolute right-2 top-2 z-10 flex items-center gap-1.5 sm:right-4 sm:top-4">
                       <button
                         type="button"
-                        onClick={() => setOpenMenuId((current) => current === training.id ? undefined : training.id)}
-                        aria-label={`Действия с тренировкой «${training.title || "Тренировка"}»`}
-                        aria-expanded={openMenuId === training.id}
-                        aria-haspopup="menu"
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-lg tracking-[0.12em] text-muted transition hover:bg-surface-muted hover:text-foreground"
+                        onClick={() => {
+                          setMarkingTraining(training);
+                          setOpenMenuId(undefined);
+                        }}
+                        aria-label={training.clientTraining ? `Изменить отметку тренировки «${training.title || "Тренировка"}»` : `Отметить тренировку «${training.title || "Тренировка"}»`}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-success text-2xl font-light text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-success/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/35"
                       >
-                        <span aria-hidden="true" className="-translate-y-1">…</span>
+                        <span aria-hidden="true">+</span>
                       </button>
 
-                      {openMenuId === training.id && (
+                      {showCreateForm && (
+                        <button
+                          type="button"
+                          onClick={() => setOpenMenuId((current) => current === training.id ? undefined : training.id)}
+                          aria-label={`Действия с тренировкой «${training.title || "Тренировка"}»`}
+                          aria-expanded={openMenuId === training.id}
+                          aria-haspopup="menu"
+                          className="flex h-9 w-9 items-center justify-center rounded-full text-lg tracking-[0.12em] text-muted transition hover:bg-surface-muted hover:text-foreground"
+                        >
+                          <span aria-hidden="true" className="-translate-y-1">…</span>
+                        </button>
+                      )}
+
+                      {showCreateForm && openMenuId === training.id && (
                         <div role="menu" className="absolute right-0 top-10 z-20 w-48 overflow-hidden rounded-xl border border-border/70 bg-white p-1.5 shadow-[0_18px_45px_-18px_rgba(43,36,29,0.42)]">
                           <button
                             type="button"
                             role="menuitem"
                             onClick={() => {
-                              setMarkingTraining(training);
+                              setEditingTraining(training);
                               setOpenMenuId(undefined);
                             }}
                             className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm text-foreground transition hover:bg-surface-muted"
                           >
-                            {training.clientTraining ? "Изменить отметку" : "Отметить тренировку"}
+                            Редактировать
                           </button>
-                          {showCreateForm && (
-                            <button
-                              type="button"
-                              role="menuitem"
-                              onClick={() => {
-                                setEditingTraining(training);
-                                setOpenMenuId(undefined);
-                              }}
-                              className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm text-foreground transition hover:bg-surface-muted"
-                            >
-                              Редактировать
-                            </button>
-                          )}
-                          {showCreateForm && (
-                            <button
-                              type="button"
-                              role="menuitem"
-                              onClick={() => openDeleteDialog(training)}
-                              className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm font-medium text-danger transition hover:bg-danger-soft"
-                            >
-                              Удалить
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => openDeleteDialog(training)}
+                            className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm font-medium text-danger transition hover:bg-danger-soft"
+                          >
+                            Удалить
+                          </button>
                         </div>
                       )}
                     </div>
