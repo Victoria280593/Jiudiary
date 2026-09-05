@@ -18,11 +18,6 @@ const SubmissionDistributionChart = dynamic(() => import("./SubmissionDistributi
   ssr: false,
   loading: () => <div className="h-64 animate-pulse rounded-2xl bg-surface-muted" aria-label="Загрузка распределения сабмишенов" />,
 });
-const TrainingTrendChart = dynamic(() => import("./TrainingTrendChart"), {
-  ssr: false,
-  loading: () => <div className="h-full animate-pulse rounded-2xl bg-surface-muted" aria-label="Загрузка динамики тренировок" />,
-});
-
 type GroupBy = "day" | "week" | "month";
 type PeriodPreset = "currentWeek" | "currentMonth" | "currentYear";
 
@@ -129,10 +124,10 @@ function aggregatePoints(analytics: FightAnalytics, groupBy: GroupBy): FightChar
   for (let date = toDate(analytics.fromDate); date <= toDate(analytics.toDate); date = addDays(date, 1)) {
     const dateKey = toIsoDate(date);
     const sourcePoint = analyticsByDate.get(dateKey);
-    dailyPoints.push({ date: dateKey, fightsCount: sourcePoint?.fightsCount ?? 0, trainingsCount: sourcePoint?.trainingsCount ?? 0 });
+    dailyPoints.push({ date: dateKey, fightsCount: sourcePoint?.fightsCount ?? 0 });
   }
 
-  const groups = new Map<string, { date: Date; fightsCount: number; trainingsCount: number }>();
+  const groups = new Map<string, { date: Date; fightsCount: number }>();
   for (const point of dailyPoints) {
     const date = toDate(point.date);
     const groupDate = groupBy === "week"
@@ -145,11 +140,10 @@ function aggregatePoints(analytics: FightAnalytics, groupBy: GroupBy): FightChar
     groups.set(key, {
       date: groupDate,
       fightsCount: (current?.fightsCount ?? 0) + point.fightsCount,
-      trainingsCount: (current?.trainingsCount ?? 0) + point.trainingsCount,
     });
   }
 
-  return [...groups.values()].map((point) => ({ ...chartLabels(point.date, groupBy), fightsCount: point.fightsCount, trainingsCount: point.trainingsCount }));
+  return [...groups.values()].map((point) => ({ ...chartLabels(point.date, groupBy), fightsCount: point.fightsCount }));
 }
 
 function FightsIcon() {
@@ -182,7 +176,7 @@ function AnalyticsSummaryBlock({ title, description, metrics }: { title: string;
         <h2 className="text-base font-semibold text-foreground sm:text-lg">{title}</h2>
         <p className="mt-0.5 text-xs text-muted sm:text-sm">{description}</p>
       </header>
-      <div className="mt-5 grid grid-cols-2 gap-3">
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {metrics.map((metric) => (
           <div key={metric.label} className="flex min-h-28 min-w-0 flex-col rounded-2xl border border-border/65 bg-white/85 p-3.5 sm:min-h-32 sm:p-4">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-soft/75 text-accent"><MetricIcon kind={metric.kind} /></span>
@@ -311,7 +305,7 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
         </article>
       </section>
 
-      <section className="grid items-start gap-5 xl:grid-cols-2">
+      <section>
         <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
           <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Распределение сабмишенов</h2>
@@ -319,15 +313,6 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
           </div>
           <div className="mt-5">
             <SubmissionDistributionChart points={analytics.submissionDistribution} />
-          </div>
-        </article>
-        <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
-          <div>
-            <h2 className="text-base font-semibold text-foreground sm:text-lg">Динамика тренировок</h2>
-            <p className="mt-1 text-xs text-muted">Количество отмеченных тренировок за выбранный период</p>
-          </div>
-          <div className={`relative mt-5 h-72 overflow-x-auto pb-2 transition-opacity ${isLoading ? "opacity-45" : "opacity-100"}`}>
-            <TrainingTrendChart points={chartPoints} />
           </div>
         </article>
       </section>

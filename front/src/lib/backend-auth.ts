@@ -303,8 +303,7 @@ function isFightAnalytics(value: unknown): value is FightAnalytics {
     analytics.points.every((point) =>
       Boolean(point) &&
       typeof point.date === "string" &&
-      typeof point.fightsCount === "number" &&
-      typeof point.trainingsCount === "number"
+      typeof point.fightsCount === "number"
     ) &&
     Array.isArray(analytics.submissionDistribution) &&
     analytics.submissionDistribution.every((submission) =>

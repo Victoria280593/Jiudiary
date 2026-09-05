@@ -19,7 +19,6 @@ export type FightChartPoint = {
   label: string;
   compactLabel: string;
   fightsCount: number;
-  trainingsCount: number;
 };
 
 const options: ChartOptions<"line"> = {
