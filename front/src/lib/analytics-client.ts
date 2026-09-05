@@ -3,14 +3,26 @@ export type FightAnalyticsPoint = {
   fightsCount: number;
 };
 
+export type SubmissionAnalyticsPoint = {
+  submissionId: number;
+  nameRu: string;
+  nameEn: string;
+  count: number;
+};
+
 export type FightAnalytics = {
   fromDate: string;
   toDate: string;
   allTimeFightsCount: number;
   periodFightsCount: number;
+  allTimeTrainingsCount: number;
+  periodTrainingsCount: number;
+  allTimeSubmissionsCount: number;
+  periodSubmissionsCount: number;
   allTimeAverageFightsPerTraining: number;
   periodAverageFightsPerTraining: number;
   points: FightAnalyticsPoint[];
+  submissionDistribution: SubmissionAnalyticsPoint[];
 };
 
 export async function getFightAnalytics(fromDate: string, toDate: string): Promise<FightAnalytics> {
@@ -21,7 +33,7 @@ export async function getFightAnalytics(fromDate: string, toDate: string): Promi
 
   if (!response.ok) {
     const result = (await response.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(result?.error ?? "Не удалось загрузить аналитику схваток.");
+    throw new Error(result?.error ?? "Не удалось загрузить аналитику.");
   }
 
   return response.json() as Promise<FightAnalytics>;

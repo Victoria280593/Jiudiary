@@ -14,6 +14,10 @@ const FightTrendChart = dynamic(() => import("./FightTrendChart"), {
   ssr: false,
   loading: () => <div className="h-full animate-pulse rounded-2xl bg-surface-muted" aria-label="Загрузка графика" />,
 });
+const SubmissionDistributionChart = dynamic(() => import("./SubmissionDistributionChart"), {
+  ssr: false,
+  loading: () => <div className="h-64 animate-pulse rounded-2xl bg-surface-muted" aria-label="Загрузка распределения сабмишенов" />,
+});
 
 type GroupBy = "day" | "week" | "month";
 type PeriodPreset = "currentWeek" | "currentMonth" | "currentYear";
@@ -150,6 +154,44 @@ function FightsIcon() {
   );
 }
 
+type MetricKind = "fights" | "trainings" | "average" | "submissions";
+
+function MetricIcon({ kind }: { kind: MetricKind }) {
+  if (kind === "trainings") {
+    return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2" /><path strokeLinecap="round" d="M8 3v4m8-4v4M4 10h16" /></svg>;
+  }
+  if (kind === "average") {
+    return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 19V9m7 10V5m7 14v-7M3 19h18" /></svg>;
+  }
+  if (kind === "submissions") {
+    return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M8 4h8v3a4 4 0 0 1-8 0V4Zm0 2H5v1a4 4 0 0 0 4 4m7-5h3v1a4 4 0 0 1-4 4m-3 0v5m-4 4h8m-6-4h4" /></svg>;
+  }
+  return <FightsIcon />;
+}
+
+function AnalyticsSummaryBlock({ title, description, metrics, highlighted = false }: { title: string; description: string; metrics: { label: string; value: string | number; kind: MetricKind }[]; highlighted?: boolean }) {
+  return (
+    <article className={`calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 p-4 sm:p-6 ${highlighted ? "bg-[linear-gradient(115deg,rgba(246,237,226,0.9),rgba(255,255,255,0.96))]" : "bg-white/94"}`}>
+      <header className="flex items-center gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent"><MetricIcon kind={highlighted ? "trainings" : "average"} /></span>
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold text-foreground sm:text-lg">{title}</h2>
+          <p className="mt-0.5 text-xs text-muted sm:text-sm">{description}</p>
+        </div>
+      </header>
+      <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="flex min-h-28 min-w-0 flex-col rounded-2xl border border-border/65 bg-white/85 p-3.5 sm:min-h-32 sm:p-4">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-soft/75 text-accent"><MetricIcon kind={metric.kind} /></span>
+            <p className="mt-auto pt-4 text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl">{metric.value}</p>
+            <p className="mt-1 text-xs text-muted">{metric.label}</p>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
 export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: FightAnalytics }) {
   const [analytics, setAnalytics] = useState(initialAnalytics);
   const [fromDate, setFromDate] = useState(initialAnalytics.fromDate);
@@ -180,7 +222,7 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
         return nextGroups.includes(currentGroup) ? currentGroup : recommendedGroup(result.fromDate, result.toDate);
       });
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Не удалось загрузить аналитику схваток.");
+      setError(loadError instanceof Error ? loadError.message : "Не удалось загрузить аналитику.");
     } finally {
       setIsLoading(false);
     }
@@ -192,11 +234,17 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
   }
 
   const periodTitle = `${new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "short", year: "numeric" }).format(toDate(analytics.fromDate))} — ${new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "short", year: "numeric" }).format(toDate(analytics.toDate))}`;
-  const summaryCards = [
-    { label: "Всего схваток", description: "за всё время", value: analytics.allTimeFightsCount },
-    { label: "Среднее за тренировку", description: "за всё время", value: formatAverage(analytics.allTimeAverageFightsPerTraining) },
-    { label: "Схватки за период", description: periodTitle, value: analytics.periodFightsCount },
-    { label: "Среднее за тренировку", description: "за выбранный период", value: formatAverage(analytics.periodAverageFightsPerTraining) },
+  const allTimeMetrics = [
+    { label: "Схваток", value: analytics.allTimeFightsCount, kind: "fights" as const },
+    { label: "Тренировок", value: analytics.allTimeTrainingsCount, kind: "trainings" as const },
+    { label: "Среднее за тренировку", value: formatAverage(analytics.allTimeAverageFightsPerTraining), kind: "average" as const },
+    { label: "Сабмишенов", value: analytics.allTimeSubmissionsCount, kind: "submissions" as const },
+  ];
+  const periodMetrics = [
+    { label: "Схваток", value: analytics.periodFightsCount, kind: "fights" as const },
+    { label: "Тренировок", value: analytics.periodTrainingsCount, kind: "trainings" as const },
+    { label: "Среднее за тренировку", value: formatAverage(analytics.periodAverageFightsPerTraining), kind: "average" as const },
+    { label: "Сабмишенов", value: analytics.periodSubmissionsCount, kind: "submissions" as const },
   ];
 
   return (
@@ -204,7 +252,7 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
       <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">Аналитика</h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted sm:text-base">Следите за объёмом схваток и динамикой тренировочного процесса.</p>
+          <p className="mt-2 max-w-2xl text-sm text-muted sm:text-base">Следите за тренировками, объёмом схваток и выполненными сабмишенами.</p>
         </div>
 
         <div className="calendar-shadow rounded-2xl border border-border/80 bg-white/92 p-3 sm:p-4">
@@ -234,26 +282,9 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
 
       {error && <p className={errorClass}>{error}</p>}
 
-      <div className="border-b border-border/80">
-        <span className="inline-flex min-h-10 items-center border-b-2 border-accent px-1 text-sm font-semibold text-accent-foreground">Схватки</span>
-      </div>
+      <AnalyticsSummaryBlock title="За всё время" description="Общая статистика по всем отмеченным тренировкам" metrics={allTimeMetrics} />
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
-        {summaryCards.map((card, index) => (
-          <article key={`${card.label}-${card.description}`} className="card-shadow flex min-h-44 min-w-0 flex-col rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:min-h-48 sm:p-5">
-            <div className="flex items-start gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent"><FightsIcon /></span>
-              <div className="min-w-0">
-                <p className="text-base font-semibold leading-5 text-foreground">{card.label}</p>
-                <p className="mt-0.5 text-xs leading-4 text-muted/80">
-                  {index === 2 ? <><span className="sm:hidden">за выбранный период</span><span className="hidden sm:inline">{card.description}</span></> : card.description}
-                </p>
-              </div>
-            </div>
-            <p className="mt-auto pt-6 text-4xl font-semibold tracking-[-0.05em] text-foreground sm:text-5xl">{card.value}</p>
-          </article>
-        ))}
-      </section>
+      <AnalyticsSummaryBlock title="За выбранный период" description={periodTitle} metrics={periodMetrics} highlighted />
 
       <section>
         <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
@@ -272,6 +303,18 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
 
           <div className={`relative mt-5 h-64 overflow-x-auto pb-2 transition-opacity sm:h-80 ${isLoading ? "opacity-45" : "opacity-100"}`}>
             <FightTrendChart points={chartPoints} />
+          </div>
+        </article>
+      </section>
+
+      <section>
+        <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
+          <div>
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Распределение сабмишенов</h2>
+            <p className="mt-1 text-xs text-muted">Количество выполненных приёмов за выбранный период</p>
+          </div>
+          <div className="mt-5">
+            <SubmissionDistributionChart points={analytics.submissionDistribution} />
           </div>
         </article>
       </section>

@@ -293,6 +293,10 @@ function isFightAnalytics(value: unknown): value is FightAnalytics {
     typeof analytics.toDate === "string" &&
     typeof analytics.allTimeFightsCount === "number" &&
     typeof analytics.periodFightsCount === "number" &&
+    typeof analytics.allTimeTrainingsCount === "number" &&
+    typeof analytics.periodTrainingsCount === "number" &&
+    typeof analytics.allTimeSubmissionsCount === "number" &&
+    typeof analytics.periodSubmissionsCount === "number" &&
     typeof analytics.allTimeAverageFightsPerTraining === "number" &&
     typeof analytics.periodAverageFightsPerTraining === "number" &&
     Array.isArray(analytics.points) &&
@@ -300,6 +304,14 @@ function isFightAnalytics(value: unknown): value is FightAnalytics {
       Boolean(point) &&
       typeof point.date === "string" &&
       typeof point.fightsCount === "number"
+    ) &&
+    Array.isArray(analytics.submissionDistribution) &&
+    analytics.submissionDistribution.every((submission) =>
+      Boolean(submission) &&
+      typeof submission.submissionId === "number" &&
+      typeof submission.nameRu === "string" &&
+      typeof submission.nameEn === "string" &&
+      typeof submission.count === "number"
     )
   );
 }

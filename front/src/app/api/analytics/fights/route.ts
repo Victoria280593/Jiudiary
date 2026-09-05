@@ -21,5 +21,5 @@ export async function GET(request: Request) {
   const analytics = await getBackendFightAnalytics(session.accessToken, fromDate, toDate);
   return analytics
     ? NextResponse.json(analytics, { headers: { "Cache-Control": "no-store" } })
-    : NextResponse.json({ error: "Не удалось загрузить аналитику схваток." }, { status: 502 });
+    : NextResponse.json({ error: "Не удалось загрузить аналитику." }, { status: 502 });
 }

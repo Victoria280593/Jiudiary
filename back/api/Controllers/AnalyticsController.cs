@@ -12,7 +12,7 @@ namespace JiuDiary.Api.Controllers;
 public sealed class AnalyticsController(AnalyticsService analyticsService) : BaseController
 {
     /// <summary>
-    /// Получает аналитику количества схваток текущего клиента за выбранный период.
+    /// Получает общую аналитику тренировок текущего клиента за выбранный период и за всё время.
     /// </summary>
     [HttpGet("fights")]
     [ProducesResponseType<FightAnalyticsOutputModel>(StatusCodes.Status200OK)]

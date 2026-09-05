@@ -12,7 +12,7 @@ public sealed class AnalyticsService(JiuDiaryDbContext dbContext, ILogger<Analyt
     private const int MaxPeriodDays = 3660;
 
     /// <summary>
-    /// Получает количество схваток текущего клиента по дням за выбранный период.
+    /// Получает сводные показатели, динамику схваток и распределение сабмишенов текущего клиента.
     /// </summary>
     public async Task<FightAnalyticsOutputModel> GetFights(DateOnly fromDate, DateOnly toDate, AuthenticatedUser user, CancellationToken cancellationToken)
     {
@@ -29,7 +29,7 @@ public sealed class AnalyticsService(JiuDiaryDbContext dbContext, ILogger<Analyt
             {
                 Date = group.Key,
                 FightsCount = group.Sum(clientTraining => clientTraining.Rounds ?? 0),
-                TrainingsCount = group.Count(clientTraining => clientTraining.Rounds.HasValue)
+                TrainingsCount = group.Count()
             })
             .OrderBy(item => item.Date)
             .ToListAsync(cancellationToken);
@@ -41,9 +41,31 @@ public sealed class AnalyticsService(JiuDiaryDbContext dbContext, ILogger<Analyt
             .Select(group => new
             {
                 FightsCount = group.Sum(clientTraining => clientTraining.Rounds ?? 0),
-                TrainingsCount = group.Count(clientTraining => clientTraining.Rounds.HasValue)
+                TrainingsCount = group.Count()
             })
             .SingleOrDefaultAsync(cancellationToken);
+
+        var allTimeSubmissionsCount = await dbContext.ClientTrainingSubmissions
+            .AsNoTracking()
+            .Where(item => item.ClientTraining.ClientInfo.UserId == user.Id)
+            .SumAsync(item => (int?)item.Count, cancellationToken) ?? 0;
+        var submissionDistribution = await dbContext.ClientTrainingSubmissions
+            .AsNoTracking()
+            .Where(item =>
+                item.ClientTraining.ClientInfo.UserId == user.Id &&
+                item.ClientTraining.Training.StartTime >= fromDateTime &&
+                item.ClientTraining.Training.StartTime < toDateTimeExclusive)
+            .GroupBy(item => new { item.SubmissionId, item.Submission.NameRu, item.Submission.NameEn })
+            .Select(group => new SubmissionAnalyticsPointOutputModel
+            {
+                SubmissionId = group.Key.SubmissionId,
+                NameRu = group.Key.NameRu,
+                NameEn = group.Key.NameEn,
+                Count = group.Sum(item => item.Count)
+            })
+            .OrderByDescending(item => item.Count)
+            .ThenBy(item => item.SubmissionId)
+            .ToListAsync(cancellationToken);
 
         var points = dailyFights.Select(item => new FightAnalyticsPointOutputModel
         {
@@ -53,15 +75,21 @@ public sealed class AnalyticsService(JiuDiaryDbContext dbContext, ILogger<Analyt
 
         var periodFightsCount = dailyFights.Sum(item => item.FightsCount);
         var periodTrainingsCount = dailyFights.Sum(item => item.TrainingsCount);
+        var periodSubmissionsCount = submissionDistribution.Sum(item => item.Count);
         var result = new FightAnalyticsOutputModel
         {
             FromDate = fromDate,
             ToDate = toDate,
             AllTimeFightsCount = allTimeTotals?.FightsCount ?? 0,
             PeriodFightsCount = periodFightsCount,
+            AllTimeTrainingsCount = allTimeTotals?.TrainingsCount ?? 0,
+            PeriodTrainingsCount = periodTrainingsCount,
+            AllTimeSubmissionsCount = allTimeSubmissionsCount,
+            PeriodSubmissionsCount = periodSubmissionsCount,
             AllTimeAverageFightsPerTraining = CalculateAverage(allTimeTotals?.FightsCount ?? 0, allTimeTotals?.TrainingsCount ?? 0),
             PeriodAverageFightsPerTraining = CalculateAverage(periodFightsCount, periodTrainingsCount),
-            Points = points
+            Points = points,
+            SubmissionDistribution = submissionDistribution
         };
 
         logger.LogInformation("Аналитика схваток получена. UserId: {UserId} | FromDate: {FromDate} | ToDate: {ToDate} | AllTimeFightsCount: {AllTimeFightsCount} | PeriodFightsCount: {PeriodFightsCount}", user.Id, fromDate, toDate, result.AllTimeFightsCount, result.PeriodFightsCount);
