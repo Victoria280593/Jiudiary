@@ -93,14 +93,22 @@ function recommendedGroup(fromDate: string, toDateValue: string): GroupBy {
   return "month";
 }
 
-function chartLabel(date: Date, groupBy: GroupBy) {
+function chartLabels(date: Date, groupBy: GroupBy) {
   if (groupBy === "month") {
-    return new Intl.DateTimeFormat("ru-RU", { month: "short", year: "2-digit" }).format(date);
+    return {
+      label: new Intl.DateTimeFormat("ru-RU", { month: "long", year: "numeric" }).format(date),
+      compactLabel: new Intl.DateTimeFormat("ru-RU", { month: "short", year: "2-digit" }).format(date),
+    };
   }
   if (groupBy === "week") {
-    return `с ${new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit" }).format(date)}`;
+    const label = `с ${new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit" }).format(date)}`;
+    return { label, compactLabel: label };
   }
-  return new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit" }).format(date);
+
+  const formattedDate = new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit" }).format(date);
+  const weekday = new Intl.DateTimeFormat("ru-RU", { weekday: "long" }).format(date);
+  const compactWeekday = new Intl.DateTimeFormat("ru-RU", { weekday: "short" }).format(date).replace(".", "");
+  return { label: `${formattedDate} (${weekday})`, compactLabel: `${formattedDate} (${compactWeekday})` };
 }
 
 function formatAverage(value: number) {
@@ -131,10 +139,7 @@ function aggregatePoints(analytics: FightAnalytics, groupBy: GroupBy): FightChar
     });
   }
 
-  return [...groups.values()].map((point) => ({
-    label: chartLabel(point.date, groupBy),
-    fightsCount: point.fightsCount,
-  }));
+  return [...groups.values()].map((point) => ({ ...chartLabels(point.date, groupBy), fightsCount: point.fightsCount }));
 }
 
 function FightsIcon() {
@@ -265,7 +270,7 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
             </div>
           </div>
 
-          <div className={`relative mt-5 h-64 transition-opacity sm:h-80 ${isLoading ? "opacity-45" : "opacity-100"}`}>
+          <div className={`relative mt-5 h-64 overflow-x-auto pb-2 transition-opacity sm:h-80 ${isLoading ? "opacity-45" : "opacity-100"}`}>
             <FightTrendChart points={chartPoints} />
           </div>
         </article>
