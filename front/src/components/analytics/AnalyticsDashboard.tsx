@@ -255,14 +255,7 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
 
       <AnalyticsSummaryBlock title="За всё время" description="Общая статистика по всем отмеченным тренировкам" metrics={allTimeMetrics} />
 
-      <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between" aria-label="Выбор периода аналитики">
-        <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Быстрый выбор периода">
-          {presets.map((preset) => (
-            <button key={preset.id} type="button" onClick={() => applyPreset(preset.id)} disabled={isLoading} aria-pressed={selectedPreset === preset.id} className={`min-h-10 shrink-0 rounded-full border px-4 text-xs font-semibold transition disabled:opacity-50 ${selectedPreset === preset.id ? "border-accent/40 bg-accent-soft text-accent-foreground" : "border-border bg-white text-muted hover:border-accent/35 hover:bg-accent-soft hover:text-accent-foreground"}`}>
-              {preset.label}
-            </button>
-          ))}
-        </div>
+      <section className="flex min-w-0 flex-col items-start gap-3" aria-label="Выбор периода аналитики">
         <div className="calendar-shadow rounded-2xl border border-border/80 bg-white/92 p-3 sm:p-4">
           <div className="grid grid-cols-2 gap-2 sm:flex sm:items-end">
             <label className="min-w-0 text-xs font-medium text-muted">
@@ -277,6 +270,13 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
               {isLoading ? "Загрузка…" : "Показать"}
             </button>
           </div>
+        </div>
+        <div className="flex max-w-full gap-2 overflow-x-auto pb-1" aria-label="Быстрый выбор периода">
+          {presets.map((preset) => (
+            <button key={preset.id} type="button" onClick={() => applyPreset(preset.id)} disabled={isLoading} aria-pressed={selectedPreset === preset.id} className={`min-h-10 shrink-0 rounded-full border px-4 text-xs font-semibold transition disabled:opacity-50 ${selectedPreset === preset.id ? "border-accent/40 bg-accent-soft text-accent-foreground" : "border-border bg-white text-muted hover:border-accent/35 hover:bg-accent-soft hover:text-accent-foreground"}`}>
+              {preset.label}
+            </button>
+          ))}
         </div>
       </section>
 

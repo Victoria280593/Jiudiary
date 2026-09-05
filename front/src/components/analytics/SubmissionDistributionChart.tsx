@@ -6,8 +6,8 @@ import type { SubmissionAnalyticsPoint } from "@/lib/analytics-client";
 
 ChartJS.register(ArcElement, Tooltip);
 
-const topColors = ["#9b7045", "#c69563", "#6f8d72", "#b47d55", "#647f91", "#85708f", "#89915f", "#d07f45", "#a85f72", "#4f8a86"];
-const otherColor = "#aaa39b";
+const topColors = ["#e11d48", "#f97316", "#eab308", "#84cc16", "#16a34a", "#0d9488", "#0891b2", "#2563eb", "#7c3aed", "#db2777"];
+const otherColor = "#9ca3af";
 
 const options: ChartOptions<"doughnut"> = {
   responsive: true,
