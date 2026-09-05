@@ -702,17 +702,25 @@ export function DaySchedulePanel({
                       )}
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMarkingTraining(training);
-                        setOpenMenuId(undefined);
-                      }}
-                      aria-label={training.clientTraining ? `Изменить отметку тренировки «${training.title || "Тренировка"}»` : `Отметить тренировку «${training.title || "Тренировка"}»`}
-                      className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl border border-success/20 bg-success/15 text-2xl font-light text-success shadow-sm transition hover:border-success/35 hover:bg-success/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/30 sm:right-4"
-                    >
-                      <span aria-hidden="true">+</span>
-                    </button>
+                    <div className="group absolute right-3 top-1/2 z-10 -translate-y-1/2 sm:right-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMarkingTraining(training);
+                          setOpenMenuId(undefined);
+                        }}
+                        aria-label={`Изменить тренировку «${training.title || "Тренировка"}»`}
+                        aria-describedby={`edit-training-tooltip-${training.id}`}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-accent/20 bg-accent-soft/70 text-accent shadow-sm transition hover:border-accent/35 hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6.5 17.5 10.5M4 20l4.2-1 10.3-10.3a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" />
+                        </svg>
+                      </button>
+                      <span id={`edit-training-tooltip-${training.id}`} role="tooltip" className="pointer-events-none absolute right-full top-1/2 mr-2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                        Изменить тренировку
+                      </span>
+                    </div>
 
                     {showCreateForm && (
                       <div data-training-menu className="absolute right-2 top-2 z-20 sm:right-3">
