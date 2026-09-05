@@ -73,7 +73,20 @@ export type BackendClientTraining = {
   id: string;
   trainingId: string;
   rounds: number | null;
+  submissions: BackendClientTrainingSubmission[];
   createdAt: string;
+};
+
+export type BackendClientTrainingSubmission = {
+  submissionId: number;
+  nameRu: string;
+  nameEn: string;
+  count: number;
+};
+
+export type BackendSubmissionSearchResult = {
+  id: number;
+  name: string;
 };
 
 export type BackendTrainer = {
@@ -245,8 +258,29 @@ function isBackendClientTraining(value: unknown): value is BackendClientTraining
     typeof clientTraining.id === "string" &&
     typeof clientTraining.trainingId === "string" &&
     (clientTraining.rounds === null || typeof clientTraining.rounds === "number") &&
+    Array.isArray(clientTraining.submissions) &&
+    clientTraining.submissions.every(isBackendClientTrainingSubmission) &&
     typeof clientTraining.createdAt === "string"
   );
+}
+
+function isBackendClientTrainingSubmission(value: unknown): value is BackendClientTrainingSubmission {
+  if (!value || typeof value !== "object") return false;
+
+  const submission = value as Partial<BackendClientTrainingSubmission>;
+  return (
+    typeof submission.submissionId === "number" &&
+    typeof submission.nameRu === "string" &&
+    typeof submission.nameEn === "string" &&
+    typeof submission.count === "number"
+  );
+}
+
+function isBackendSubmissionSearchResult(value: unknown): value is BackendSubmissionSearchResult {
+  if (!value || typeof value !== "object") return false;
+
+  const submission = value as Partial<BackendSubmissionSearchResult>;
+  return typeof submission.id === "number" && typeof submission.name === "string";
 }
 
 function isFightAnalytics(value: unknown): value is FightAnalytics {
@@ -1133,6 +1167,88 @@ export async function saveBackendClientTraining(
     return isBackendClientTraining(clientTraining)
       ? { ok: true, clientTraining }
       : { ok: false, status: 502, error: "Сервер вернул некорректные данные тренировки." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export type SearchBackendSubmissionsResult =
+  | { ok: true; submissions: BackendSubmissionSearchResult[] }
+  | { ok: false; status: number; error: string };
+
+export async function searchBackendSubmissions(accessToken: string, query: string): Promise<SearchBackendSubmissionsResult> {
+  try {
+    const response = await fetch(`${backendUrl}/api/trainings/submissions/search?query=${encodeURIComponent(query)}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, status: response.status, error: result?.error ?? "Не удалось найти приём." };
+    }
+
+    const submissions: unknown = await response.json();
+    return Array.isArray(submissions) && submissions.every(isBackendSubmissionSearchResult)
+      ? { ok: true, submissions }
+      : { ok: false, status: 502, error: "Сервер вернул некорректные результаты поиска." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export type SaveBackendClientTrainingSubmissionResult =
+  | { ok: true; submission: BackendClientTrainingSubmission }
+  | { ok: false; status: number; error: string };
+
+export async function addBackendClientTrainingSubmission(accessToken: string, trainingId: string, submissionId: number): Promise<SaveBackendClientTrainingSubmissionResult> {
+  return saveBackendClientTrainingSubmission(accessToken, trainingId, submissionId, "POST");
+}
+
+export async function updateBackendClientTrainingSubmission(accessToken: string, trainingId: string, submissionId: number, count: number): Promise<SaveBackendClientTrainingSubmissionResult> {
+  return saveBackendClientTrainingSubmission(accessToken, trainingId, submissionId, "PUT", count);
+}
+
+async function saveBackendClientTrainingSubmission(accessToken: string, trainingId: string, submissionId: number, method: "POST" | "PUT", count?: number): Promise<SaveBackendClientTrainingSubmissionResult> {
+  try {
+    const suffix = method === "POST" ? "" : `/${submissionId}`;
+    const body = method === "POST" ? { submissionId } : { count };
+    const response = await fetch(`${backendUrl}/api/trainings/client/${encodeURIComponent(trainingId)}/submissions${suffix}`, {
+      method,
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, status: response.status, error: result?.error ?? "Не удалось сохранить приём." };
+    }
+
+    const submission: unknown = await response.json();
+    return isBackendClientTrainingSubmission(submission)
+      ? { ok: true, submission }
+      : { ok: false, status: 502, error: "Сервер вернул некорректные данные приёма." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export async function deleteBackendClientTrainingSubmission(accessToken: string, trainingId: string, submissionId: number): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  try {
+    const response = await fetch(`${backendUrl}/api/trainings/client/${encodeURIComponent(trainingId)}/submissions/${submissionId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (response.ok) return { ok: true };
+
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    return { ok: false, status: response.status, error: result?.error ?? "Не удалось удалить приём." };
   } catch {
     return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
   }

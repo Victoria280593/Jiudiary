@@ -25,4 +25,6 @@ public sealed class ClientTraining : IAuditable
     public ClientInfo ClientInfo { get; set; } = null!;
 
     public Training Training { get; set; } = null!;
+
+    public ICollection<ClientTrainingSubmission> Submissions { get; set; } = [];
 }

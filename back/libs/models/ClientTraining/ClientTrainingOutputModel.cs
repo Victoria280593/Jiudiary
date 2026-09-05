@@ -8,5 +8,7 @@ public sealed class ClientTrainingOutputModel
 
     public int? Rounds { get; set; }
 
+    public List<ClientTrainingSubmissionOutputModel> Submissions { get; set; } = [];
+
     public DateTime CreatedAt { get; set; }
 }

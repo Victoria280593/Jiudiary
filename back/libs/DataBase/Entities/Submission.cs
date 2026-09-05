@@ -6,11 +6,10 @@ namespace JiuDiary.Database.Entities;
 
 /// <summary>
 /// Приём (болевой или удушающий) из библиотеки известных названий БЖЖ.
-/// Каноническое название хранится на английском; варианты написания (в т.ч. русские)
-/// для поиска описаны в submissions.json.
 /// </summary>
 [Table("Submissions")]
-[Index(nameof(Name), IsUnique = true)]
+[Index(nameof(NameRu), IsUnique = true)]
+[Index(nameof(NameEn), IsUnique = true)]
 public sealed class Submission
 {
     [Key]
@@ -19,5 +18,11 @@ public sealed class Submission
 
     [Required]
     [MaxLength(150)]
-    public string Name { get; set; } = string.Empty;
+    public string NameRu { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(150)]
+    public string NameEn { get; set; } = string.Empty;
+
+    public ICollection<ClientTrainingSubmission> ClientTrainingSubmissions { get; set; } = [];
 }

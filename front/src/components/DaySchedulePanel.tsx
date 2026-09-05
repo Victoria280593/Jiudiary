@@ -4,8 +4,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CreateTrainingForm } from "@/components/CreateTrainingForm";
 import {
+  addClientTrainingSubmission,
   type ClientTraining,
+  type ClientTrainingSubmission,
+  deleteClientTrainingSubmission,
   saveClientTraining,
+  searchSubmissions,
+  type SubmissionSearchResult,
+  updateClientTrainingSubmission,
 } from "@/lib/client-trainings-client";
 import { formatTime } from "@/lib/format";
 import { getGroupColorStyle } from "@/lib/group-colors";
@@ -121,6 +127,107 @@ function TrainingFormModal({
   );
 }
 
+function SubmissionSearchModal({ excludedIds, onClose, onSelect }: { excludedIds: Set<number>; onClose: () => void; onSelect: (submission: SubmissionSearchResult) => Promise<void> }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SubmissionSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [addingId, setAddingId] = useState<number>();
+  const [error, setError] = useState<string>();
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
+
+  useEffect(() => {
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      setIsSearching(true);
+      setError(undefined);
+      try {
+        setResults((await searchSubmissions(normalizedQuery, controller.signal)).filter((submission) => !excludedIds.has(submission.id)));
+      } catch (searchError) {
+        if (!controller.signal.aborted) setError(searchError instanceof Error ? searchError.message : "Не удалось найти приём.");
+      } finally {
+        if (!controller.signal.aborted) setIsSearching(false);
+      }
+    }, 200);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [excludedIds, query]);
+
+  function changeQuery(value: string) {
+    setQuery(value);
+    setResults([]);
+    setIsSearching(false);
+    setError(undefined);
+  }
+
+  async function selectSubmission(submission: SubmissionSearchResult) {
+    setAddingId(submission.id);
+    setError(undefined);
+    try {
+      await onSelect(submission);
+      onClose();
+    } catch (selectError) {
+      setError(selectError instanceof Error ? selectError.message : "Не удалось добавить приём.");
+    } finally {
+      setAddingId(undefined);
+    }
+  }
+
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="submission-search-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!addingId) onClose();
+      }}
+      className={`${styles.createModal} fixed inset-0 m-auto w-[calc(100%-1.5rem)] max-w-md rounded-[1.5rem] border border-border/70 bg-[#fbfaf8] p-0 text-foreground shadow-[0_30px_90px_-24px_rgba(43,36,29,0.55)] backdrop:bg-[#302820]/45 backdrop:backdrop-blur-[2px]`}
+    >
+      <div className="p-5 sm:p-6">
+        <div className="flex items-center justify-between gap-4">
+          <h3 id="submission-search-title" className="text-lg font-semibold">Добавить сабмишен</h3>
+          <button type="button" onClick={onClose} disabled={Boolean(addingId)} aria-label="Закрыть поиск" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-muted shadow-sm transition hover:text-foreground disabled:opacity-50">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true"><path strokeLinecap="round" d="m6 6 12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+
+        <label className="mt-5 block">
+          <span className="sr-only">Название сабмишена</span>
+          <div className="flex items-center gap-3 rounded-2xl border border-border bg-white px-4 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/10">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5 shrink-0 text-muted" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path strokeLinecap="round" d="m16 16 4 4" /></svg>
+            <input autoFocus value={query} onChange={(event) => changeQuery(event.target.value)} placeholder="Начните вводить название" className="min-h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted/70" />
+          </div>
+        </label>
+
+        <div className="mt-4 max-h-72 space-y-2 overflow-y-auto">
+          {isSearching && <p className="py-6 text-center text-sm text-muted">Поиск…</p>}
+          {!isSearching && query.trim() && results.length === 0 && !error && <p className="py-6 text-center text-sm text-muted">Ничего не найдено</p>}
+          {!isSearching && results.map((submission) => (
+            <button key={submission.id} type="button" onClick={() => void selectSubmission(submission)} disabled={Boolean(addingId)} className="flex min-h-12 w-full items-center justify-between rounded-2xl border border-border bg-white px-4 text-left transition hover:border-accent/40 hover:bg-accent-soft/40 disabled:opacity-50">
+              <span className="text-sm font-medium">{submission.name}</span>
+              <span className="text-xl font-light text-accent" aria-hidden="true">+</span>
+            </button>
+          ))}
+        </div>
+        {error && <p className={`${errorClass} mt-4`}>{error}</p>}
+      </div>
+    </dialog>
+  );
+}
+
 function ClientTrainingModal({
   training,
   clientTraining,
@@ -135,12 +242,15 @@ function ClientTrainingModal({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [rounds, setRounds] = useState(clientTraining?.rounds ?? 0);
   const [manualAttended, setManualAttended] = useState(Boolean(clientTraining));
+  const [submissions, setSubmissions] = useState<ClientTrainingSubmission[]>(clientTraining?.submissions ?? []);
+  const [isSubmissionSearchOpen, setIsSubmissionSearchOpen] = useState(false);
+  const [changingSubmissionId, setChangingSubmissionId] = useState<number>();
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
 
-  // При раундах > 0 посещение проставляется автоматически и недоступно для ручного снятия.
-  // Вручную отметку можно ставить/снимать только пока раундов ещё нет.
-  const attended = rounds > 0 ? true : manualAttended;
+  // Раунды или добавленные приёмы означают посещение и не позволяют снять отметку вручную.
+  const attended = rounds > 0 || submissions.length > 0 ? true : manualAttended;
+  const excludedSubmissionIds = useMemo(() => new Set(submissions.map((submission) => submission.submissionId)), [submissions]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -165,7 +275,47 @@ function ClientTrainingModal({
     }
   }
 
+  async function addSubmission(submission: SubmissionSearchResult) {
+    setChangingSubmissionId(submission.id);
+    setError(undefined);
+    try {
+      const addedSubmission = await addClientTrainingSubmission(training.id, submission.id);
+      setSubmissions((current) => [...current, addedSubmission].sort((left, right) => left.submissionId - right.submissionId));
+      setManualAttended(true);
+    } finally {
+      setChangingSubmissionId(undefined);
+    }
+  }
+
+  async function changeSubmissionCount(submission: ClientTrainingSubmission, count: number) {
+    if (count <= 0) return;
+    setChangingSubmissionId(submission.submissionId);
+    setError(undefined);
+    try {
+      const updatedSubmission = await updateClientTrainingSubmission(training.id, submission.submissionId, count);
+      setSubmissions((current) => current.map((item) => item.submissionId === updatedSubmission.submissionId ? updatedSubmission : item));
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : "Не удалось изменить количество приёмов.");
+    } finally {
+      setChangingSubmissionId(undefined);
+    }
+  }
+
+  async function removeSubmission(submissionId: number) {
+    setChangingSubmissionId(submissionId);
+    setError(undefined);
+    try {
+      await deleteClientTrainingSubmission(training.id, submissionId);
+      setSubmissions((current) => current.filter((submission) => submission.submissionId !== submissionId));
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Не удалось удалить приём.");
+    } finally {
+      setChangingSubmissionId(undefined);
+    }
+  }
+
   return (
+    <>
     <dialog
       ref={dialogRef}
       aria-labelledby="client-training-title"
@@ -173,7 +323,7 @@ function ClientTrainingModal({
         event.preventDefault();
         if (!isSaving) onClose();
       }}
-      className={`${styles.createModal} fixed inset-0 m-auto w-[calc(100%-1.5rem)] max-w-md rounded-[1.5rem] border border-border/70 bg-[#fbfaf8] p-0 text-foreground shadow-[0_30px_90px_-24px_rgba(43,36,29,0.55)] backdrop:bg-[#302820]/55 backdrop:backdrop-blur-[2px]`}
+      className={`${styles.createModal} fixed inset-0 m-auto max-h-[calc(100svh-1.5rem)] w-[calc(100%-1.5rem)] max-w-2xl overflow-y-auto rounded-[1.5rem] border border-border/70 bg-[#fbfaf8] p-0 text-foreground shadow-[0_30px_90px_-24px_rgba(43,36,29,0.55)] backdrop:bg-[#302820]/55 backdrop:backdrop-blur-[2px] sm:max-h-[calc(100svh-3rem)]`}
     >
       <div className="p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
@@ -220,31 +370,67 @@ function ClientTrainingModal({
         </div>
 
         <label
-          className={`mt-5 flex items-center gap-3 rounded-2xl border border-border bg-white px-4 py-3 ${rounds > 0 ? "opacity-60" : "cursor-pointer hover:bg-surface-muted"}`}
+          className={`mt-5 flex items-center gap-3 rounded-2xl border border-border bg-white px-4 py-3 ${rounds > 0 || submissions.length > 0 ? "opacity-60" : "cursor-pointer hover:bg-surface-muted"}`}
         >
           <input
             type="checkbox"
             checked={attended}
-            disabled={rounds > 0 || isSaving}
+            disabled={rounds > 0 || submissions.length > 0 || isSaving}
             onChange={(event) => setManualAttended(event.target.checked)}
             className="h-4 w-4 rounded border-border text-accent focus:ring-1 focus:ring-accent"
           />
           <span className="text-sm font-medium text-foreground">
-            Посетил{rounds > 0 && <span className="ml-1 font-normal text-muted">— проставлено автоматически по раундам</span>}
+            Посетил{(rounds > 0 || submissions.length > 0) && <span className="ml-1 font-normal text-muted">— проставлено автоматически</span>}
           </span>
         </label>
+
+        <section className="mt-6 border-t border-border/70 pt-5" aria-labelledby="client-training-submissions-title">
+          <h4 id="client-training-submissions-title" className="text-lg font-semibold">Сабмишены</h4>
+
+          {submissions.length > 0 && (
+            <div className="mt-4 space-y-2.5">
+              {submissions.map((submission) => {
+                const isChanging = changingSubmissionId === submission.submissionId;
+                return (
+                  <div key={submission.submissionId} className="grid grid-cols-[1.25rem_minmax(0,1fr)_2.75rem_2rem_2.75rem_2.5rem] items-center gap-2 rounded-2xl border border-border bg-white px-3 py-2.5 shadow-[0_8px_22px_-20px_rgba(86,61,38,0.42)]">
+                    <span className="grid grid-cols-2 gap-1" aria-hidden="true">
+                      {Array.from({ length: 6 }, (_, index) => <span key={index} className="h-1 w-1 rounded-full bg-muted/55" />)}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold">{submission.nameRu}</span>
+                      <span className="mt-0.5 block truncate text-xs text-muted">{submission.nameEn}</span>
+                    </span>
+                    <button type="button" onClick={() => void changeSubmissionCount(submission, submission.count - 1)} disabled={isChanging || submission.count <= 1} aria-label={`Уменьшить количество «${submission.nameRu}»`} className="h-10 rounded-xl border border-border bg-white text-xl transition hover:bg-surface-muted disabled:opacity-35">−</button>
+                    <output className="text-center text-lg font-semibold tabular-nums" aria-live="polite">{submission.count}</output>
+                    <button type="button" onClick={() => void changeSubmissionCount(submission, submission.count + 1)} disabled={isChanging} aria-label={`Увеличить количество «${submission.nameRu}»`} className="h-10 rounded-xl bg-accent text-xl text-white transition hover:bg-accent-hover disabled:opacity-50">+</button>
+                    <button type="button" onClick={() => void removeSubmission(submission.submissionId)} disabled={isChanging} aria-label={`Удалить «${submission.nameRu}»`} className="flex h-10 items-center justify-center rounded-xl text-danger transition hover:bg-danger-soft disabled:opacity-50">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5m4-5v5" /></svg>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <button type="button" onClick={() => setIsSubmissionSearchOpen(true)} disabled={isSaving || changingSubmissionId !== undefined} className="mt-4 flex min-h-14 w-full items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-white/45 text-sm font-semibold text-accent-foreground transition hover:border-accent/50 hover:bg-accent-soft/35 disabled:opacity-50">
+            <span className="text-2xl font-light" aria-hidden="true">+</span>
+            Добавить сабмишен
+          </button>
+        </section>
 
         {error && <p className={`${errorClass} mt-5`}>{error}</p>}
         <button
           type="button"
           onClick={() => void save()}
-          disabled={isSaving || !attended}
+          disabled={isSaving || changingSubmissionId !== undefined || !attended}
           className="mt-7 min-h-12 w-full rounded-2xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60"
         >
           {isSaving ? "Сохранение…" : "Сохранить"}
         </button>
       </div>
     </dialog>
+    {isSubmissionSearchOpen && <SubmissionSearchModal excludedIds={excludedSubmissionIds} onClose={() => setIsSubmissionSearchOpen(false)} onSelect={addSubmission} />}
+    </>
   );
 }
 

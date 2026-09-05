@@ -34,6 +34,8 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
 
     public DbSet<ClientTraining> ClientTrainings => Set<ClientTraining>();
 
+    public DbSet<ClientTrainingSubmission> ClientTrainingSubmissions => Set<ClientTrainingSubmission>();
+
     public DbSet<StudentRequest> StudentsRequests => Set<StudentRequest>();
 
     public DbSet<CoachStudent> CoachStudents => Set<CoachStudent>();
@@ -111,6 +113,23 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
                 .WithMany(training => training.ClientTrainings)
                 .HasForeignKey(item => item.TrainingId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ClientTrainingSubmission>(entity =>
+        {
+            entity.HasKey(item => new { item.ClientTrainingId, item.SubmissionId });
+
+            entity.HasOne(item => item.ClientTraining)
+                .WithMany(clientTraining => clientTraining.Submissions)
+                .HasForeignKey(item => item.ClientTrainingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(item => item.Submission)
+                .WithMany(submission => submission.ClientTrainingSubmissions)
+                .HasForeignKey(item => item.SubmissionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.ToTable(table => table.HasCheckConstraint("CK_ClientTrainingSubmissions_Count", "[Count] > 0"));
         });
     }
 

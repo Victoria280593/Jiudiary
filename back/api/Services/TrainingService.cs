@@ -33,7 +33,10 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             throw new AspNetException("Тренировка не найдена или недоступна.", StatusCodes.Status404NotFound);
         }
 
-        var clientTraining = await dbContext.ClientTrainings.SingleOrDefaultAsync(item => item.ClientInfoId == clientInfoId && item.TrainingId == trainingId, cancellationToken);
+        var clientTraining = await dbContext.ClientTrainings
+            .Include(item => item.Submissions)
+            .ThenInclude(item => item.Submission)
+            .SingleOrDefaultAsync(item => item.ClientInfoId == clientInfoId && item.TrainingId == trainingId, cancellationToken);
         if (clientTraining is null)
         {
             clientTraining = new ClientTraining
@@ -57,8 +60,140 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             Id = clientTraining.Id,
             TrainingId = clientTraining.TrainingId,
             Rounds = clientTraining.Rounds,
+            Submissions = clientTraining.Submissions.OrderBy(item => item.SubmissionId).Select(ToOutputModel).ToList(),
             CreatedAt = clientTraining.CreatedAt
         };
+    }
+
+    /// <summary>
+    /// Добавляет приём к отметке текущего клиента о тренировке с начальным количеством один.
+    /// </summary>
+    /// <param name="trainingId">Идентификатор доступной клиенту тренировки.</param>
+    /// <param name="inputModel">Идентификатор добавляемого приёма.</param>
+    /// <param name="user">Текущий авторизованный пользователь.</param>
+    /// <param name="cancellationToken">Токен отмены операции.</param>
+    /// <returns>Добавленный приём с русским и английским названиями.</returns>
+    public async Task<ClientTrainingSubmissionOutputModel> AddClientTrainingSubmission(Guid trainingId, AddClientTrainingSubmissionInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
+    {
+        EnsureClientTrainingRole(user);
+        if (trainingId == Guid.Empty || inputModel.SubmissionId <= 0)
+        {
+            throw new AspNetException("Необходимо указать тренировку и приём.", StatusCodes.Status400BadRequest);
+        }
+
+        var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
+        if (!await GetAccessibleTrainings(user).AnyAsync(training => training.Id == trainingId, cancellationToken))
+        {
+            throw new AspNetException("Тренировка не найдена или недоступна.", StatusCodes.Status404NotFound);
+        }
+
+        var submission = await dbContext.Submissions.AsNoTracking().SingleOrDefaultAsync(item => item.Id == inputModel.SubmissionId, cancellationToken);
+        if (submission is null)
+        {
+            throw new AspNetException("Приём не найден.", StatusCodes.Status404NotFound);
+        }
+
+        var clientTraining = await dbContext.ClientTrainings
+            .Include(item => item.Submissions)
+            .SingleOrDefaultAsync(item => item.ClientInfoId == clientInfoId && item.TrainingId == trainingId, cancellationToken);
+
+        if (clientTraining is null)
+        {
+            clientTraining = new ClientTraining
+            {
+                ClientInfoId = clientInfoId,
+                TrainingId = trainingId,
+                Rounds = 0
+            };
+            dbContext.ClientTrainings.Add(clientTraining);
+        }
+
+        if (clientTraining.Submissions.Any(item => item.SubmissionId == inputModel.SubmissionId))
+        {
+            throw new AspNetException("Этот приём уже добавлен к тренировке.", StatusCodes.Status409Conflict);
+        }
+
+        var clientTrainingSubmission = new ClientTrainingSubmission
+        {
+            ClientTraining = clientTraining,
+            SubmissionId = submission.Id,
+            Count = 1
+        };
+        dbContext.ClientTrainingSubmissions.Add(clientTrainingSubmission);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation("Приём добавлен к тренировке клиента. UserId: {UserId} | TrainingId: {TrainingId} | SubmissionId: {SubmissionId}", user.Id, trainingId, submission.Id);
+        return new ClientTrainingSubmissionOutputModel { SubmissionId = submission.Id, NameRu = submission.NameRu, NameEn = submission.NameEn, Count = clientTrainingSubmission.Count };
+    }
+
+    /// <summary>
+    /// Изменяет количество выбранного приёма в отметке текущего клиента о тренировке.
+    /// </summary>
+    /// <param name="trainingId">Идентификатор тренировки.</param>
+    /// <param name="submissionId">Идентификатор приёма.</param>
+    /// <param name="inputModel">Новое положительное количество выполнений.</param>
+    /// <param name="user">Текущий авторизованный пользователь.</param>
+    /// <param name="cancellationToken">Токен отмены операции.</param>
+    /// <returns>Приём с обновлённым количеством.</returns>
+    public async Task<ClientTrainingSubmissionOutputModel> UpdateClientTrainingSubmission(Guid trainingId, int submissionId, UpdateClientTrainingSubmissionInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
+    {
+        EnsureClientTrainingRole(user);
+        if (trainingId == Guid.Empty || submissionId <= 0 || inputModel.Count <= 0)
+        {
+            throw new AspNetException("Количество приёмов должно быть больше нуля.", StatusCodes.Status400BadRequest);
+        }
+
+        var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
+        var clientTrainingSubmission = await dbContext.ClientTrainingSubmissions
+            .Include(item => item.Submission)
+            .SingleOrDefaultAsync(item =>
+                item.ClientTraining.ClientInfoId == clientInfoId &&
+                item.ClientTraining.TrainingId == trainingId &&
+                item.SubmissionId == submissionId,
+                cancellationToken);
+
+        if (clientTrainingSubmission is null)
+        {
+            throw new AspNetException("Приём не найден в отметке о тренировке.", StatusCodes.Status404NotFound);
+        }
+
+        clientTrainingSubmission.Count = inputModel.Count;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation("Количество приёмов изменено. UserId: {UserId} | TrainingId: {TrainingId} | SubmissionId: {SubmissionId} | Count: {Count}", user.Id, trainingId, submissionId, inputModel.Count);
+        return ToOutputModel(clientTrainingSubmission);
+    }
+
+    /// <summary>
+    /// Удаляет выбранный приём из отметки текущего клиента о тренировке.
+    /// </summary>
+    /// <param name="trainingId">Идентификатор тренировки.</param>
+    /// <param name="submissionId">Идентификатор удаляемого приёма.</param>
+    /// <param name="user">Текущий авторизованный пользователь.</param>
+    /// <param name="cancellationToken">Токен отмены операции.</param>
+    public async Task DeleteClientTrainingSubmission(Guid trainingId, int submissionId, AuthenticatedUser user, CancellationToken cancellationToken)
+    {
+        EnsureClientTrainingRole(user);
+        if (trainingId == Guid.Empty || submissionId <= 0)
+        {
+            throw new AspNetException("Необходимо указать тренировку и приём.", StatusCodes.Status400BadRequest);
+        }
+
+        var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
+        var clientTrainingSubmission = await dbContext.ClientTrainingSubmissions.SingleOrDefaultAsync(item =>
+            item.ClientTraining.ClientInfoId == clientInfoId &&
+            item.ClientTraining.TrainingId == trainingId &&
+            item.SubmissionId == submissionId,
+            cancellationToken);
+
+        if (clientTrainingSubmission is null)
+        {
+            throw new AspNetException("Приём не найден в отметке о тренировке.", StatusCodes.Status404NotFound);
+        }
+
+        dbContext.ClientTrainingSubmissions.Remove(clientTrainingSubmission);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Приём удалён из тренировки клиента. UserId: {UserId} | TrainingId: {TrainingId} | SubmissionId: {SubmissionId}", user.Id, trainingId, submissionId);
     }
 
     /// <summary>
@@ -108,6 +243,16 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
                         Id = clientTraining.Id,
                         TrainingId = clientTraining.TrainingId,
                         Rounds = clientTraining.Rounds,
+                        Submissions = clientTraining.Submissions
+                            .OrderBy(item => item.SubmissionId)
+                            .Select(item => new ClientTrainingSubmissionOutputModel
+                            {
+                                SubmissionId = item.SubmissionId,
+                                NameRu = item.Submission.NameRu,
+                                NameEn = item.Submission.NameEn,
+                                Count = item.Count
+                            })
+                            .ToList(),
                         CreatedAt = clientTraining.CreatedAt
                     })
                     .FirstOrDefault()
@@ -351,6 +496,8 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             throw new AspNetException("Отмечать тренировки может только тренер или ученик.", StatusCodes.Status403Forbidden);
         }
     }
+
+    private static ClientTrainingSubmissionOutputModel ToOutputModel(ClientTrainingSubmission item) => new() { SubmissionId = item.SubmissionId, NameRu = item.Submission.NameRu, NameEn = item.Submission.NameEn, Count = item.Count };
 
     private static string? ValidateTrainingInput(Guid groupId, string? inputDescription, DateTime startTime, DateTime endTime)
     {
