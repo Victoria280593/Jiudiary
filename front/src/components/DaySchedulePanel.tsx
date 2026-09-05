@@ -216,8 +216,11 @@ function SubmissionSearchModal({ excludedIds, onClose, onSelect }: { excludedIds
           {isSearching && <p className="py-6 text-center text-sm text-muted">Поиск…</p>}
           {!isSearching && query.trim() && results.length === 0 && !error && <p className="py-6 text-center text-sm text-muted">Ничего не найдено</p>}
           {!isSearching && results.map((submission) => (
-            <button key={submission.id} type="button" onClick={() => void selectSubmission(submission)} disabled={Boolean(addingId)} className="flex min-h-12 w-full items-center justify-between rounded-2xl border border-border bg-white px-4 text-left transition hover:border-accent/40 hover:bg-accent-soft/40 disabled:opacity-50">
-              <span className="text-sm font-medium">{submission.name}</span>
+            <button key={submission.id} type="button" onClick={() => void selectSubmission(submission)} disabled={Boolean(addingId)} className="flex min-h-14 w-full items-center justify-between rounded-2xl border border-border bg-white px-4 py-2.5 text-left transition hover:border-accent/40 hover:bg-accent-soft/40 disabled:opacity-50">
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold">{submission.nameRu}</span>
+                <span className="mt-0.5 block truncate text-xs text-muted">{submission.nameEn}</span>
+              </span>
               <span className="text-xl font-light text-accent" aria-hidden="true">+</span>
             </button>
           ))}
@@ -392,10 +395,7 @@ function ClientTrainingModal({
               {submissions.map((submission) => {
                 const isChanging = changingSubmissionId === submission.submissionId;
                 return (
-                  <div key={submission.submissionId} className="grid grid-cols-[1.25rem_minmax(0,1fr)_2.75rem_2rem_2.75rem_2.5rem] items-center gap-2 rounded-2xl border border-border bg-white px-3 py-2.5 shadow-[0_8px_22px_-20px_rgba(86,61,38,0.42)]">
-                    <span className="grid grid-cols-2 gap-1" aria-hidden="true">
-                      {Array.from({ length: 6 }, (_, index) => <span key={index} className="h-1 w-1 rounded-full bg-muted/55" />)}
-                    </span>
+                  <div key={submission.submissionId} className="grid grid-cols-[minmax(0,1fr)_2.75rem_2rem_2.75rem_2.5rem] items-center gap-2 rounded-2xl border border-border bg-white px-3 py-2.5 shadow-[0_8px_22px_-20px_rgba(86,61,38,0.42)]">
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold">{submission.nameRu}</span>
                       <span className="mt-0.5 block truncate text-xs text-muted">{submission.nameEn}</span>

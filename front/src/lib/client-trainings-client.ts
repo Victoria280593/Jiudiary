@@ -15,7 +15,8 @@ export type ClientTrainingSubmission = {
 
 export type SubmissionSearchResult = {
   id: number;
-  name: string;
+  nameRu: string;
+  nameEn: string;
 };
 
 export async function saveClientTraining(trainingId: string, rounds: number): Promise<ClientTraining> {

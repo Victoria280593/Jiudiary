@@ -11,7 +11,12 @@ public sealed class SubmissionSearchOutputModel
     public int Id { get; set; }
 
     /// <summary>
+    /// Каноническое русскоязычное название приёма.
+    /// </summary>
+    public string NameRu { get; set; } = string.Empty;
+
+    /// <summary>
     /// Каноническое англоязычное название приёма.
     /// </summary>
-    public string Name { get; set; } = string.Empty;
+    public string NameEn { get; set; } = string.Empty;
 }

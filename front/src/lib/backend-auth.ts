@@ -86,7 +86,8 @@ export type BackendClientTrainingSubmission = {
 
 export type BackendSubmissionSearchResult = {
   id: number;
-  name: string;
+  nameRu: string;
+  nameEn: string;
 };
 
 export type BackendTrainer = {
@@ -280,7 +281,7 @@ function isBackendSubmissionSearchResult(value: unknown): value is BackendSubmis
   if (!value || typeof value !== "object") return false;
 
   const submission = value as Partial<BackendSubmissionSearchResult>;
-  return typeof submission.id === "number" && typeof submission.name === "string";
+  return typeof submission.id === "number" && typeof submission.nameRu === "string" && typeof submission.nameEn === "string";
 }
 
 function isFightAnalytics(value: unknown): value is FightAnalytics {

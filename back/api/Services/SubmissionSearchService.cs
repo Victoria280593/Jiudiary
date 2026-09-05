@@ -44,9 +44,10 @@ public sealed class SubmissionSearchService
 
         _entries = file.Submissions
             .Select(submission => new SubmissionSearchEntry(
-                new SubmissionSearchOutputModel { Id = submission.Id, Name = submission.Name },
+                new SubmissionSearchOutputModel { Id = submission.Id, NameRu = submission.NameRu, NameEn = submission.NameEn },
                 submission.Aliases
-                    .Prepend(submission.Name)
+                    .Prepend(submission.NameEn)
+                    .Prepend(submission.NameRu)
                     .Select(Normalize)
                     .Where(term => term.Length > 0)
                     .Distinct(StringComparer.Ordinal)
@@ -56,7 +57,7 @@ public sealed class SubmissionSearchService
     }
 
     /// <summary>
-    /// Ищет приёмы по подстроке одновременно в каноническом английском названии и во всех его алиасах.
+    /// Ищет приёмы по подстроке одновременно в канонических русском и английском названиях и во всех алиасах.
     /// </summary>
     /// <remarks>
     /// Запрос нормализуется по тем же правилам, что и строки словаря. Для каждого приёма выбирается
@@ -204,13 +205,19 @@ public sealed class SubmissionSearchService
         public int Id { get; set; }
 
         /// <summary>
-        /// Каноническое английское название приёма, участвующее в поиске и возвращаемое клиенту.
+        /// Каноническое русскоязычное название приёма, участвующее в поиске и возвращаемое клиенту.
         /// </summary>
-        [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
+        [JsonPropertyName("nameRu")]
+        public string NameRu { get; set; } = string.Empty;
 
         /// <summary>
-        /// Дополнительные варианты написания, транслитерации и русские названия для поиска.
+        /// Каноническое англоязычное название приёма, участвующее в поиске и возвращаемое клиенту.
+        /// </summary>
+        [JsonPropertyName("nameEn")]
+        public string NameEn { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Дополнительные варианты написания и транслитерации для поиска.
         /// </summary>
         [JsonPropertyName("aliases")]
         public List<string> Aliases { get; set; } = [];
