@@ -1,6 +1,7 @@
 export type FightAnalyticsPoint = {
   date: string;
   fightsCount: number;
+  trainingsCount: number;
 };
 
 export type SubmissionAnalyticsPoint = {

@@ -18,6 +18,10 @@ const SubmissionDistributionChart = dynamic(() => import("./SubmissionDistributi
   ssr: false,
   loading: () => <div className="h-64 animate-pulse rounded-2xl bg-surface-muted" aria-label="Загрузка распределения сабмишенов" />,
 });
+const TrainingTrendChart = dynamic(() => import("./TrainingTrendChart"), {
+  ssr: false,
+  loading: () => <div className="h-full animate-pulse rounded-2xl bg-surface-muted" aria-label="Загрузка динамики тренировок" />,
+});
 
 type GroupBy = "day" | "week" | "month";
 type PeriodPreset = "currentWeek" | "currentMonth" | "currentYear";
@@ -120,14 +124,15 @@ function formatAverage(value: number) {
 }
 
 function aggregatePoints(analytics: FightAnalytics, groupBy: GroupBy): FightChartPoint[] {
-  const fightsByDate = new Map(analytics.points.map((point) => [point.date, point.fightsCount]));
+  const analyticsByDate = new Map(analytics.points.map((point) => [point.date, point]));
   const dailyPoints: FightAnalyticsPoint[] = [];
   for (let date = toDate(analytics.fromDate); date <= toDate(analytics.toDate); date = addDays(date, 1)) {
     const dateKey = toIsoDate(date);
-    dailyPoints.push({ date: dateKey, fightsCount: fightsByDate.get(dateKey) ?? 0 });
+    const sourcePoint = analyticsByDate.get(dateKey);
+    dailyPoints.push({ date: dateKey, fightsCount: sourcePoint?.fightsCount ?? 0, trainingsCount: sourcePoint?.trainingsCount ?? 0 });
   }
 
-  const groups = new Map<string, { date: Date; fightsCount: number }>();
+  const groups = new Map<string, { date: Date; fightsCount: number; trainingsCount: number }>();
   for (const point of dailyPoints) {
     const date = toDate(point.date);
     const groupDate = groupBy === "week"
@@ -140,10 +145,11 @@ function aggregatePoints(analytics: FightAnalytics, groupBy: GroupBy): FightChar
     groups.set(key, {
       date: groupDate,
       fightsCount: (current?.fightsCount ?? 0) + point.fightsCount,
+      trainingsCount: (current?.trainingsCount ?? 0) + point.trainingsCount,
     });
   }
 
-  return [...groups.values()].map((point) => ({ ...chartLabels(point.date, groupBy), fightsCount: point.fightsCount }));
+  return [...groups.values()].map((point) => ({ ...chartLabels(point.date, groupBy), fightsCount: point.fightsCount, trainingsCount: point.trainingsCount }));
 }
 
 function FightsIcon() {
@@ -176,7 +182,7 @@ function AnalyticsSummaryBlock({ title, description, metrics }: { title: string;
         <h2 className="text-base font-semibold text-foreground sm:text-lg">{title}</h2>
         <p className="mt-0.5 text-xs text-muted sm:text-sm">{description}</p>
       </header>
-      <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mt-5 grid grid-cols-2 gap-3">
         {metrics.map((metric) => (
           <div key={metric.label} className="flex min-h-28 min-w-0 flex-col rounded-2xl border border-border/65 bg-white/85 p-3.5 sm:min-h-32 sm:p-4">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-soft/75 text-accent"><MetricIcon kind={metric.kind} /></span>
@@ -246,43 +252,43 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
 
   return (
     <div className="relative left-1/2 flex w-[calc(100vw-2rem)] max-w-[1440px] -translate-x-1/2 flex-col gap-5 sm:w-[calc(100vw-3rem)] sm:gap-6 xl:w-[calc(100vw-4rem)]">
-      <header>
+      <header className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
         <div>
           <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">Аналитика</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted sm:text-base">Следите за тренировками, объёмом схваток и выполненными сабмишенами.</p>
         </div>
-      </header>
-
-      <AnalyticsSummaryBlock title="За всё время" description="Общая статистика по всем отмеченным тренировкам" metrics={allTimeMetrics} />
-
-      <section className="flex min-w-0 flex-col items-start gap-3" aria-label="Выбор периода аналитики">
-        <div className="calendar-shadow rounded-2xl border border-border/80 bg-white/92 p-3 sm:p-4">
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-end">
-            <label className="min-w-0 text-xs font-medium text-muted">
-              С
-              <input type="date" value={fromDate} max={toDateValue} onChange={(event) => setFromDate(event.target.value)} className="mt-1 block h-10 w-full rounded-xl border border-border bg-white px-3 text-sm text-foreground outline-none transition focus:border-accent/55 focus:ring-2 focus:ring-accent/10 sm:w-36" />
-            </label>
-            <label className="min-w-0 text-xs font-medium text-muted">
-              По
-              <input type="date" value={toDateValue} min={fromDate} onChange={(event) => setToDateValue(event.target.value)} className="mt-1 block h-10 w-full rounded-xl border border-border bg-white px-3 text-sm text-foreground outline-none transition focus:border-accent/55 focus:ring-2 focus:ring-accent/10 sm:w-36" />
-            </label>
-            <button type="button" onClick={() => void loadPeriod(fromDate, toDateValue)} disabled={isLoading} className="col-span-2 h-10 rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60 sm:col-span-1">
-              {isLoading ? "Загрузка…" : "Показать"}
-            </button>
+        <section className="flex min-w-0 flex-col items-start gap-3 lg:items-end" aria-label="Выбор периода аналитики">
+          <div className="calendar-shadow rounded-2xl border border-border/80 bg-white/92 p-3 sm:p-4">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-end">
+              <label className="min-w-0 text-xs font-medium text-muted">
+                С
+                <input type="date" value={fromDate} max={toDateValue} onChange={(event) => setFromDate(event.target.value)} className="mt-1 block h-10 w-full rounded-xl border border-border bg-white px-3 text-sm text-foreground outline-none transition focus:border-accent/55 focus:ring-2 focus:ring-accent/10 sm:w-36" />
+              </label>
+              <label className="min-w-0 text-xs font-medium text-muted">
+                По
+                <input type="date" value={toDateValue} min={fromDate} onChange={(event) => setToDateValue(event.target.value)} className="mt-1 block h-10 w-full rounded-xl border border-border bg-white px-3 text-sm text-foreground outline-none transition focus:border-accent/55 focus:ring-2 focus:ring-accent/10 sm:w-36" />
+              </label>
+              <button type="button" onClick={() => void loadPeriod(fromDate, toDateValue)} disabled={isLoading} className="col-span-2 h-10 rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60 sm:col-span-1">
+                {isLoading ? "Загрузка…" : "Показать"}
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="flex max-w-full gap-2 overflow-x-auto pb-1" aria-label="Быстрый выбор периода">
-          {presets.map((preset) => (
-            <button key={preset.id} type="button" onClick={() => applyPreset(preset.id)} disabled={isLoading} aria-pressed={selectedPreset === preset.id} className={`min-h-10 shrink-0 rounded-full border px-4 text-xs font-semibold transition disabled:opacity-50 ${selectedPreset === preset.id ? "border-accent/40 bg-accent-soft text-accent-foreground" : "border-border bg-white text-muted hover:border-accent/35 hover:bg-accent-soft hover:text-accent-foreground"}`}>
-              {preset.label}
-            </button>
-          ))}
-        </div>
-      </section>
+          <div className="flex max-w-full gap-2 overflow-x-auto pb-1" aria-label="Быстрый выбор периода">
+            {presets.map((preset) => (
+              <button key={preset.id} type="button" onClick={() => applyPreset(preset.id)} disabled={isLoading} aria-pressed={selectedPreset === preset.id} className={`min-h-10 shrink-0 rounded-full border px-4 text-xs font-semibold transition disabled:opacity-50 ${selectedPreset === preset.id ? "border-accent/40 bg-accent-soft text-accent-foreground" : "border-border bg-white text-muted hover:border-accent/35 hover:bg-accent-soft hover:text-accent-foreground"}`}>
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </section>
+      </header>
 
       {error && <p className={errorClass}>{error}</p>}
 
-      <AnalyticsSummaryBlock title="За выбранный период" description={periodTitle} metrics={periodMetrics} />
+      <section className="grid gap-5 lg:grid-cols-2">
+        <AnalyticsSummaryBlock title="За выбранный период" description={periodTitle} metrics={periodMetrics} />
+        <AnalyticsSummaryBlock title="За всё время" description="Общая статистика по всем отмеченным тренировкам" metrics={allTimeMetrics} />
+      </section>
 
       <section>
         <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
@@ -305,7 +311,7 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
         </article>
       </section>
 
-      <section>
+      <section className="grid items-start gap-5 xl:grid-cols-2">
         <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
           <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Распределение сабмишенов</h2>
@@ -313,6 +319,15 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
           </div>
           <div className="mt-5">
             <SubmissionDistributionChart points={analytics.submissionDistribution} />
+          </div>
+        </article>
+        <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
+          <div>
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Динамика тренировок</h2>
+            <p className="mt-1 text-xs text-muted">Количество отмеченных тренировок за выбранный период</p>
+          </div>
+          <div className={`relative mt-5 h-72 overflow-x-auto pb-2 transition-opacity ${isLoading ? "opacity-45" : "opacity-100"}`}>
+            <TrainingTrendChart points={chartPoints} />
           </div>
         </article>
       </section>

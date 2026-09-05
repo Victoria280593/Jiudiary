@@ -70,7 +70,8 @@ public sealed class AnalyticsService(JiuDiaryDbContext dbContext, ILogger<Analyt
         var points = dailyFights.Select(item => new FightAnalyticsPointOutputModel
         {
             Date = DateOnly.FromDateTime(item.Date),
-            FightsCount = item.FightsCount
+            FightsCount = item.FightsCount,
+            TrainingsCount = item.TrainingsCount
         }).ToList();
 
         var periodFightsCount = dailyFights.Sum(item => item.FightsCount);

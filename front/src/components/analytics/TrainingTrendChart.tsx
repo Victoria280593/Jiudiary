@@ -1,35 +1,16 @@
 "use client";
 
-import {
-  CategoryScale,
-  Chart as ChartJS,
-  Filler,
-  LineElement,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  type ChartOptions,
-} from "chart.js";
-import { Line } from "react-chartjs-2";
+import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip, type ChartOptions } from "chart.js";
 import { useEffect, useState } from "react";
+import { Bar } from "react-chartjs-2";
+import type { FightChartPoint } from "./FightTrendChart";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
-export type FightChartPoint = {
-  label: string;
-  compactLabel: string;
-  fightsCount: number;
-  trainingsCount: number;
-};
-
-const options: ChartOptions<"line"> = {
+const options: ChartOptions<"bar"> = {
   responsive: true,
   maintainAspectRatio: false,
   normalized: true,
-  interaction: {
-    intersect: false,
-    mode: "index",
-  },
   plugins: {
     legend: { display: false },
     tooltip: {
@@ -37,7 +18,7 @@ const options: ChartOptions<"line"> = {
       backgroundColor: "#2b241d",
       bodyFont: { size: 13, weight: 600 },
       callbacks: {
-        label: (context) => `Схватки: ${context.parsed.y}`,
+        label: (context) => `Тренировки: ${context.parsed.y}`,
       },
       cornerRadius: 10,
       padding: 12,
@@ -50,7 +31,7 @@ const options: ChartOptions<"line"> = {
       ticks: {
         autoSkip: false,
         color: "#7b6f61",
-        font: { size: 11, weight: 500 },
+        font: { size: 10, weight: 500 },
         maxRotation: 0,
       },
     },
@@ -67,7 +48,7 @@ const options: ChartOptions<"line"> = {
   },
 };
 
-export default function FightTrendChart({ points }: { points: FightChartPoint[] }) {
+export default function TrainingTrendChart({ points }: { points: FightChartPoint[] }) {
   const [useCompactLabels, setUseCompactLabels] = useState(false);
 
   useEffect(() => {
@@ -78,26 +59,22 @@ export default function FightTrendChart({ points }: { points: FightChartPoint[] 
     return () => mediaQuery.removeEventListener("change", updateLabelMode);
   }, []);
 
-  const minimumWidth = Math.max(560, points.length * (useCompactLabels ? 68 : 108));
+  const minimumWidth = Math.max(520, points.length * (useCompactLabels ? 62 : 96));
 
   return (
     <div className="h-full" style={{ minWidth: minimumWidth }}>
-      <Line
+      <Bar
         options={options}
         data={{
           labels: points.map((point) => useCompactLabels ? point.compactLabel : point.label),
           datasets: [{
-            data: points.map((point) => point.fightsCount),
+            data: points.map((point) => point.trainingsCount),
+            backgroundColor: "rgba(155, 112, 69, 0.72)",
             borderColor: "#9b7045",
-            backgroundColor: "rgba(155, 112, 69, 0.12)",
-            borderWidth: 2.25,
-            fill: true,
-            pointBackgroundColor: "#9b7045",
-            pointBorderColor: "#ffffff",
-            pointBorderWidth: 2,
-            pointHoverRadius: 5,
-            pointRadius: points.length > 45 ? 2.5 : 3.5,
-            tension: 0.32,
+            borderWidth: 1,
+            borderRadius: 7,
+            borderSkipped: false,
+            maxBarThickness: 38,
           }],
         }}
       />
