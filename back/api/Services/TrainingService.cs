@@ -27,10 +27,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             throw new AspNetException("Количество раундов не может быть отрицательным.", StatusCodes.Status400BadRequest);
         }
 
-        // Посещение проставляется автоматически, если есть хотя бы один раунд —
-        // ручной флаг Attended важен только при Rounds == 0.
-        var attended = inputModel.Attended || inputModel.Rounds > 0;
-
         var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
         if (!await GetAccessibleTrainings(user).AnyAsync(training => training.Id == trainingId, cancellationToken))
         {
@@ -44,31 +40,23 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             {
                 ClientInfoId = clientInfoId,
                 TrainingId = trainingId,
-                Rounds = inputModel.Rounds,
-                Attended = attended
+                Rounds = inputModel.Rounds
             };
             dbContext.ClientTrainings.Add(clientTraining);
         }
         else
         {
             clientTraining.Rounds = inputModel.Rounds;
-            clientTraining.Attended = attended;
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        logger.LogInformation(
-            "Отметка о тренировке клиента сохранена. UserId: {UserId} | TrainingId: {TrainingId} | Rounds: {Rounds} | Attended: {Attended}",
-            user.Id,
-            trainingId,
-            inputModel.Rounds,
-            attended);
+        logger.LogInformation("Отметка о тренировке клиента сохранена. UserId: {UserId} | TrainingId: {TrainingId} | Rounds: {Rounds}", user.Id, trainingId, inputModel.Rounds);
 
         return new ClientTrainingOutputModel
         {
             Id = clientTraining.Id,
             TrainingId = clientTraining.TrainingId,
             Rounds = clientTraining.Rounds,
-            Attended = clientTraining.Attended,
             CreatedAt = clientTraining.CreatedAt
         };
     }
@@ -120,7 +108,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
                         Id = clientTraining.Id,
                         TrainingId = clientTraining.TrainingId,
                         Rounds = clientTraining.Rounds,
-                        Attended = clientTraining.Attended,
                         CreatedAt = clientTraining.CreatedAt
                     })
                     .FirstOrDefault()

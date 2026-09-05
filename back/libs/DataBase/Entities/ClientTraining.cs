@@ -18,8 +18,6 @@ public sealed class ClientTraining : IAuditable
 
     public int? Rounds { get; set; }
 
-    public bool Attended { get; set; }
-
     public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }

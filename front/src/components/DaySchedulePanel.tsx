@@ -45,10 +45,7 @@ function clientTrainingBadge(clientTraining: ClientTraining) {
   if (clientTraining.rounds) {
     return { label: `Раунды: ${clientTraining.rounds}`, className: "bg-accent-soft text-accent-foreground" };
   }
-  if (clientTraining.attended) {
-    return { label: "Посетил", className: "bg-success-soft text-success" };
-  }
-  return { label: "Не посетил", className: "bg-danger-soft text-danger" };
+  return { label: "Посетил", className: "bg-success-soft text-success" };
 }
 
 function localDateTimeValue(date: Date) {
@@ -137,7 +134,7 @@ function ClientTrainingModal({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [rounds, setRounds] = useState(clientTraining?.rounds ?? 0);
-  const [manualAttended, setManualAttended] = useState(clientTraining?.attended ?? false);
+  const [manualAttended, setManualAttended] = useState(Boolean(clientTraining));
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -155,7 +152,11 @@ function ClientTrainingModal({
     setIsSaving(true);
     setError(undefined);
     try {
-      onSaved(await saveClientTraining(training.id, rounds, attended));
+      if (!attended) {
+        setError("Отметьте посещение или укажите количество раундов.");
+        return;
+      }
+      onSaved(await saveClientTraining(training.id, rounds));
       onClose();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Не удалось отметить тренировку.");
@@ -237,7 +238,7 @@ function ClientTrainingModal({
         <button
           type="button"
           onClick={() => void save()}
-          disabled={isSaving}
+          disabled={isSaving || !attended}
           className="mt-7 min-h-12 w-full rounded-2xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60"
         >
           {isSaving ? "Сохранение…" : "Сохранить"}

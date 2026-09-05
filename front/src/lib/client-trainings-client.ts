@@ -2,15 +2,14 @@ export type ClientTraining = {
   id: string;
   trainingId: string;
   rounds: number | null;
-  attended: boolean;
   createdAt: string;
 };
 
-export async function saveClientTraining(trainingId: string, rounds: number, attended: boolean): Promise<ClientTraining> {
+export async function saveClientTraining(trainingId: string, rounds: number): Promise<ClientTraining> {
   const response = await fetch("/api/client-trainings", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ trainingId, rounds, attended }),
+    body: JSON.stringify({ trainingId, rounds }),
     cache: "no-store",
   });
 
