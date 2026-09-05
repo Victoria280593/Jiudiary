@@ -299,7 +299,7 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
             </div>
           </div>
 
-          <div className={`relative mt-5 h-64 overflow-x-auto pb-2 transition-opacity sm:h-80 ${isLoading ? "opacity-45" : "opacity-100"}`}>
+          <div className={`relative mt-5 h-64 min-w-0 overflow-x-hidden pb-2 transition-opacity sm:h-80 sm:overflow-x-auto ${isLoading ? "opacity-45" : "opacity-100"}`}>
             <FightTrendChart points={chartPoints} />
           </div>
         </article>
