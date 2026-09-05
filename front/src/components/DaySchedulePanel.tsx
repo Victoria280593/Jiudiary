@@ -208,7 +208,7 @@ function SubmissionSearchModal({ excludedIds, onClose, onSelect }: { excludedIds
           <span className="sr-only">Название сабмишена</span>
           <div className="flex items-center gap-3 rounded-2xl border border-border bg-white px-4 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/10">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5 shrink-0 text-muted" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path strokeLinecap="round" d="m16 16 4 4" /></svg>
-            <input autoFocus value={query} onChange={(event) => changeQuery(event.target.value)} placeholder="Начните вводить название" className="min-h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted/70" />
+            <input autoFocus value={query} onChange={(event) => changeQuery(event.target.value)} placeholder="Начните вводить название" className="min-h-12 w-full bg-transparent text-base outline-none placeholder:text-muted/70 sm:text-sm" />
           </div>
         </label>
 
