@@ -169,15 +169,12 @@ function MetricIcon({ kind }: { kind: MetricKind }) {
   return <FightsIcon />;
 }
 
-function AnalyticsSummaryBlock({ title, description, metrics, highlighted = false }: { title: string; description: string; metrics: { label: string; value: string | number; kind: MetricKind }[]; highlighted?: boolean }) {
+function AnalyticsSummaryBlock({ title, description, metrics }: { title: string; description: string; metrics: { label: string; value: string | number; kind: MetricKind }[] }) {
   return (
-    <article className={`calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 p-4 sm:p-6 ${highlighted ? "bg-[linear-gradient(115deg,rgba(246,237,226,0.9),rgba(255,255,255,0.96))]" : "bg-white/94"}`}>
-      <header className="flex items-center gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent"><MetricIcon kind={highlighted ? "trainings" : "average"} /></span>
-        <div className="min-w-0">
-          <h2 className="text-base font-semibold text-foreground sm:text-lg">{title}</h2>
-          <p className="mt-0.5 text-xs text-muted sm:text-sm">{description}</p>
-        </div>
+    <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
+      <header className="min-w-0">
+        <h2 className="text-base font-semibold text-foreground sm:text-lg">{title}</h2>
+        <p className="mt-0.5 text-xs text-muted sm:text-sm">{description}</p>
       </header>
       <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {metrics.map((metric) => (
@@ -249,12 +246,23 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
 
   return (
     <div className="relative left-1/2 flex w-[calc(100vw-2rem)] max-w-[1440px] -translate-x-1/2 flex-col gap-5 sm:w-[calc(100vw-3rem)] sm:gap-6 xl:w-[calc(100vw-4rem)]">
-      <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <header>
         <div>
           <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">Аналитика</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted sm:text-base">Следите за тренировками, объёмом схваток и выполненными сабмишенами.</p>
         </div>
+      </header>
 
+      <AnalyticsSummaryBlock title="За всё время" description="Общая статистика по всем отмеченным тренировкам" metrics={allTimeMetrics} />
+
+      <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between" aria-label="Выбор периода аналитики">
+        <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Быстрый выбор периода">
+          {presets.map((preset) => (
+            <button key={preset.id} type="button" onClick={() => applyPreset(preset.id)} disabled={isLoading} aria-pressed={selectedPreset === preset.id} className={`min-h-10 shrink-0 rounded-full border px-4 text-xs font-semibold transition disabled:opacity-50 ${selectedPreset === preset.id ? "border-accent/40 bg-accent-soft text-accent-foreground" : "border-border bg-white text-muted hover:border-accent/35 hover:bg-accent-soft hover:text-accent-foreground"}`}>
+              {preset.label}
+            </button>
+          ))}
+        </div>
         <div className="calendar-shadow rounded-2xl border border-border/80 bg-white/92 p-3 sm:p-4">
           <div className="grid grid-cols-2 gap-2 sm:flex sm:items-end">
             <label className="min-w-0 text-xs font-medium text-muted">
@@ -270,21 +278,11 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
             </button>
           </div>
         </div>
-      </header>
-
-      <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Быстрый выбор периода">
-        {presets.map((preset) => (
-          <button key={preset.id} type="button" onClick={() => applyPreset(preset.id)} disabled={isLoading} aria-pressed={selectedPreset === preset.id} className={`min-h-9 shrink-0 rounded-full border px-4 text-xs font-semibold transition disabled:opacity-50 ${selectedPreset === preset.id ? "border-accent/40 bg-accent-soft text-accent-foreground" : "border-border bg-white text-muted hover:border-accent/35 hover:bg-accent-soft hover:text-accent-foreground"}`}>
-            {preset.label}
-          </button>
-        ))}
-      </div>
+      </section>
 
       {error && <p className={errorClass}>{error}</p>}
 
-      <AnalyticsSummaryBlock title="За всё время" description="Общая статистика по всем отмеченным тренировкам" metrics={allTimeMetrics} />
-
-      <AnalyticsSummaryBlock title="За выбранный период" description={periodTitle} metrics={periodMetrics} highlighted />
+      <AnalyticsSummaryBlock title="За выбранный период" description={periodTitle} metrics={periodMetrics} />
 
       <section>
         <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
