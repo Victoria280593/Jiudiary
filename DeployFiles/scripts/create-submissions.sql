@@ -1,67 +1,35 @@
-IF OBJECT_ID(N'dbo.Submissions', N'U') IS NULL
-BEGIN
-    CREATE TABLE dbo.Submissions
-    (
-        Id int NOT NULL,
-        Name nvarchar(150) NOT NULL,
-        CONSTRAINT PK_Submissions PRIMARY KEY (Id),
-        CONSTRAINT UQ_Submissions_Name UNIQUE (Name)
-    );
-END;
+DELETE FROM dbo.Submissions;
 
-IF EXISTS (
-    SELECT 1 FROM sys.columns
-    WHERE object_id = OBJECT_ID(N'dbo.Submissions') AND name = N'NameEn'
-)
-BEGIN
-    IF EXISTS (SELECT 1 FROM sys.key_constraints WHERE name = N'UQ_Submissions_NameEn')
-        ALTER TABLE dbo.Submissions DROP CONSTRAINT UQ_Submissions_NameEn;
-
-    ALTER TABLE dbo.Submissions DROP COLUMN NameEn;
-END;
-
-MERGE dbo.Submissions AS target
-USING
-(
-    VALUES
-        (1,  N'Armbar'),
-        (2,  N'Triangle armbar'),
-        (3,  N'Reverse triangle'),
-        (4,  N'Reverse armbar'),
-        (5,  N'Americana'),
-        (6,  N'Kimura'),
-        (7,  N'Omoplata'),
-        (8,  N'Baratoplata'),
-        (9,  N'Wristlock'),
-        (10, N'Armbar from mount'),
-        (11, N'Flying armbar'),
-        (12, N'Biceps slicer'),
-        (13, N'Monoplata'),
-        (14, N'Crucifix'),
-        (15, N'Straight ankle lock'),
-        (16, N'Heel hook'),
-        (17, N'Footlock'),
-        (18, N'Kneebar'),
-        (19, N'Calf slicer'),
-        (20, N'Twister'),
-        (21, N'Banana split'),
-        (22, N'Estima lock'),
-        (23, N'Triangle choke'),
-        (24, N'Guillotine choke'),
-        (25, N'Cross collar choke'),
-        (26, N'Rear naked choke'),
-        (27, N'Bow and arrow choke'),
-        (28, N'Ezekiel choke'),
-        (29, N'D''Arce choke'),
-        (30, N'Anaconda choke'),
-        (31, N'Loop choke'),
-        (32, N'North-south choke'),
-        (33, N'Baseball choke'),
-        (34, N'Joker choke')
-) AS source (Id, Name)
-ON target.Id = source.Id
-WHEN MATCHED THEN
-    UPDATE SET Name = source.Name
-WHEN NOT MATCHED BY TARGET THEN
-    INSERT (Id, Name)
-    VALUES (source.Id, source.Name);
+INSERT INTO dbo.Submissions (Id, NameRu, NameEn)
+VALUES
+    (1,  N'Рычаг локтя',                N'Armbar'),
+    (2,  N'Обратный треугольник',       N'Reverse triangle'),
+    (3,  N'Обратный рычаг локтя',       N'Reverse armbar'),
+    (4,  N'Американа',                  N'Americana'),
+    (5,  N'Кимура',                     N'Kimura'),
+    (6,  N'Омо плата',                  N'Omoplata'),
+    (7,  N'Барата плата',               N'Baratoplata'),
+    (8,  N'Вирст лок',                  N'Wristlock'),
+    (9,  N'Бицепс-слайсер',             N'Biceps slicer'),
+    (10, N'Моноплата',                  N'Monoplata'),
+    (11, N'Распятье',                   N'Crucifix'),
+    (12, N'Прямой ахилл',               N'Straight ankle lock'),
+    (13, N'Скрутка пятки (хилхук)',     N'Heel hook'),
+    (14, N'Футлок',                     N'Footlock'),
+    (15, N'Рычаг колена',               N'Kneebar'),
+    (16, N'Калф-слайсер',               N'Calf slicer'),
+    (17, N'Твистер',                    N'Twister'),
+    (18, N'Банана-сплит',               N'Banana split'),
+    (19, N'Эстима-лок',                 N'Estima lock'),
+    (20, N'Треугольник',                N'Triangle choke'),
+    (21, N'Гильотина',                  N'Guillotine choke'),
+    (22, N'Кросс чок',                  N'Cross collar choke'),
+    (23, N'Удушение сзади',             N'Rear naked choke'),
+    (24, N'Лук и стрелы',               N'Bow and arrow choke'),
+    (25, N'Удушение Иезекииля',         N'Ezekiel choke'),
+    (26, N'Дарс-чок',                   N'D''Arce choke'),
+    (27, N'Анаконда',                   N'Anaconda choke'),
+    (28, N'Луп чок',                    N'Loop choke'),
+    (29, N'Север-юг',                   N'North-south choke'),
+    (30, N'Бейсбол чок',                N'Baseball choke'),
+    (31, N'Джокер-чок',                 N'Joker choke');

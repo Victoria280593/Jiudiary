@@ -1,5 +1,6 @@
 using JiuDiary.Api.Services;
 using JiuDiary.Models.ClientTraining;
+using JiuDiary.Models.Submission;
 using JiuDiary.Models.Training;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,8 +11,17 @@ namespace JiuDiary.Api.Controllers;
 [Authorize]
 [Route("api/trainings")]
 [Produces("application/json")]
-public sealed class TrainingController(TrainingService trainingService) : BaseController
+public sealed class TrainingController(TrainingService trainingService, SubmissionSearchService submissionSearchService) : BaseController
 {
+    /// <summary>
+    /// Ищет приёмы по подстроке в названии или алиасах.
+    /// </summary>
+    /// <param name="query">Часть названия или алиаса приёма.</param>
+    /// <returns>Подходящие приёмы, отсортированные по релевантности.</returns>
+    [HttpGet("submissions/search")]
+    [ProducesResponseType<IReadOnlyList<SubmissionSearchOutputModel>>(StatusCodes.Status200OK)]
+    public ActionResult<IReadOnlyList<SubmissionSearchOutputModel>> SearchSubmissions([FromQuery] string? query) => Ok(submissionSearchService.Search(query));
+
     /// <summary>
     /// Создаёт или обновляет отметку текущего клиента о тренировке.
     /// </summary>
