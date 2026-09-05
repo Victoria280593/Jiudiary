@@ -658,7 +658,7 @@ export function DaySchedulePanel({
                 return (
                   <article
                     key={training.id}
-                    className={`relative grid min-h-28 grid-cols-[4.4rem_minmax(0,1fr)] overflow-visible rounded-2xl border border-border/60 bg-white shadow-[0_12px_32px_-26px_rgba(86,61,38,0.48)] transition sm:grid-cols-[6.5rem_minmax(0,1fr)] sm:rounded-[1.15rem] ${isDeleting ? "pointer-events-none opacity-55" : ""}`}
+                    className={`relative grid min-h-32 grid-cols-[4.4rem_minmax(0,1fr)] overflow-visible rounded-2xl border border-border/60 bg-white shadow-[0_12px_32px_-26px_rgba(86,61,38,0.48)] transition sm:grid-cols-[6.5rem_minmax(0,1fr)] sm:rounded-[1.15rem] ${isDeleting ? "pointer-events-none opacity-55" : ""}`}
                   >
                     <span className={`absolute inset-y-0 left-0 w-1 rounded-l-2xl sm:w-1.5 ${colorStyle.dot}`} aria-hidden="true" />
                     <time
@@ -674,7 +674,7 @@ export function DaySchedulePanel({
                       )}
                     </time>
 
-                    <div className={`min-w-0 px-4 py-4 sm:px-6 sm:py-5 ${showCreateForm ? "pr-24 sm:pr-28" : "pr-16 sm:pr-20"}`}>
+                    <div className="min-w-0 px-4 py-4 pr-16 sm:px-6 sm:py-5 sm:pr-20">
                       {linkBase ? (
                         <Link href={`${linkBase}/${training.id}`} className="group block rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
                           {training.groupName && <p className="truncate text-xs font-normal text-muted sm:text-sm">{training.groupName}</p>}
@@ -702,20 +702,20 @@ export function DaySchedulePanel({
                       )}
                     </div>
 
-                    <div data-training-menu className="absolute right-2 top-2 z-10 flex items-center gap-1.5 sm:right-4 sm:top-4">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMarkingTraining(training);
-                          setOpenMenuId(undefined);
-                        }}
-                        aria-label={training.clientTraining ? `Изменить отметку тренировки «${training.title || "Тренировка"}»` : `Отметить тренировку «${training.title || "Тренировка"}»`}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-success text-2xl font-light text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-success/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/35"
-                      >
-                        <span aria-hidden="true">+</span>
-                      </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMarkingTraining(training);
+                        setOpenMenuId(undefined);
+                      }}
+                      aria-label={training.clientTraining ? `Изменить отметку тренировки «${training.title || "Тренировка"}»` : `Отметить тренировку «${training.title || "Тренировка"}»`}
+                      className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl border border-success/20 bg-success/15 text-2xl font-light text-success shadow-sm transition hover:border-success/35 hover:bg-success/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/30 sm:right-4"
+                    >
+                      <span aria-hidden="true">+</span>
+                    </button>
 
-                      {showCreateForm && (
+                    {showCreateForm && (
+                      <div data-training-menu className="absolute right-2 top-2 z-20 sm:right-3">
                         <button
                           type="button"
                           onClick={() => setOpenMenuId((current) => current === training.id ? undefined : training.id)}
@@ -726,32 +726,32 @@ export function DaySchedulePanel({
                         >
                           <span aria-hidden="true" className="-translate-y-1">…</span>
                         </button>
-                      )}
 
-                      {showCreateForm && openMenuId === training.id && (
-                        <div role="menu" className="absolute right-0 top-10 z-20 w-48 overflow-hidden rounded-xl border border-border/70 bg-white p-1.5 shadow-[0_18px_45px_-18px_rgba(43,36,29,0.42)]">
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                              setEditingTraining(training);
-                              setOpenMenuId(undefined);
-                            }}
-                            className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm text-foreground transition hover:bg-surface-muted"
-                          >
-                            Редактировать
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => openDeleteDialog(training)}
-                            className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm font-medium text-danger transition hover:bg-danger-soft"
-                          >
-                            Удалить
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                        {openMenuId === training.id && (
+                          <div role="menu" className="absolute right-0 top-10 z-20 w-48 overflow-hidden rounded-xl border border-border/70 bg-white p-1.5 shadow-[0_18px_45px_-18px_rgba(43,36,29,0.42)]">
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => {
+                                setEditingTraining(training);
+                                setOpenMenuId(undefined);
+                              }}
+                              className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm text-foreground transition hover:bg-surface-muted"
+                            >
+                              Редактировать
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => openDeleteDialog(training)}
+                              className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm font-medium text-danger transition hover:bg-danger-soft"
+                            >
+                              Удалить
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </article>
                 );
               })
