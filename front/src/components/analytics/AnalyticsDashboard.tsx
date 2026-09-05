@@ -251,9 +251,9 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
           <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">Аналитика</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted sm:text-base">Следите за тренировками, объёмом схваток и выполненными сабмишенами.</p>
         </div>
-        <section className="flex min-w-0 flex-col items-start gap-3 lg:items-end" aria-label="Выбор периода аналитики">
-          <div className="calendar-shadow rounded-2xl border border-border/80 bg-white/92 p-3 sm:p-4">
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-end">
+        <section className="flex w-full min-w-0 flex-col items-stretch gap-3 lg:w-auto lg:items-end" aria-label="Выбор периода аналитики">
+          <div className="calendar-shadow w-full rounded-2xl border border-border/80 bg-white/92 p-3 sm:p-4">
+            <div className="grid w-full grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:flex sm:items-end sm:gap-2">
               <label className="min-w-0 text-xs font-medium text-muted">
                 С
                 <input type="date" value={fromDate} max={toDateValue} onChange={(event) => setFromDate(event.target.value)} className="mt-1 block h-10 w-full rounded-xl border border-border bg-white px-3 text-sm text-foreground outline-none transition focus:border-accent/55 focus:ring-2 focus:ring-accent/10 sm:w-36" />
@@ -262,14 +262,14 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
                 По
                 <input type="date" value={toDateValue} min={fromDate} onChange={(event) => setToDateValue(event.target.value)} className="mt-1 block h-10 w-full rounded-xl border border-border bg-white px-3 text-sm text-foreground outline-none transition focus:border-accent/55 focus:ring-2 focus:ring-accent/10 sm:w-36" />
               </label>
-              <button type="button" onClick={() => void loadPeriod(fromDate, toDateValue)} disabled={isLoading} className="col-span-2 h-10 rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60 sm:col-span-1">
+              <button type="button" onClick={() => void loadPeriod(fromDate, toDateValue)} disabled={isLoading} className="h-10 rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60 min-[480px]:col-span-2 sm:col-span-1">
                 {isLoading ? "Загрузка…" : "Показать"}
               </button>
             </div>
           </div>
-          <div className="flex max-w-full gap-2 overflow-x-auto pb-1" aria-label="Быстрый выбор периода">
+          <div className="flex w-full max-w-full flex-col gap-2 pb-1 sm:w-auto sm:flex-row sm:overflow-x-auto" aria-label="Быстрый выбор периода">
             {presets.map((preset) => (
-              <button key={preset.id} type="button" onClick={() => applyPreset(preset.id)} disabled={isLoading} aria-pressed={selectedPreset === preset.id} className={`min-h-10 shrink-0 rounded-full border px-4 text-xs font-semibold transition disabled:opacity-50 ${selectedPreset === preset.id ? "border-accent/40 bg-accent-soft text-accent-foreground" : "border-border bg-white text-muted hover:border-accent/35 hover:bg-accent-soft hover:text-accent-foreground"}`}>
+              <button key={preset.id} type="button" onClick={() => applyPreset(preset.id)} disabled={isLoading} aria-pressed={selectedPreset === preset.id} className={`min-h-10 w-full shrink-0 rounded-full border px-4 text-xs font-semibold transition disabled:opacity-50 sm:w-auto ${selectedPreset === preset.id ? "border-accent/40 bg-accent-soft text-accent-foreground" : "border-border bg-white text-muted hover:border-accent/35 hover:bg-accent-soft hover:text-accent-foreground"}`}>
                 {preset.label}
               </button>
             ))}
@@ -280,8 +280,8 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
       {error && <p className={errorClass}>{error}</p>}
 
       <section className="grid gap-5 lg:grid-cols-2">
-        <AnalyticsSummaryBlock title="За выбранный период" description={periodTitle} metrics={periodMetrics} />
         <AnalyticsSummaryBlock title="За всё время" description="Общая статистика по всем отмеченным тренировкам" metrics={allTimeMetrics} />
+        <AnalyticsSummaryBlock title="За выбранный период" description={periodTitle} metrics={periodMetrics} />
       </section>
 
       <section>
@@ -308,20 +308,20 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
       <section className="grid items-start gap-5 lg:grid-cols-2">
         <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
           <div>
-            <h2 className="text-base font-semibold text-foreground sm:text-lg">Сабмишены за выбранный период</h2>
-            <p className="mt-1 text-xs text-muted">Количество выполненных приёмов за выбранный период</p>
-          </div>
-          <div className="mt-5">
-            <SubmissionDistributionChart points={analytics.submissionDistribution} />
-          </div>
-        </article>
-        <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
-          <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Сабмишены за всё время</h2>
             <p className="mt-1 text-xs text-muted">Распределение всех выполненных приёмов</p>
           </div>
           <div className="mt-5">
             <SubmissionDistributionChart points={analytics.allTimeSubmissionDistribution} />
+          </div>
+        </article>
+        <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
+          <div>
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Сабмишены за выбранный период</h2>
+            <p className="mt-1 text-xs text-muted">Количество выполненных приёмов за выбранный период</p>
+          </div>
+          <div className="mt-5">
+            <SubmissionDistributionChart points={analytics.submissionDistribution} />
           </div>
         </article>
       </section>
