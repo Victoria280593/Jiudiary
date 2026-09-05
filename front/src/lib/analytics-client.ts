@@ -23,6 +23,7 @@ export type FightAnalytics = {
   periodAverageFightsPerTraining: number;
   points: FightAnalyticsPoint[];
   submissionDistribution: SubmissionAnalyticsPoint[];
+  allTimeSubmissionDistribution: SubmissionAnalyticsPoint[];
 };
 
 export async function getFightAnalytics(fromDate: string, toDate: string): Promise<FightAnalytics> {

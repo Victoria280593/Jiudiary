@@ -305,14 +305,23 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
         </article>
       </section>
 
-      <section>
+      <section className="grid items-start gap-5 lg:grid-cols-2">
         <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
           <div>
-            <h2 className="text-base font-semibold text-foreground sm:text-lg">Распределение сабмишенов</h2>
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Сабмишены за выбранный период</h2>
             <p className="mt-1 text-xs text-muted">Количество выполненных приёмов за выбранный период</p>
           </div>
           <div className="mt-5">
             <SubmissionDistributionChart points={analytics.submissionDistribution} />
+          </div>
+        </article>
+        <article className="calendar-shadow min-w-0 rounded-[1.4rem] border border-border/75 bg-white/94 p-4 sm:p-6">
+          <div>
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Сабмишены за всё время</h2>
+            <p className="mt-1 text-xs text-muted">Распределение всех выполненных приёмов</p>
+          </div>
+          <div className="mt-5">
+            <SubmissionDistributionChart points={analytics.allTimeSubmissionDistribution} />
           </div>
         </article>
       </section>

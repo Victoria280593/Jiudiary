@@ -25,4 +25,6 @@ public sealed class FightAnalyticsOutputModel
     public List<FightAnalyticsPointOutputModel> Points { get; set; } = [];
 
     public List<SubmissionAnalyticsPointOutputModel> SubmissionDistribution { get; set; } = [];
+
+    public List<SubmissionAnalyticsPointOutputModel> AllTimeSubmissionDistribution { get; set; } = [];
 }

@@ -45,10 +45,20 @@ public sealed class AnalyticsService(JiuDiaryDbContext dbContext, ILogger<Analyt
             })
             .SingleOrDefaultAsync(cancellationToken);
 
-        var allTimeSubmissionsCount = await dbContext.ClientTrainingSubmissions
+        var allTimeSubmissionDistribution = await dbContext.ClientTrainingSubmissions
             .AsNoTracking()
             .Where(item => item.ClientTraining.ClientInfo.UserId == user.Id)
-            .SumAsync(item => (int?)item.Count, cancellationToken) ?? 0;
+            .GroupBy(item => new { item.SubmissionId, item.Submission.NameRu, item.Submission.NameEn })
+            .Select(group => new SubmissionAnalyticsPointOutputModel
+            {
+                SubmissionId = group.Key.SubmissionId,
+                NameRu = group.Key.NameRu,
+                NameEn = group.Key.NameEn,
+                Count = group.Sum(item => item.Count)
+            })
+            .OrderByDescending(item => item.Count)
+            .ThenBy(item => item.SubmissionId)
+            .ToListAsync(cancellationToken);
         var submissionDistribution = await dbContext.ClientTrainingSubmissions
             .AsNoTracking()
             .Where(item =>
@@ -84,12 +94,13 @@ public sealed class AnalyticsService(JiuDiaryDbContext dbContext, ILogger<Analyt
             PeriodFightsCount = periodFightsCount,
             AllTimeTrainingsCount = allTimeTotals?.TrainingsCount ?? 0,
             PeriodTrainingsCount = periodTrainingsCount,
-            AllTimeSubmissionsCount = allTimeSubmissionsCount,
+            AllTimeSubmissionsCount = allTimeSubmissionDistribution.Sum(item => item.Count),
             PeriodSubmissionsCount = periodSubmissionsCount,
             AllTimeAverageFightsPerTraining = CalculateAverage(allTimeTotals?.FightsCount ?? 0, allTimeTotals?.TrainingsCount ?? 0),
             PeriodAverageFightsPerTraining = CalculateAverage(periodFightsCount, periodTrainingsCount),
             Points = points,
-            SubmissionDistribution = submissionDistribution
+            SubmissionDistribution = submissionDistribution,
+            AllTimeSubmissionDistribution = allTimeSubmissionDistribution
         };
 
         logger.LogInformation("Аналитика схваток получена. UserId: {UserId} | FromDate: {FromDate} | ToDate: {ToDate} | AllTimeFightsCount: {AllTimeFightsCount} | PeriodFightsCount: {PeriodFightsCount}", user.Id, fromDate, toDate, result.AllTimeFightsCount, result.PeriodFightsCount);

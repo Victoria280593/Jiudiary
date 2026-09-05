@@ -312,6 +312,14 @@ function isFightAnalytics(value: unknown): value is FightAnalytics {
       typeof submission.nameRu === "string" &&
       typeof submission.nameEn === "string" &&
       typeof submission.count === "number"
+    ) &&
+    Array.isArray(analytics.allTimeSubmissionDistribution) &&
+    analytics.allTimeSubmissionDistribution.every((submission) =>
+      Boolean(submission) &&
+      typeof submission.submissionId === "number" &&
+      typeof submission.nameRu === "string" &&
+      typeof submission.nameEn === "string" &&
+      typeof submission.count === "number"
     )
   );
 }
