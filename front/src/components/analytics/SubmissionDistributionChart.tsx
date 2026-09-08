@@ -57,8 +57,8 @@ export default function SubmissionDistributionChart({ points }: { points: Submis
               data: displayedPoints.map((point) => point.count),
               backgroundColor: displayedPoints.map((point) => point.color),
               borderColor: "#ffffff",
-              borderWidth: 3,
-              hoverBorderWidth: 3,
+              borderWidth: displayedPoints.length > 1 ? 3 : 0,
+              hoverBorderWidth: displayedPoints.length > 1 ? 3 : 0,
               hoverOffset: 5,
             }],
           }}
