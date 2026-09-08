@@ -68,7 +68,7 @@ export function ClientBeltsCard({
         <p className="text-sm text-muted">История поясов пока пустая.</p>
       ) : (
         <div className="overflow-hidden rounded-xl border border-border">
-          <div className="hidden grid-cols-[minmax(12rem,1fr)_minmax(9rem,0.65fr)_minmax(5rem,0.35fr)_2.5rem] gap-4 border-b border-border bg-surface-muted/55 px-4 py-2.5 text-xs font-medium text-muted sm:grid">
+          <div className="grid grid-cols-[minmax(6.5rem,1fr)_minmax(4.75rem,0.65fr)_minmax(2.75rem,0.35fr)_2rem] gap-2 border-b border-border bg-surface-muted/55 px-3 py-2.5 text-[0.7rem] font-medium text-muted sm:grid-cols-[minmax(12rem,1fr)_minmax(9rem,0.65fr)_minmax(5rem,0.35fr)_2.5rem] sm:gap-4 sm:px-4 sm:text-xs">
             <span>Пояс</span>
             <span>Дата получения</span>
             <span>Страйпы</span>
@@ -82,23 +82,21 @@ export function ClientBeltsCard({
               return (
                 <li
                   key={clientBelt.id}
-                  className="grid grid-cols-2 gap-3 px-4 py-3 sm:grid-cols-[minmax(12rem,1fr)_minmax(9rem,0.65fr)_minmax(5rem,0.35fr)_2.5rem] sm:items-center sm:gap-4"
+                  className="grid grid-cols-[minmax(6.5rem,1fr)_minmax(4.75rem,0.65fr)_minmax(2.75rem,0.35fr)_2rem] items-center gap-2 px-3 py-3 sm:grid-cols-[minmax(12rem,1fr)_minmax(9rem,0.65fr)_minmax(5rem,0.35fr)_2.5rem] sm:gap-4 sm:px-4"
                 >
-                  <div className="col-span-2 flex items-center gap-3 sm:col-span-1">
-                    <TiedBeltIcon belt={belt} className="h-9 w-16 shrink-0" />
-                    <span className="text-sm font-medium text-foreground">
+                  <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                    <TiedBeltIcon belt={belt} className="h-8 w-12 shrink-0 sm:h-9 sm:w-16" />
+                    <span className="min-w-0 text-xs font-medium text-foreground sm:text-sm">
                       {BELT_LABELS[belt]} пояс
                     </span>
                   </div>
                   <div>
-                    <span className="block text-xs text-muted sm:hidden">Дата получения</span>
-                    <span className="text-sm text-foreground">
+                    <span className="text-xs text-foreground sm:text-sm">
                       {formatReceivedDate(clientBelt.receivedDate)}
                     </span>
                   </div>
                   <div>
-                    <span className="block text-xs text-muted sm:hidden">Страйпы</span>
-                    <span className="text-sm text-foreground">{clientBelt.stripesCount}</span>
+                    <span className="text-xs text-foreground sm:text-sm">{clientBelt.stripesCount}</span>
                   </div>
                   <button
                     type="button"
