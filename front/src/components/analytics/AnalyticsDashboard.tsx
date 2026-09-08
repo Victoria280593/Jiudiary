@@ -253,16 +253,16 @@ export function AnalyticsDashboard({ initialAnalytics }: { initialAnalytics: Fig
         </div>
         <section className="flex w-full min-w-0 flex-col items-stretch gap-3 lg:w-auto lg:items-end" aria-label="Выбор периода аналитики">
           <div className="calendar-shadow w-full rounded-2xl border border-border/80 bg-white/92 p-3 sm:p-4">
-            <div className="grid w-full grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:flex sm:items-end sm:gap-2">
+            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:items-end">
               <label className="min-w-0 text-xs font-medium text-muted">
                 С
-                <input type="date" value={fromDate} max={toDateValue} onChange={(event) => setFromDate(event.target.value)} className="mt-1 block h-10 w-full rounded-xl border border-border bg-white px-3 text-sm text-foreground outline-none transition focus:border-accent/55 focus:ring-2 focus:ring-accent/10 sm:w-36" />
+                <input type="date" value={fromDate} max={toDateValue} onChange={(event) => setFromDate(event.target.value)} className="mt-1 block h-10 w-full min-w-0 rounded-xl border border-border bg-white px-2 text-base text-foreground outline-none transition focus:border-accent/55 focus:ring-2 focus:ring-accent/10 sm:w-36 sm:px-3 sm:text-sm" />
               </label>
               <label className="min-w-0 text-xs font-medium text-muted">
                 По
-                <input type="date" value={toDateValue} min={fromDate} onChange={(event) => setToDateValue(event.target.value)} className="mt-1 block h-10 w-full rounded-xl border border-border bg-white px-3 text-sm text-foreground outline-none transition focus:border-accent/55 focus:ring-2 focus:ring-accent/10 sm:w-36" />
+                <input type="date" value={toDateValue} min={fromDate} onChange={(event) => setToDateValue(event.target.value)} className="mt-1 block h-10 w-full min-w-0 rounded-xl border border-border bg-white px-2 text-base text-foreground outline-none transition focus:border-accent/55 focus:ring-2 focus:ring-accent/10 sm:w-36 sm:px-3 sm:text-sm" />
               </label>
-              <button type="button" onClick={() => void loadPeriod(fromDate, toDateValue)} disabled={isLoading} className="h-10 rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60 min-[480px]:col-span-2 sm:col-span-1">
+              <button type="button" onClick={() => void loadPeriod(fromDate, toDateValue)} disabled={isLoading} className="col-span-2 h-10 rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60 sm:col-span-1">
                 {isLoading ? "Загрузка…" : "Показать"}
               </button>
             </div>
