@@ -2,6 +2,7 @@ using JiuDiary.Api.Auth;
 using JiuDiary.Database;
 using JiuDiary.Database.Entities;
 using JiuDiary.Database.Enums;
+using JiuDiary.Models.ClientDayNote;
 using JiuDiary.Models.ClientTraining;
 using JiuDiary.Models.Training;
 using JiraDiary.AspCore.Exceptions;
@@ -11,6 +12,95 @@ namespace JiuDiary.Api.Services;
 
 public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<TrainingService> logger)
 {
+    private const int MaxClientDayNoteLength = 500;
+
+    /// <summary>
+    /// Получает личную заметку текущего клиента за выбранный календарный день.
+    /// </summary>
+    /// <param name="date">Дата, за которую требуется заметка.</param>
+    /// <param name="user">Текущий авторизованный пользователь.</param>
+    /// <param name="cancellationToken">Токен отмены операции.</param>
+    /// <returns>Заметка или <see langword="null"/>, если на эту дату она ещё не создана.</returns>
+    public async Task<GetClientDayNoteOutputModel?> GetClientDayNote(DateOnly date, AuthenticatedUser user, CancellationToken cancellationToken)
+    {
+        EnsureClientDayNoteDate(date);
+        var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
+
+        return await dbContext.ClientDayNotes
+            .AsNoTracking()
+            .Where(note => note.ClientInfoId == clientInfoId && note.Date == date)
+            .Select(note => new GetClientDayNoteOutputModel
+            {
+                Id = note.Id,
+                Date = note.Date,
+                Text = note.Text,
+                CreatedAt = note.CreatedAt,
+                UpdatedAt = note.UpdatedAt
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Создаёт личную заметку текущего клиента за выбранный календарный день.
+    /// </summary>
+    /// <param name="inputModel">Дата и текст новой заметки.</param>
+    /// <param name="user">Текущий авторизованный пользователь.</param>
+    /// <param name="cancellationToken">Токен отмены операции.</param>
+    /// <returns>Созданная заметка.</returns>
+    public async Task<CreateClientDayNoteOutputModel> CreateClientDayNote(CreateClientDayNoteInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
+    {
+        EnsureClientDayNoteDate(inputModel.Date);
+        var text = ValidateClientDayNoteText(inputModel.Text);
+        var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
+
+        if (await dbContext.ClientDayNotes.AnyAsync(note => note.ClientInfoId == clientInfoId && note.Date == inputModel.Date, cancellationToken))
+        {
+            throw new AspNetException("Заметка на выбранную дату уже существует.", StatusCodes.Status409Conflict);
+        }
+
+        var note = new ClientDayNote
+        {
+            ClientInfoId = clientInfoId,
+            Date = inputModel.Date,
+            Text = text
+        };
+        dbContext.ClientDayNotes.Add(note);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation("Дневная заметка создана. UserId: {UserId} | ClientDayNoteId: {ClientDayNoteId} | Date: {Date}", user.Id, note.Id, note.Date);
+        return new CreateClientDayNoteOutputModel { Id = note.Id, Date = note.Date, Text = note.Text, CreatedAt = note.CreatedAt, UpdatedAt = note.UpdatedAt };
+    }
+
+    /// <summary>
+    /// Обновляет принадлежащую текущему клиенту дневную заметку.
+    /// </summary>
+    /// <param name="clientDayNoteId">Идентификатор обновляемой заметки.</param>
+    /// <param name="inputModel">Новый текст заметки.</param>
+    /// <param name="user">Текущий авторизованный пользователь.</param>
+    /// <param name="cancellationToken">Токен отмены операции.</param>
+    /// <returns>Обновлённая заметка.</returns>
+    public async Task<UpdateClientDayNoteOutputModel> UpdateClientDayNote(Guid clientDayNoteId, UpdateClientDayNoteInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
+    {
+        if (clientDayNoteId == Guid.Empty)
+        {
+            throw new AspNetException("Необходимо указать заметку.", StatusCodes.Status400BadRequest);
+        }
+
+        var text = ValidateClientDayNoteText(inputModel.Text);
+        var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
+        var note = await dbContext.ClientDayNotes.SingleOrDefaultAsync(item => item.Id == clientDayNoteId && item.ClientInfoId == clientInfoId, cancellationToken);
+        if (note is null)
+        {
+            throw new AspNetException("Заметка не найдена.", StatusCodes.Status404NotFound);
+        }
+
+        note.Text = text;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation("Дневная заметка обновлена. UserId: {UserId} | ClientDayNoteId: {ClientDayNoteId} | Date: {Date}", user.Id, note.Id, note.Date);
+        return new UpdateClientDayNoteOutputModel { Id = note.Id, Date = note.Date, Text = note.Text, CreatedAt = note.CreatedAt, UpdatedAt = note.UpdatedAt };
+    }
+
     /// <summary>
     /// Создаёт или обновляет отметку текущего клиента о доступной ему тренировке.
     /// </summary>
@@ -495,6 +585,30 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         {
             throw new AspNetException("Отмечать тренировки может только тренер или ученик.", StatusCodes.Status403Forbidden);
         }
+    }
+
+    private static void EnsureClientDayNoteDate(DateOnly date)
+    {
+        if (date == default)
+        {
+            throw new AspNetException("Необходимо указать дату заметки.", StatusCodes.Status400BadRequest);
+        }
+    }
+
+    private static string ValidateClientDayNoteText(string? inputText)
+    {
+        var text = inputText?.Trim();
+        if (string.IsNullOrEmpty(text))
+        {
+            throw new AspNetException("Текст заметки не может быть пустым.", StatusCodes.Status400BadRequest);
+        }
+
+        if (text.Length > MaxClientDayNoteLength)
+        {
+            throw new AspNetException($"Текст заметки не должен превышать {MaxClientDayNoteLength} символов.", StatusCodes.Status400BadRequest);
+        }
+
+        return text;
     }
 
     private static ClientTrainingSubmissionOutputModel ToOutputModel(ClientTrainingSubmission item) => new() { SubmissionId = item.SubmissionId, NameRu = item.Submission.NameRu, NameEn = item.Submission.NameEn, Count = item.Count };

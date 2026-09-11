@@ -1,4 +1,5 @@
 using JiuDiary.Api.Services;
+using JiuDiary.Models.ClientDayNote;
 using JiuDiary.Models.ClientTraining;
 using JiuDiary.Models.Submission;
 using JiuDiary.Models.Training;
@@ -13,6 +14,49 @@ namespace JiuDiary.Api.Controllers;
 [Produces("application/json")]
 public sealed class TrainingController(TrainingService trainingService, SubmissionSearchService submissionSearchService) : BaseController
 {
+    /// <summary>
+    /// Получает личную заметку текущего клиента за выбранный день.
+    /// </summary>
+    /// <param name="date">Дата заметки.</param>
+    /// <param name="cancellationToken">Токен отмены запроса.</param>
+    /// <returns>Заметка или пустой ответ, если она ещё не создана.</returns>
+    [HttpGet("client/day-notes")]
+    [ProducesResponseType<GetClientDayNoteOutputModel>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<GetClientDayNoteOutputModel>> GetClientDayNote([FromQuery] DateOnly date, CancellationToken cancellationToken)
+    {
+        var note = await trainingService.GetClientDayNote(date, CurrentUser, cancellationToken);
+        return note is null ? NoContent() : Ok(note);
+    }
+
+    /// <summary>
+    /// Создаёт личную заметку текущего клиента за выбранный день.
+    /// </summary>
+    /// <param name="inputModel">Дата и текст новой заметки.</param>
+    /// <param name="cancellationToken">Токен отмены запроса.</param>
+    /// <returns>Созданная заметка.</returns>
+    [HttpPost("client/day-notes")]
+    [ProducesResponseType<CreateClientDayNoteOutputModel>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<CreateClientDayNoteOutputModel>> CreateClientDayNote(CreateClientDayNoteInputModel inputModel, CancellationToken cancellationToken) => Ok(await trainingService.CreateClientDayNote(inputModel, CurrentUser, cancellationToken));
+
+    /// <summary>
+    /// Обновляет принадлежащую текущему клиенту дневную заметку.
+    /// </summary>
+    /// <param name="clientDayNoteId">Идентификатор заметки.</param>
+    /// <param name="inputModel">Новый текст заметки.</param>
+    /// <param name="cancellationToken">Токен отмены запроса.</param>
+    /// <returns>Обновлённая заметка.</returns>
+    [HttpPut("client/day-notes/{clientDayNoteId:guid}")]
+    [ProducesResponseType<UpdateClientDayNoteOutputModel>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UpdateClientDayNoteOutputModel>> UpdateClientDayNote(Guid clientDayNoteId, UpdateClientDayNoteInputModel inputModel, CancellationToken cancellationToken) => Ok(await trainingService.UpdateClientDayNote(clientDayNoteId, inputModel, CurrentUser, cancellationToken));
+
     /// <summary>
     /// Ищет приёмы по подстроке в названии или алиасах.
     /// </summary>

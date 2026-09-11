@@ -81,4 +81,9 @@ public sealed class ClientInfo : IAuditable
     public ICollection<ClientBelt> ClientBelts { get; set; } = [];
 
     public ICollection<ClientTraining> ClientTrainings { get; set; } = [];
+
+    /// <summary>
+    /// Личные заметки клиента по календарным дням.
+    /// </summary>
+    public ICollection<ClientDayNote> ClientDayNotes { get; set; } = [];
 }

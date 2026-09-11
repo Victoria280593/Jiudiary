@@ -77,6 +77,14 @@ export type BackendClientTraining = {
   createdAt: string;
 };
 
+export type BackendClientDayNote = {
+  id: string;
+  date: string;
+  text: string;
+  createdAt: string;
+  updatedAt: string | null;
+};
+
 export type BackendClientTrainingSubmission = {
   submissionId: number;
   nameRu: string;
@@ -262,6 +270,19 @@ function isBackendClientTraining(value: unknown): value is BackendClientTraining
     Array.isArray(clientTraining.submissions) &&
     clientTraining.submissions.every(isBackendClientTrainingSubmission) &&
     typeof clientTraining.createdAt === "string"
+  );
+}
+
+function isBackendClientDayNote(value: unknown): value is BackendClientDayNote {
+  if (!value || typeof value !== "object") return false;
+
+  const note = value as Partial<BackendClientDayNote>;
+  return (
+    typeof note.id === "string" &&
+    typeof note.date === "string" &&
+    typeof note.text === "string" &&
+    typeof note.createdAt === "string" &&
+    (note.updatedAt === null || typeof note.updatedAt === "string")
   );
 }
 
@@ -1188,6 +1209,70 @@ export async function saveBackendClientTraining(
     return isBackendClientTraining(clientTraining)
       ? { ok: true, clientTraining }
       : { ok: false, status: 502, error: "Сервер вернул некорректные данные тренировки." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export type GetBackendClientDayNoteResult =
+  | { ok: true; note: BackendClientDayNote | null }
+  | { ok: false; status: number; error: string };
+
+export async function getBackendClientDayNote(accessToken: string, date: string): Promise<GetBackendClientDayNoteResult> {
+  try {
+    const response = await fetch(`${backendUrl}/api/trainings/client/day-notes?date=${encodeURIComponent(date)}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (response.status === 204) return { ok: true, note: null };
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, status: response.status, error: result?.error ?? "Не удалось загрузить заметку." };
+    }
+
+    const note: unknown = await response.json();
+    return isBackendClientDayNote(note)
+      ? { ok: true, note }
+      : { ok: false, status: 502, error: "Сервер вернул некорректные данные заметки." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export type SaveBackendClientDayNoteResult =
+  | { ok: true; note: BackendClientDayNote }
+  | { ok: false; status: number; error: string };
+
+export async function createBackendClientDayNote(accessToken: string, date: string, text: string): Promise<SaveBackendClientDayNoteResult> {
+  return saveBackendClientDayNote(accessToken, "POST", { date, text });
+}
+
+export async function updateBackendClientDayNote(accessToken: string, noteId: string, text: string): Promise<SaveBackendClientDayNoteResult> {
+  return saveBackendClientDayNote(accessToken, "PUT", { text }, noteId);
+}
+
+async function saveBackendClientDayNote(accessToken: string, method: "POST" | "PUT", body: object, noteId?: string): Promise<SaveBackendClientDayNoteResult> {
+  try {
+    const suffix = noteId ? `/${encodeURIComponent(noteId)}` : "";
+    const response = await fetch(`${backendUrl}/api/trainings/client/day-notes${suffix}`, {
+      method,
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, status: response.status, error: result?.error ?? "Не удалось сохранить заметку." };
+    }
+
+    const note: unknown = await response.json();
+    return isBackendClientDayNote(note)
+      ? { ok: true, note }
+      : { ok: false, status: 502, error: "Сервер вернул некорректные данные заметки." };
   } catch {
     return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
   }

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CreateTrainingForm } from "@/components/CreateTrainingForm";
+import { createClientDayNote, getClientDayNote, type ClientDayNote, updateClientDayNote } from "@/lib/client-day-notes-client";
 import {
   addClientTrainingSubmission,
   type ClientTraining,
@@ -432,6 +433,88 @@ function ClientTrainingModal({
   );
 }
 
+function DayNoteEditor({ dateKey }: { dateKey: string }) {
+  const [dayNote, setDayNote] = useState<ClientDayNote | null>(null);
+  const [text, setText] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string>();
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void getClientDayNote(dateKey, controller.signal)
+      .then((note) => {
+        setDayNote(note);
+        setText(note?.text ?? "");
+      })
+      .catch((loadError) => {
+        if (!controller.signal.aborted) setError(loadError instanceof Error ? loadError.message : "Не удалось загрузить заметку.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [dateKey]);
+
+  async function save() {
+    const normalizedText = text.trim();
+    if (!normalizedText) {
+      setError("Введите текст заметки.");
+      return;
+    }
+
+    setIsSaving(true);
+    setError(undefined);
+    try {
+      const savedNote = dayNote
+        ? await updateClientDayNote(dayNote.id, normalizedText)
+        : await createClientDayNote(dateKey, normalizedText);
+      setDayNote(savedNote);
+      setText(savedNote.text);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Не удалось сохранить заметку.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section className="mb-5 rounded-2xl border border-border/70 bg-white p-4 shadow-[0_12px_32px_-26px_rgba(86,61,38,0.48)] sm:p-5" aria-labelledby="day-note-title">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h3 id="day-note-title" className="text-sm font-semibold text-foreground sm:text-base">Заметка на день</h3>
+          <p className="mt-0.5 text-xs text-muted">Видна только вам</p>
+        </div>
+        <span className="shrink-0 text-xs tabular-nums text-muted">{text.length}/500</span>
+      </div>
+      <textarea
+        value={text}
+        onChange={(event) => {
+          setText(event.target.value);
+          setError(undefined);
+        }}
+        maxLength={500}
+        rows={3}
+        disabled={isLoading || isSaving}
+        placeholder={isLoading ? "Загрузка…" : "Что важно запомнить об этом дне?"}
+        className="mt-3 block min-h-24 w-full resize-y rounded-xl border border-border bg-[#fbfaf8] px-3 py-2.5 text-base leading-6 text-foreground outline-none transition placeholder:text-muted/70 focus:border-accent/55 focus:ring-2 focus:ring-accent/10 disabled:cursor-wait disabled:opacity-60 sm:text-sm"
+      />
+      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-h-5 text-xs text-danger" role="status">{error}</div>
+        <button
+          type="button"
+          onClick={() => void save()}
+          disabled={isLoading || isSaving || !text.trim() || text.trim() === dayNote?.text}
+          className="min-h-10 rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isSaving ? "Сохранение…" : dayNote ? "Обновить заметку" : "Добавить заметку"}
+        </button>
+      </div>
+    </section>
+  );
+}
+
 export function DaySchedulePanel({
   dateKey,
   trainings,
@@ -616,6 +699,8 @@ export function DaySchedulePanel({
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-5 sm:px-7 sm:pb-7 lg:px-9">
+          <DayNoteEditor key={dateKey} dateKey={dateKey} />
+
           {groups.length > 0 && (
             <div role="group" aria-label="Фильтр тренировок по группе" className="mb-5 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
               <button
