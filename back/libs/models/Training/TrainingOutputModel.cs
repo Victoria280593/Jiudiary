@@ -1,4 +1,5 @@
 using JiuDiary.Models.ClientTraining;
+using JiuDiary.Models.ClientDayNote;
 
 namespace JiuDiary.Models.Training;
 
@@ -24,4 +25,14 @@ public class TrainingOutputModel
     public DateTime EndTime { get; set; }
 
     public ClientTrainingOutputModel? ClientTraining { get; set; }
+}
+
+/// <summary>
+/// Данные календаря текущего пользователя: доступные тренировки и его личные заметки по дням.
+/// </summary>
+public sealed class TrainingsOutputModel
+{
+    public List<TrainingOutputModel> Trainings { get; set; } = [];
+
+    public List<GetClientDayNoteOutputModel> Notes { get; set; } = [];
 }

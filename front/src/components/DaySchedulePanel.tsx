@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CreateTrainingForm } from "@/components/CreateTrainingForm";
-import { createClientDayNote, getClientDayNotes, type ClientDayNote, updateClientDayNote } from "@/lib/client-day-notes-client";
+import { createClientDayNote, type ClientDayNote, updateClientDayNote } from "@/lib/client-day-notes-client";
 import {
   addClientTrainingSubmission,
   type ClientTraining,
@@ -434,9 +434,35 @@ function ClientTrainingModal({
 }
 
 function EditableDayNote({ note, onSaved }: { note: ClientDayNote; onSaved: (note: ClientDayNote) => void }) {
-  const [text, setText] = useState(note.text);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  return (
+    <>
+      <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-[#fbfaf8] p-3 sm:p-4">
+        <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">{note.text}</p>
+        <button type="button" onClick={() => setIsEditModalOpen(true)} aria-label="Редактировать заметку" title="Редактировать заметку" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent/20 bg-accent-soft/70 text-accent shadow-sm transition hover:border-accent/35 hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6.5 17.5 10.5M4 20l4.2-1 10.3-10.3a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" />
+          </svg>
+        </button>
+      </div>
+      {isEditModalOpen && <DayNoteModal note={note} onClose={() => setIsEditModalOpen(false)} onSaved={onSaved} />}
+    </>
+  );
+}
+
+function DayNoteModal({ dateKey, note, onClose, onSaved }: { dateKey?: string; note?: ClientDayNote; onClose: () => void; onSaved: (note: ClientDayNote) => void }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [text, setText] = useState(note?.text ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
+  const isEditing = Boolean(note);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
 
   async function save() {
     const normalizedText = text.trim();
@@ -448,99 +474,42 @@ function EditableDayNote({ note, onSaved }: { note: ClientDayNote; onSaved: (not
     setIsSaving(true);
     setError(undefined);
     try {
-      const savedNote = await updateClientDayNote(note.id, normalizedText);
-      setText(savedNote.text);
+      const savedNote = note
+        ? await updateClientDayNote(note.id, normalizedText)
+        : await createClientDayNote(dateKey!, normalizedText);
       onSaved(savedNote);
+      onClose();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Не удалось обновить заметку.");
+      setError(saveError instanceof Error ? saveError.message : `Не удалось ${isEditing ? "обновить" : "добавить"} заметку.`);
     } finally {
       setIsSaving(false);
     }
   }
 
   return (
-    <div className="rounded-xl border border-border/70 bg-[#fbfaf8] p-3">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-medium text-muted">Заметка</span>
-        <span className="shrink-0 text-xs tabular-nums text-muted">{text.length}/500</span>
-      </div>
-      <textarea
-        value={text}
-        onChange={(event) => {
-          setText(event.target.value);
-          setError(undefined);
-        }}
-        maxLength={500}
-        rows={3}
-        disabled={isSaving}
-        className="mt-2 block min-h-20 w-full resize-y rounded-lg border border-border bg-white px-3 py-2.5 text-base leading-6 text-foreground outline-none transition focus:border-accent/55 focus:ring-2 focus:ring-accent/10 disabled:cursor-wait disabled:opacity-60 sm:text-sm"
-      />
-      <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-h-5 text-xs text-danger" role="status">{error}</div>
-        <button type="button" onClick={() => void save()} disabled={isSaving || !text.trim() || text.trim() === note.text} className="min-h-9 rounded-lg border border-accent/35 bg-white px-4 text-sm font-semibold text-accent transition hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50">
-          {isSaving ? "Сохранение…" : "Обновить"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function AddDayNoteModal({ dateKey, onClose, onCreated }: { dateKey: string; onClose: () => void; onCreated: (note: ClientDayNote) => void }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const [text, setText] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState<string>();
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    dialog?.showModal();
-    return () => dialog?.close();
-  }, []);
-
-  async function create() {
-    const normalizedText = text.trim();
-    if (!normalizedText) {
-      setError("Введите текст заметки.");
-      return;
-    }
-
-    setIsCreating(true);
-    setError(undefined);
-    try {
-      const createdNote = await createClientDayNote(dateKey, normalizedText);
-      onCreated(createdNote);
-      onClose();
-    } catch (createError) {
-      setError(createError instanceof Error ? createError.message : "Не удалось добавить заметку.");
-    } finally {
-      setIsCreating(false);
-    }
-  }
-
-  return (
     <dialog
       ref={dialogRef}
-      aria-labelledby="add-day-note-title"
-      aria-describedby="add-day-note-description"
+      aria-labelledby="day-note-modal-title"
+      aria-describedby="day-note-modal-description"
       onCancel={(event) => {
         event.preventDefault();
-        if (!isCreating) onClose();
+        if (!isSaving) onClose();
       }}
       className={`${styles.createModal} fixed inset-0 m-auto max-h-[calc(100svh-1rem)] w-[calc(100%-1rem)] max-w-md overflow-y-auto rounded-[1.5rem] border border-border/70 bg-[#fbfaf8] p-0 text-foreground shadow-[0_30px_90px_-24px_rgba(43,36,29,0.55)] backdrop:bg-[#302820]/50 backdrop:backdrop-blur-[3px] sm:max-h-[calc(100svh-2rem)] sm:w-[calc(100%-2rem)]`}
     >
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          void create();
+          void save();
         }}
         className="p-4 sm:p-5 md:p-6"
       >
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 pt-1">
-            <h3 id="add-day-note-title" className="text-lg font-semibold sm:text-xl">Добавить заметку</h3>
-            <p id="add-day-note-description" className="mt-1 text-sm leading-5 text-muted">Заметка будет видна только вам</p>
+            <h3 id="day-note-modal-title" className="text-lg font-semibold sm:text-xl">{isEditing ? "Редактировать заметку" : "Добавить заметку"}</h3>
+            <p id="day-note-modal-description" className="mt-1 text-sm leading-5 text-muted">Заметка будет видна только вам</p>
           </div>
-          <button type="button" onClick={onClose} disabled={isCreating} aria-label="Закрыть добавление заметки" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-muted shadow-sm transition hover:text-foreground disabled:opacity-50">
+          <button type="button" onClick={onClose} disabled={isSaving} aria-label={`Закрыть ${isEditing ? "редактирование" : "добавление"} заметки`} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-muted shadow-sm transition hover:text-foreground disabled:opacity-50">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true"><path strokeLinecap="round" d="m6 6 12 12M18 6 6 18" /></svg>
           </button>
         </div>
@@ -556,7 +525,7 @@ function AddDayNoteModal({ dateKey, onClose, onCreated }: { dateKey: string; onC
             }}
             maxLength={500}
             rows={5}
-            disabled={isCreating}
+            disabled={isSaving}
             placeholder="Что важно запомнить об этом дне?"
             className="block min-h-36 w-full max-w-full resize-y rounded-2xl border border-border bg-white px-4 py-3 text-base leading-6 text-foreground outline-none transition placeholder:text-muted/70 focus:border-accent/55 focus:ring-2 focus:ring-accent/10 disabled:cursor-wait disabled:opacity-60"
           />
@@ -567,9 +536,9 @@ function AddDayNoteModal({ dateKey, onClose, onCreated }: { dateKey: string; onC
         </div>
 
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
-          <button type="button" onClick={onClose} disabled={isCreating} className="min-h-11 w-full rounded-xl border border-border bg-white px-5 text-sm font-semibold text-foreground transition hover:bg-surface-muted disabled:opacity-50 sm:w-auto">Отмена</button>
-          <button type="submit" disabled={isCreating || !text.trim()} className="min-h-11 w-full rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
-            {isCreating ? "Сохранение…" : "Сохранить"}
+          <button type="button" onClick={onClose} disabled={isSaving} className="min-h-11 w-full rounded-xl border border-border bg-white px-5 text-sm font-semibold text-foreground transition hover:bg-surface-muted disabled:opacity-50 sm:w-auto">Отмена</button>
+          <button type="submit" disabled={isSaving || !text.trim() || (isEditing && text.trim() === note?.text)} className="min-h-11 w-full rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+            {isSaving ? "Сохранение…" : "Сохранить"}
           </button>
         </div>
       </form>
@@ -577,25 +546,8 @@ function AddDayNoteModal({ dateKey, onClose, onCreated }: { dateKey: string; onC
   );
 }
 
-function DayNoteEditor({ dateKey }: { dateKey: string }) {
-  const [notes, setNotes] = useState<ClientDayNote[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+function DayNoteEditor({ dateKey, notes, onNoteSaved }: { dateKey: string; notes: ClientDayNote[]; onNoteSaved: (note: ClientDayNote) => void }) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [error, setError] = useState<string>();
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void getClientDayNotes(dateKey, controller.signal)
-      .then(setNotes)
-      .catch((loadError) => {
-        if (!controller.signal.aborted) setError(loadError instanceof Error ? loadError.message : "Не удалось загрузить заметки.");
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsLoading(false);
-      });
-
-    return () => controller.abort();
-  }, [dateKey]);
 
   return (
     <>
@@ -606,26 +558,25 @@ function DayNoteEditor({ dateKey }: { dateKey: string }) {
             <p className="mt-0.5 text-xs text-muted">Видны только вам</p>
           </div>
           <div className="flex w-full items-center gap-3 sm:w-auto">
-            <button type="button" onClick={() => setIsAddModalOpen(true)} disabled={isLoading} className="min-h-10 flex-1 rounded-xl border border-accent/30 bg-accent-soft/55 px-4 text-sm font-semibold text-accent-foreground transition hover:border-accent/45 hover:bg-accent-soft disabled:cursor-wait disabled:opacity-50 sm:flex-none">
+            <button type="button" onClick={() => setIsAddModalOpen(true)} className="min-h-10 flex-1 rounded-xl border border-accent/30 bg-accent-soft/55 px-4 text-sm font-semibold text-accent-foreground transition hover:border-accent/45 hover:bg-accent-soft sm:flex-none">
               + Добавить заметку
             </button>
           </div>
         </div>
 
-        {!isLoading && notes.length > 0 && (
+        {notes.length > 0 && (
           <div className="mt-3 space-y-3">
             {notes.map((note) => (
               <EditableDayNote
                 key={note.id}
                 note={note}
-                onSaved={(savedNote) => setNotes((current) => current.map((item) => item.id === savedNote.id ? savedNote : item))}
+                onSaved={onNoteSaved}
               />
             ))}
           </div>
         )}
-        {error && <p className={`${errorClass} mt-3`}>{error}</p>}
       </section>
-      {isAddModalOpen && <AddDayNoteModal dateKey={dateKey} onClose={() => setIsAddModalOpen(false)} onCreated={(createdNote) => setNotes((current) => [...current, createdNote])} />}
+      {isAddModalOpen && <DayNoteModal dateKey={dateKey} onClose={() => setIsAddModalOpen(false)} onSaved={onNoteSaved} />}
     </>
   );
 }
@@ -633,8 +584,10 @@ function DayNoteEditor({ dateKey }: { dateKey: string }) {
 export function DaySchedulePanel({
   dateKey,
   trainings,
+  notes,
   onClose,
   onDateChange,
+  onNoteSaved,
   linkBase = "/dashboard/coach/trainings",
   showCreateForm = true,
   onClientTrainingSaved,
@@ -643,8 +596,10 @@ export function DaySchedulePanel({
 }: {
   dateKey: string;
   trainings: DayTraining[];
+  notes: ClientDayNote[];
   onClose: () => void;
   onDateChange: (dateKey: string) => void;
+  onNoteSaved: (note: ClientDayNote) => void;
   linkBase?: string;
   showCreateForm?: boolean;
   onClientTrainingSaved: (clientTraining: ClientTraining) => void;
@@ -814,7 +769,7 @@ export function DaySchedulePanel({
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-5 sm:px-7 sm:pb-7 lg:px-9">
-          <DayNoteEditor key={dateKey} dateKey={dateKey} />
+          <DayNoteEditor dateKey={dateKey} notes={notes} onNoteSaved={onNoteSaved} />
 
           {groups.length > 0 && (
             <div role="group" aria-label="Фильтр тренировок по группе" className="mb-5 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">

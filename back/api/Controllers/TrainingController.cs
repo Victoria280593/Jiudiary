@@ -115,11 +115,11 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
         => Ok(await trainingService.SaveClientTraining(trainingId, inputModel, CurrentUser, cancellationToken));
 
     /// <summary>
-    /// Получает доступные текущему пользователю тренировки вместе с его отметками.
+    /// Получает доступные текущему пользователю тренировки вместе с его отметками и личными заметками по дням.
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<List<TrainingOutputModel>>> GetTrainings([FromQuery] List<Guid>? groupIds, CancellationToken cancellationToken)
-        => Ok(await trainingService.GetTrainings(CurrentUser, groupIds, cancellationToken));
+    public async Task<ActionResult<TrainingsOutputModel>> GetTrainings([FromQuery] List<Guid>? groupIds, [FromQuery] DateOnly? fromDate, [FromQuery] DateOnly? toDate, CancellationToken cancellationToken)
+        => Ok(await trainingService.GetTrainings(CurrentUser, groupIds, fromDate, toDate, cancellationToken));
 
     [HttpPost]
     public async Task<ActionResult<TrainingOutputModel>> CreateTraining(CreateTrainingInputModel inputModel, CancellationToken cancellationToken)

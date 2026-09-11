@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DaySchedulePanel } from "@/components/DaySchedulePanel";
 import { useGroups } from "@/components/GroupsProvider";
-import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, dateKey, addMonths } from "@/lib/calendar";
+import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, getMonthGridRange, getMonthRange, dateKey, addMonths, type CalendarRange } from "@/lib/calendar";
 import { getGroupColorStyle } from "@/lib/group-colors";
+import type { ClientDayNote } from "@/lib/client-day-notes-client";
 import type { ClientTraining } from "@/lib/client-trainings-client";
 import { getTrainings } from "@/lib/trainings-client";
 
@@ -52,11 +53,13 @@ function weekTitle(weekStart: Date) {
 
 export function TrainingCalendar({
   trainings,
+  notes = [],
   linkBase = "/dashboard/coach/trainings",
   showCreateForm = true,
   showGroupFilter = false,
 }: {
   trainings: TrainingItem[];
+  notes?: ClientDayNote[];
   linkBase?: string;
   showCreateForm?: boolean;
   showGroupFilter?: boolean;
@@ -71,8 +74,12 @@ export function TrainingCalendar({
   const { groups, status: groupsStatus, error: groupsError } = useGroups();
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [visibleTrainings, setVisibleTrainings] = useState(trainings);
+  const [visibleNotes, setVisibleNotes] = useState(notes);
+  const [isCalendarLoading, setIsCalendarLoading] = useState(false);
   const [trainingsError, setTrainingsError] = useState<string>();
   const latestTrainingRequestRef = useRef(0);
+  const selectedGroupIdsRef = useRef<string[]>([]);
+  const skipInitialRangeLoadRef = useRef(true);
 
   const parsedTrainings = useMemo(
     () => visibleTrainings.map((training) => ({ ...training, date: new Date(training.date), endDate: training.endDate ? new Date(training.endDate) : undefined })),
@@ -90,6 +97,42 @@ export function TrainingCalendar({
 
   const monthWeeks = getMonthGrid(viewYear, viewMonth);
   const weekDays = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+  const visibleRange = useMemo(
+    () => calendarView === "month"
+      ? getMonthGridRange(viewYear, viewMonth)
+      : getMonthRange(addDays(weekStart, 3)),
+    [calendarView, viewMonth, viewYear, weekStart]
+  );
+
+  const loadCalendarData = useCallback(async (groupIds: string[], range: CalendarRange) => {
+    const requestId = latestTrainingRequestRef.current + 1;
+    latestTrainingRequestRef.current = requestId;
+    setTrainingsError(undefined);
+    setIsCalendarLoading(true);
+
+    try {
+      const loadedCalendarData = await getTrainings(groupIds, range);
+      if (latestTrainingRequestRef.current === requestId) {
+        setVisibleTrainings(loadedCalendarData.trainings);
+        setVisibleNotes(loadedCalendarData.notes);
+      }
+    } catch (error) {
+      if (latestTrainingRequestRef.current === requestId) {
+        setTrainingsError(error instanceof Error ? error.message : "Не удалось загрузить тренировки.");
+      }
+    } finally {
+      if (latestTrainingRequestRef.current === requestId) setIsCalendarLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (skipInitialRangeLoadRef.current) {
+      skipInitialRangeLoadRef.current = false;
+      return;
+    }
+
+    void loadCalendarData(selectedGroupIdsRef.current, visibleRange);
+  }, [loadCalendarData, visibleRange]);
 
   const goRelative = (delta: number) => {
     if (calendarView === "week") {
@@ -125,6 +168,7 @@ export function TrainingCalendar({
       : weekTitle(weekStart);
 
   const selectDay = (key: string) => {
+    if (isCalendarLoading) return;
     setSelectedDay(key);
     setIsDayPanelOpen(true);
   };
@@ -150,7 +194,7 @@ export function TrainingCalendar({
     repeatEveryWeek?: boolean
   ) => {
     if (repeatEveryWeek) {
-      void selectGroups(selectedGroupIds);
+      void loadCalendarData(selectedGroupIdsRef.current, visibleRange);
       return;
     }
 
@@ -174,21 +218,9 @@ export function TrainingCalendar({
   };
 
   const selectGroups = async (groupIds: string[]) => {
-    const requestId = latestTrainingRequestRef.current + 1;
-    latestTrainingRequestRef.current = requestId;
+    selectedGroupIdsRef.current = groupIds;
     setSelectedGroupIds(groupIds);
-    setTrainingsError(undefined);
-
-    try {
-      const loadedTrainings = await getTrainings(groupIds);
-      if (latestTrainingRequestRef.current === requestId) {
-        setVisibleTrainings(loadedTrainings);
-      }
-    } catch (error) {
-      if (latestTrainingRequestRef.current === requestId) {
-        setTrainingsError(error instanceof Error ? error.message : "Не удалось загрузить тренировки.");
-      }
-    }
+    await loadCalendarData(groupIds, visibleRange);
   };
 
   const toggleGroup = (groupId: string) => {
@@ -346,6 +378,7 @@ export function TrainingCalendar({
                               key={key}
                               type="button"
                               onClick={() => selectDay(key)}
+                              disabled={isCalendarLoading}
                               aria-pressed={isSelected}
                               className={`group relative flex min-h-16 flex-col items-center px-1 py-2 text-center transition duration-200 ease-out sm:min-h-24 sm:px-1.5 sm:py-3 lg:min-h-32 xl:min-h-36 ${
                                 isSelected
@@ -397,6 +430,7 @@ export function TrainingCalendar({
                         key={key}
                         type="button"
                         onClick={() => selectDay(key)}
+                        disabled={isCalendarLoading}
                         aria-pressed={isSelected}
                         className={`group relative flex min-h-24 flex-col items-center px-1 py-2.5 text-center transition duration-200 ease-out sm:min-h-72 sm:px-2 sm:py-4 ${
                           isSelected
@@ -440,6 +474,7 @@ export function TrainingCalendar({
           <DaySchedulePanel
             dateKey={selectedDay}
             trainings={trainingsByDay.get(selectedDay) ?? []}
+            notes={visibleNotes.filter((note) => note.date === selectedDay)}
             onClientTrainingSaved={(clientTraining) => {
               setVisibleTrainings((current) => current.map((training) =>
                 training.id === clientTraining.trainingId
@@ -448,6 +483,11 @@ export function TrainingCalendar({
               ));
             }}
             onDateChange={showRelativeDay}
+            onNoteSaved={(savedNote) => {
+              setVisibleNotes((current) => current.some((note) => note.id === savedNote.id)
+                ? current.map((note) => note.id === savedNote.id ? savedNote : note)
+                : [...current, savedNote]);
+            }}
             onClose={() => {
               setIsDayPanelOpen(false);
               setSelectedDay(null);

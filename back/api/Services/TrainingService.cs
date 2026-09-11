@@ -283,10 +283,15 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
     }
 
     /// <summary>
-    /// Получает доступные пользователю тренировки вместе с его отметками.
+    /// Получает доступные пользователю тренировки вместе с его отметками и личными заметками по дням.
     /// </summary>
-    public async Task<List<TrainingOutputModel>> GetTrainings(AuthenticatedUser user, IReadOnlyCollection<Guid>? groupIds, CancellationToken cancellationToken)
+    public async Task<TrainingsOutputModel> GetTrainings(AuthenticatedUser user, IReadOnlyCollection<Guid>? groupIds, DateOnly? fromDate, DateOnly? toDate, CancellationToken cancellationToken)
     {
+        if (fromDate.HasValue != toDate.HasValue || fromDate > toDate)
+        {
+            throw new AspNetException("Диапазон календаря указан некорректно.", StatusCodes.Status400BadRequest);
+        }
+
         IQueryable<Training> trainings;
         if (user.Role == UserRolesEnum.Coach)
         {
@@ -308,6 +313,13 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         if (groupIds is { Count: > 0 })
         {
             trainings = trainings.Where(training => groupIds.Contains(training.GroupId));
+        }
+
+        if (fromDate.HasValue && toDate.HasValue)
+        {
+            var rangeStart = fromDate.Value.ToDateTime(TimeOnly.MinValue);
+            var rangeEnd = toDate.Value.AddDays(1).ToDateTime(TimeOnly.MinValue);
+            trainings = trainings.Where(training => training.StartTime >= rangeStart && training.StartTime < rangeEnd);
         }
 
         var result = await trainings
@@ -345,8 +357,30 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             })
             .ToListAsync(cancellationToken);
 
-        logger.LogInformation("Тренировки пользователя получены. UserId: {UserId} | Role: {Role} | Count: {Count}", user.Id, user.Role, result.Count);
-        return result;
+        var notesQuery = dbContext.Notes
+            .AsNoTracking()
+            .Where(note => note.ClientInfo.UserId == user.Id);
+
+        if (fromDate.HasValue && toDate.HasValue)
+        {
+            notesQuery = notesQuery.Where(note => note.Date >= fromDate.Value && note.Date <= toDate.Value);
+        }
+
+        var notes = await notesQuery
+            .OrderBy(note => note.Date)
+            .ThenBy(note => note.CreatedAt)
+            .Select(note => new GetClientDayNoteOutputModel
+            {
+                Id = note.Id,
+                Date = note.Date,
+                Text = note.Text,
+                CreatedAt = note.CreatedAt,
+                UpdatedAt = note.UpdatedAt
+            })
+            .ToListAsync(cancellationToken);
+
+        logger.LogInformation("Данные календаря пользователя получены. UserId: {UserId} | Role: {Role} | TrainingsCount: {TrainingsCount} | NotesCount: {NotesCount}", user.Id, user.Role, result.Count, notes.Count);
+        return new TrainingsOutputModel { Trainings = result, Notes = notes };
     }
 
     public async Task<TrainingOutputModel> CreateTraining(CreateTrainingInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)

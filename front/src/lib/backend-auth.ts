@@ -69,6 +69,11 @@ export type BackendTraining = {
   clientTraining: BackendClientTraining | null;
 };
 
+export type BackendTrainings = {
+  trainings: BackendTraining[];
+  notes: BackendClientDayNote[];
+};
+
 export type BackendClientTraining = {
   id: string;
   trainingId: string;
@@ -270,6 +275,18 @@ function isBackendClientTraining(value: unknown): value is BackendClientTraining
     Array.isArray(clientTraining.submissions) &&
     clientTraining.submissions.every(isBackendClientTrainingSubmission) &&
     typeof clientTraining.createdAt === "string"
+  );
+}
+
+function isBackendTrainings(value: unknown): value is BackendTrainings {
+  if (!value || typeof value !== "object") return false;
+
+  const result = value as Partial<BackendTrainings>;
+  return (
+    Array.isArray(result.trainings) &&
+    result.trainings.every(isBackendTraining) &&
+    Array.isArray(result.notes) &&
+    result.notes.every(isBackendClientDayNote)
   );
 }
 
@@ -1135,10 +1152,12 @@ export async function updateBackendTraining(
   }
 }
 
-export async function getBackendTrainings(accessToken: string, groupIds: string[] = []): Promise<BackendTraining[] | null> {
+export async function getBackendTrainings(accessToken: string, groupIds: string[] = [], fromDate?: string, toDate?: string): Promise<BackendTrainings | null> {
   try {
     const searchParams = new URLSearchParams();
     groupIds.forEach((groupId) => searchParams.append("groupIds", groupId));
+    if (fromDate) searchParams.set("fromDate", fromDate);
+    if (toDate) searchParams.set("toDate", toDate);
     const query = searchParams.size > 0 ? `?${searchParams.toString()}` : "";
     const response = await fetch(`${backendUrl}/api/trainings${query}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -1148,9 +1167,9 @@ export async function getBackendTrainings(accessToken: string, groupIds: string[
 
     if (!response.ok) return null;
 
-    const trainings: unknown = await response.json();
-    return Array.isArray(trainings) && trainings.every(isBackendTraining)
-      ? trainings
+    const result: unknown = await response.json();
+    return isBackendTrainings(result)
+      ? result
       : null;
   } catch {
     return null;

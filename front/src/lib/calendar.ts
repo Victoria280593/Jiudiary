@@ -16,6 +16,7 @@ export const MONTH_LABELS = [
 ];
 
 export type CalendarCell = { date: Date; inMonth: boolean; isToday: boolean };
+export type CalendarRange = { fromDate: string; toDate: string };
 
 export function dateKey(date: Date): string {
   const y = date.getFullYear();
@@ -46,6 +47,23 @@ export function getMonthGrid(year: number, month: number): CalendarCell[][] {
     weeks.push(cells.slice(i, i + 7));
   }
   return weeks;
+}
+
+export function getMonthGridRange(year: number, month: number): CalendarRange {
+  const weeks = getMonthGrid(year, month);
+  return {
+    fromDate: dateKey(weeks[0][0].date),
+    toDate: dateKey(weeks.at(-1)!.at(-1)!.date),
+  };
+}
+
+export function getMonthRange(date: Date): CalendarRange {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  return {
+    fromDate: dateKey(new Date(year, month, 1)),
+    toDate: dateKey(new Date(year, month + 1, 0)),
+  };
 }
 
 export function addMonths(
