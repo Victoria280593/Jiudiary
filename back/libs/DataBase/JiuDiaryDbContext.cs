@@ -36,7 +36,7 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
 
     public DbSet<ClientTrainingSubmission> ClientTrainingSubmissions => Set<ClientTrainingSubmission>();
 
-    public DbSet<ClientDayNote> ClientDayNotes => Set<ClientDayNote>();
+    public DbSet<ClientDayNote> Notes => Set<ClientDayNote>();
 
     public DbSet<StudentRequest> StudentsRequests => Set<StudentRequest>();
 

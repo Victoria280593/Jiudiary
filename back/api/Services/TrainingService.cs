@@ -26,7 +26,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         EnsureClientDayNoteDate(date);
         var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
 
-        return await dbContext.ClientDayNotes
+        return await dbContext.Notes
             .AsNoTracking()
             .Where(note => note.ClientInfoId == clientInfoId && note.Date == date)
             .OrderBy(note => note.CreatedAt)
@@ -60,7 +60,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             Date = inputModel.Date,
             Text = text
         };
-        dbContext.ClientDayNotes.Add(note);
+        dbContext.Notes.Add(note);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("Дневная заметка создана. UserId: {UserId} | ClientDayNoteId: {ClientDayNoteId} | Date: {Date}", user.Id, note.Id, note.Date);
@@ -84,7 +84,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
 
         var text = ValidateClientDayNoteText(inputModel.Text);
         var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
-        var note = await dbContext.ClientDayNotes.SingleOrDefaultAsync(item => item.Id == clientDayNoteId && item.ClientInfoId == clientInfoId, cancellationToken);
+        var note = await dbContext.Notes.SingleOrDefaultAsync(item => item.Id == clientDayNoteId && item.ClientInfoId == clientInfoId, cancellationToken);
         if (note is null)
         {
             throw new AspNetException("Заметка не найдена.", StatusCodes.Status404NotFound);
