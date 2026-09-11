@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CreateTrainingForm } from "@/components/CreateTrainingForm";
-import { createClientDayNote, getClientDayNote, type ClientDayNote, updateClientDayNote } from "@/lib/client-day-notes-client";
+import { createClientDayNote, getClientDayNotes, type ClientDayNote, updateClientDayNote } from "@/lib/client-day-notes-client";
 import {
   addClientTrainingSubmission,
   type ClientTraining,
@@ -433,29 +433,10 @@ function ClientTrainingModal({
   );
 }
 
-function DayNoteEditor({ dateKey }: { dateKey: string }) {
-  const [dayNote, setDayNote] = useState<ClientDayNote | null>(null);
-  const [text, setText] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+function EditableDayNote({ note, onSaved }: { note: ClientDayNote; onSaved: (note: ClientDayNote) => void }) {
+  const [text, setText] = useState(note.text);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void getClientDayNote(dateKey, controller.signal)
-      .then((note) => {
-        setDayNote(note);
-        setText(note?.text ?? "");
-      })
-      .catch((loadError) => {
-        if (!controller.signal.aborted) setError(loadError instanceof Error ? loadError.message : "Не удалось загрузить заметку.");
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsLoading(false);
-      });
-
-    return () => controller.abort();
-  }, [dateKey]);
 
   async function save() {
     const normalizedText = text.trim();
@@ -467,25 +448,20 @@ function DayNoteEditor({ dateKey }: { dateKey: string }) {
     setIsSaving(true);
     setError(undefined);
     try {
-      const savedNote = dayNote
-        ? await updateClientDayNote(dayNote.id, normalizedText)
-        : await createClientDayNote(dateKey, normalizedText);
-      setDayNote(savedNote);
+      const savedNote = await updateClientDayNote(note.id, normalizedText);
       setText(savedNote.text);
+      onSaved(savedNote);
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Не удалось сохранить заметку.");
+      setError(saveError instanceof Error ? saveError.message : "Не удалось обновить заметку.");
     } finally {
       setIsSaving(false);
     }
   }
 
   return (
-    <section className="mb-5 rounded-2xl border border-border/70 bg-white p-4 shadow-[0_12px_32px_-26px_rgba(86,61,38,0.48)] sm:p-5" aria-labelledby="day-note-title">
+    <div className="rounded-xl border border-border/70 bg-[#fbfaf8] p-3">
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 id="day-note-title" className="text-sm font-semibold text-foreground sm:text-base">Заметка на день</h3>
-          <p className="mt-0.5 text-xs text-muted">Видна только вам</p>
-        </div>
+        <span className="text-xs font-medium text-muted">Заметка</span>
         <span className="shrink-0 text-xs tabular-nums text-muted">{text.length}/500</span>
       </div>
       <textarea
@@ -496,20 +472,112 @@ function DayNoteEditor({ dateKey }: { dateKey: string }) {
         }}
         maxLength={500}
         rows={3}
-        disabled={isLoading || isSaving}
-        placeholder={isLoading ? "Загрузка…" : "Что важно запомнить об этом дне?"}
+        disabled={isSaving}
+        className="mt-2 block min-h-20 w-full resize-y rounded-lg border border-border bg-white px-3 py-2.5 text-base leading-6 text-foreground outline-none transition focus:border-accent/55 focus:ring-2 focus:ring-accent/10 disabled:cursor-wait disabled:opacity-60 sm:text-sm"
+      />
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-h-5 text-xs text-danger" role="status">{error}</div>
+        <button type="button" onClick={() => void save()} disabled={isSaving || !text.trim() || text.trim() === note.text} className="min-h-9 rounded-lg border border-accent/35 bg-white px-4 text-sm font-semibold text-accent transition hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50">
+          {isSaving ? "Сохранение…" : "Обновить"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DayNoteEditor({ dateKey }: { dateKey: string }) {
+  const [notes, setNotes] = useState<ClientDayNote[]>([]);
+  const [newText, setNewText] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string>();
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void getClientDayNotes(dateKey, controller.signal)
+      .then(setNotes)
+      .catch((loadError) => {
+        if (!controller.signal.aborted) setError(loadError instanceof Error ? loadError.message : "Не удалось загрузить заметки.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [dateKey]);
+
+  async function create() {
+    const normalizedText = newText.trim();
+    if (!normalizedText) {
+      setError("Введите текст заметки.");
+      return;
+    }
+
+    setIsCreating(true);
+    setError(undefined);
+    try {
+      const createdNote = await createClientDayNote(dateKey, normalizedText);
+      setNotes((current) => [...current, createdNote]);
+      setNewText("");
+    } catch (createError) {
+      setError(createError instanceof Error ? createError.message : "Не удалось добавить заметку.");
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
+  return (
+    <section className="mb-5 rounded-2xl border border-border/70 bg-white p-4 shadow-[0_12px_32px_-26px_rgba(86,61,38,0.48)] sm:p-5" aria-labelledby="day-note-title">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h3 id="day-note-title" className="text-sm font-semibold text-foreground sm:text-base">Заметки на день</h3>
+          <p className="mt-0.5 text-xs text-muted">Видны только вам</p>
+        </div>
+        {!isLoading && <span className="shrink-0 text-xs tabular-nums text-muted">{notes.length}</span>}
+      </div>
+
+      {isLoading ? (
+        <p className="py-6 text-center text-sm text-muted">Загрузка заметок…</p>
+      ) : (
+        <div className="mt-3 space-y-3">
+          {notes.map((note) => (
+            <EditableDayNote
+              key={note.id}
+              note={note}
+              onSaved={(savedNote) => setNotes((current) => current.map((item) => item.id === savedNote.id ? savedNote : item))}
+            />
+          ))}
+        </div>
+      )}
+
+      <div className={`${notes.length > 0 ? "mt-4 border-t border-border/70 pt-4" : "mt-3"}`}>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs font-medium text-muted">Новая заметка</span>
+          <span className="shrink-0 text-xs tabular-nums text-muted">{newText.length}/500</span>
+        </div>
+      <textarea
+        value={newText}
+        onChange={(event) => {
+          setNewText(event.target.value);
+          setError(undefined);
+        }}
+        maxLength={500}
+        rows={3}
+        disabled={isLoading || isCreating}
+        placeholder="Что важно запомнить об этом дне?"
         className="mt-3 block min-h-24 w-full resize-y rounded-xl border border-border bg-[#fbfaf8] px-3 py-2.5 text-base leading-6 text-foreground outline-none transition placeholder:text-muted/70 focus:border-accent/55 focus:ring-2 focus:ring-accent/10 disabled:cursor-wait disabled:opacity-60 sm:text-sm"
       />
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-h-5 text-xs text-danger" role="status">{error}</div>
         <button
           type="button"
-          onClick={() => void save()}
-          disabled={isLoading || isSaving || !text.trim() || text.trim() === dayNote?.text}
+          onClick={() => void create()}
+          disabled={isLoading || isCreating || !newText.trim()}
           className="min-h-10 rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isSaving ? "Сохранение…" : dayNote ? "Обновить заметку" : "Добавить заметку"}
+          {isCreating ? "Сохранение…" : "Добавить заметку"}
         </button>
+      </div>
       </div>
     </section>
   );

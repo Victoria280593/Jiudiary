@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { createBackendClientDayNote, getBackendClientDayNote, updateBackendClientDayNote } from "@/lib/backend-auth";
+import { createBackendClientDayNote, getBackendClientDayNotes, updateBackendClientDayNote } from "@/lib/backend-auth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -12,9 +12,9 @@ export async function GET(request: Request) {
   const date = new URL(request.url).searchParams.get("date");
   if (!date) return NextResponse.json({ error: "Необходимо указать дату заметки." }, { status: 400 });
 
-  const result = await getBackendClientDayNote(session.accessToken, date);
+  const result = await getBackendClientDayNotes(session.accessToken, date);
   return result.ok
-    ? NextResponse.json(result.note, { headers: { "Cache-Control": "no-store" } })
+    ? NextResponse.json(result.notes, { headers: { "Cache-Control": "no-store" } })
     : NextResponse.json({ error: result.error }, { status: result.status });
 }
 

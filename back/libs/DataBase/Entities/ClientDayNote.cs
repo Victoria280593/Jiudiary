@@ -8,7 +8,7 @@ namespace JiuDiary.Database.Entities;
 /// Личная заметка клиента за определённый календарный день.
 /// </summary>
 [Table("ClientDayNotes")]
-[Index(nameof(ClientInfoId), nameof(Date), IsUnique = true)]
+[Index(nameof(ClientInfoId), nameof(Date))]
 public sealed class ClientDayNote : IAuditable
 {
     /// <summary>

@@ -1214,11 +1214,11 @@ export async function saveBackendClientTraining(
   }
 }
 
-export type GetBackendClientDayNoteResult =
-  | { ok: true; note: BackendClientDayNote | null }
+export type GetBackendClientDayNotesResult =
+  | { ok: true; notes: BackendClientDayNote[] }
   | { ok: false; status: number; error: string };
 
-export async function getBackendClientDayNote(accessToken: string, date: string): Promise<GetBackendClientDayNoteResult> {
+export async function getBackendClientDayNotes(accessToken: string, date: string): Promise<GetBackendClientDayNotesResult> {
   try {
     const response = await fetch(`${backendUrl}/api/trainings/client/day-notes?date=${encodeURIComponent(date)}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -1226,16 +1226,16 @@ export async function getBackendClientDayNote(accessToken: string, date: string)
       signal: AbortSignal.timeout(5_000),
     });
 
-    if (response.status === 204) return { ok: true, note: null };
+    if (response.status === 204) return { ok: true, notes: [] };
     if (!response.ok) {
       const result = (await response.json().catch(() => null)) as { error?: string } | null;
       return { ok: false, status: response.status, error: result?.error ?? "Не удалось загрузить заметку." };
     }
 
-    const note: unknown = await response.json();
-    return isBackendClientDayNote(note)
-      ? { ok: true, note }
-      : { ok: false, status: 502, error: "Сервер вернул некорректные данные заметки." };
+    const notes: unknown = await response.json();
+    return Array.isArray(notes) && notes.every(isBackendClientDayNote)
+      ? { ok: true, notes }
+      : { ok: false, status: 502, error: "Сервер вернул некорректные данные заметок." };
   } catch {
     return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
   }

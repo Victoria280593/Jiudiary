@@ -15,21 +15,16 @@ namespace JiuDiary.Api.Controllers;
 public sealed class TrainingController(TrainingService trainingService, SubmissionSearchService submissionSearchService) : BaseController
 {
     /// <summary>
-    /// Получает личную заметку текущего клиента за выбранный день.
+    /// Получает личные заметки текущего клиента за выбранный день.
     /// </summary>
     /// <param name="date">Дата заметки.</param>
     /// <param name="cancellationToken">Токен отмены запроса.</param>
-    /// <returns>Заметка или пустой ответ, если она ещё не создана.</returns>
+    /// <returns>Список заметок, отсортированных по времени создания.</returns>
     [HttpGet("client/day-notes")]
-    [ProducesResponseType<GetClientDayNoteOutputModel>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<List<GetClientDayNoteOutputModel>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<GetClientDayNoteOutputModel>> GetClientDayNote([FromQuery] DateOnly date, CancellationToken cancellationToken)
-    {
-        var note = await trainingService.GetClientDayNote(date, CurrentUser, cancellationToken);
-        return note is null ? NoContent() : Ok(note);
-    }
+    public async Task<ActionResult<List<GetClientDayNoteOutputModel>>> GetClientDayNotes([FromQuery] DateOnly date, CancellationToken cancellationToken) => Ok(await trainingService.GetClientDayNotes(date, CurrentUser, cancellationToken));
 
     /// <summary>
     /// Создаёт личную заметку текущего клиента за выбранный день.
@@ -41,7 +36,6 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
     [ProducesResponseType<CreateClientDayNoteOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<CreateClientDayNoteOutputModel>> CreateClientDayNote(CreateClientDayNoteInputModel inputModel, CancellationToken cancellationToken) => Ok(await trainingService.CreateClientDayNote(inputModel, CurrentUser, cancellationToken));
 
     /// <summary>

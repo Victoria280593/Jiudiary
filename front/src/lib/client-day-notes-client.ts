@@ -6,10 +6,10 @@ export type ClientDayNote = {
   updatedAt: string | null;
 };
 
-export async function getClientDayNote(date: string, signal?: AbortSignal): Promise<ClientDayNote | null> {
+export async function getClientDayNotes(date: string, signal?: AbortSignal): Promise<ClientDayNote[]> {
   const response = await fetch(`/api/client-day-notes?date=${encodeURIComponent(date)}`, { cache: "no-store", signal });
   if (!response.ok) throw await clientDayNoteError(response, "Не удалось загрузить заметку.");
-  return response.json() as Promise<ClientDayNote | null>;
+  return response.json() as Promise<ClientDayNote[]>;
 }
 
 export async function createClientDayNote(date: string, text: string): Promise<ClientDayNote> {

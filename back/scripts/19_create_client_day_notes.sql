@@ -17,11 +17,32 @@ BEGIN
 
         CONSTRAINT [FK_ClientDayNotes_ClientInfo_ClientInfoId]
             FOREIGN KEY ([ClientInfoId])
-            REFERENCES [dbo].[ClientInfo] ([Id]),
-
-        CONSTRAINT [UQ_ClientDayNotes_ClientInfoId_Date]
-            UNIQUE ([ClientInfoId], [Date])
+            REFERENCES [dbo].[ClientInfo] ([Id])
     );
+END;
+
+IF EXISTS
+(
+    SELECT 1
+    FROM [sys].[key_constraints]
+    WHERE [name] = N'UQ_ClientDayNotes_ClientInfoId_Date'
+      AND [parent_object_id] = OBJECT_ID(N'[dbo].[ClientDayNotes]')
+)
+BEGIN
+    ALTER TABLE [dbo].[ClientDayNotes]
+        DROP CONSTRAINT [UQ_ClientDayNotes_ClientInfoId_Date];
+END;
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [sys].[indexes]
+    WHERE [name] = N'IX_ClientDayNotes_ClientInfoId_Date'
+      AND [object_id] = OBJECT_ID(N'[dbo].[ClientDayNotes]')
+)
+BEGIN
+    CREATE INDEX [IX_ClientDayNotes_ClientInfoId_Date]
+        ON [dbo].[ClientDayNotes] ([ClientInfoId], [Date]);
 END;
 
 COMMIT TRANSACTION;

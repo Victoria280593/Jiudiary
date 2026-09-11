@@ -15,13 +15,13 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
     private const int MaxClientDayNoteLength = 500;
 
     /// <summary>
-    /// Получает личную заметку текущего клиента за выбранный календарный день.
+    /// Получает личные заметки текущего клиента за выбранный календарный день.
     /// </summary>
     /// <param name="date">Дата, за которую требуется заметка.</param>
     /// <param name="user">Текущий авторизованный пользователь.</param>
     /// <param name="cancellationToken">Токен отмены операции.</param>
-    /// <returns>Заметка или <see langword="null"/>, если на эту дату она ещё не создана.</returns>
-    public async Task<GetClientDayNoteOutputModel?> GetClientDayNote(DateOnly date, AuthenticatedUser user, CancellationToken cancellationToken)
+    /// <returns>Заметки, отсортированные по времени создания.</returns>
+    public async Task<List<GetClientDayNoteOutputModel>> GetClientDayNotes(DateOnly date, AuthenticatedUser user, CancellationToken cancellationToken)
     {
         EnsureClientDayNoteDate(date);
         var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
@@ -29,6 +29,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         return await dbContext.ClientDayNotes
             .AsNoTracking()
             .Where(note => note.ClientInfoId == clientInfoId && note.Date == date)
+            .OrderBy(note => note.CreatedAt)
             .Select(note => new GetClientDayNoteOutputModel
             {
                 Id = note.Id,
@@ -37,7 +38,7 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
                 CreatedAt = note.CreatedAt,
                 UpdatedAt = note.UpdatedAt
             })
-            .SingleOrDefaultAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
     }
 
     /// <summary>
@@ -52,11 +53,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         EnsureClientDayNoteDate(inputModel.Date);
         var text = ValidateClientDayNoteText(inputModel.Text);
         var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
-
-        if (await dbContext.ClientDayNotes.AnyAsync(note => note.ClientInfoId == clientInfoId && note.Date == inputModel.Date, cancellationToken))
-        {
-            throw new AspNetException("Заметка на выбранную дату уже существует.", StatusCodes.Status409Conflict);
-        }
 
         var note = new ClientDayNote
         {
