@@ -448,7 +448,10 @@ export function TrainingCalendar({
               ));
             }}
             onDateChange={showRelativeDay}
-            onClose={() => setIsDayPanelOpen(false)}
+            onClose={() => {
+              setIsDayPanelOpen(false);
+              setSelectedDay(null);
+            }}
             onTrainingDeleted={(trainingId, deleteAllAfterThis) => {
               if (deleteAllAfterThis) {
                 void selectGroups(selectedGroupIds);
