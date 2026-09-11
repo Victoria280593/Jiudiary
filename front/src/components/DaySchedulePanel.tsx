@@ -612,9 +612,7 @@ function DayNoteEditor({ dateKey }: { dateKey: string }) {
           </div>
         </div>
 
-        {isLoading ? (
-          <p className="py-6 text-center text-sm text-muted">Загрузка заметок…</p>
-        ) : (
+        {!isLoading && notes.length > 0 && (
           <div className="mt-3 space-y-3">
             {notes.map((note) => (
               <EditableDayNote
