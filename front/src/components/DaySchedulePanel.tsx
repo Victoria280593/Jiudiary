@@ -485,11 +485,102 @@ function EditableDayNote({ note, onSaved }: { note: ClientDayNote; onSaved: (not
   );
 }
 
+function AddDayNoteModal({ dateKey, onClose, onCreated }: { dateKey: string; onClose: () => void; onCreated: (note: ClientDayNote) => void }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [text, setText] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string>();
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
+
+  async function create() {
+    const normalizedText = text.trim();
+    if (!normalizedText) {
+      setError("Введите текст заметки.");
+      return;
+    }
+
+    setIsCreating(true);
+    setError(undefined);
+    try {
+      const createdNote = await createClientDayNote(dateKey, normalizedText);
+      onCreated(createdNote);
+      onClose();
+    } catch (createError) {
+      setError(createError instanceof Error ? createError.message : "Не удалось добавить заметку.");
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="add-day-note-title"
+      aria-describedby="add-day-note-description"
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!isCreating) onClose();
+      }}
+      className={`${styles.createModal} fixed inset-0 m-auto max-h-[calc(100svh-1rem)] w-[calc(100%-1rem)] max-w-md overflow-y-auto rounded-[1.5rem] border border-border/70 bg-[#fbfaf8] p-0 text-foreground shadow-[0_30px_90px_-24px_rgba(43,36,29,0.55)] backdrop:bg-[#302820]/50 backdrop:backdrop-blur-[3px] sm:max-h-[calc(100svh-2rem)] sm:w-[calc(100%-2rem)]`}
+    >
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          void create();
+        }}
+        className="p-4 sm:p-5 md:p-6"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 pt-1">
+            <h3 id="add-day-note-title" className="text-lg font-semibold sm:text-xl">Добавить заметку</h3>
+            <p id="add-day-note-description" className="mt-1 text-sm leading-5 text-muted">Заметка будет видна только вам</p>
+          </div>
+          <button type="button" onClick={onClose} disabled={isCreating} aria-label="Закрыть добавление заметки" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-muted shadow-sm transition hover:text-foreground disabled:opacity-50">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true"><path strokeLinecap="round" d="m6 6 12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+
+        <label className="mt-5 block">
+          <span className="sr-only">Текст заметки</span>
+          <textarea
+            autoFocus
+            value={text}
+            onChange={(event) => {
+              setText(event.target.value);
+              setError(undefined);
+            }}
+            maxLength={500}
+            rows={5}
+            disabled={isCreating}
+            placeholder="Что важно запомнить об этом дне?"
+            className="block min-h-36 w-full max-w-full resize-y rounded-2xl border border-border bg-white px-4 py-3 text-base leading-6 text-foreground outline-none transition placeholder:text-muted/70 focus:border-accent/55 focus:ring-2 focus:ring-accent/10 disabled:cursor-wait disabled:opacity-60"
+          />
+        </label>
+        <div className="mt-2 flex min-h-5 items-start justify-between gap-3">
+          <p className="text-xs text-danger" role="status">{error}</p>
+          <span className="ml-auto shrink-0 text-xs tabular-nums text-muted">{text.length}/500</span>
+        </div>
+
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+          <button type="button" onClick={onClose} disabled={isCreating} className="min-h-11 w-full rounded-xl border border-border bg-white px-5 text-sm font-semibold text-foreground transition hover:bg-surface-muted disabled:opacity-50 sm:w-auto">Отмена</button>
+          <button type="submit" disabled={isCreating || !text.trim()} className="min-h-11 w-full rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+            {isCreating ? "Сохранение…" : "Сохранить"}
+          </button>
+        </div>
+      </form>
+    </dialog>
+  );
+}
+
 function DayNoteEditor({ dateKey }: { dateKey: string }) {
   const [notes, setNotes] = useState<ClientDayNote[]>([]);
-  const [newText, setNewText] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [error, setError] = useState<string>();
 
   useEffect(() => {
@@ -506,80 +597,39 @@ function DayNoteEditor({ dateKey }: { dateKey: string }) {
     return () => controller.abort();
   }, [dateKey]);
 
-  async function create() {
-    const normalizedText = newText.trim();
-    if (!normalizedText) {
-      setError("Введите текст заметки.");
-      return;
-    }
-
-    setIsCreating(true);
-    setError(undefined);
-    try {
-      const createdNote = await createClientDayNote(dateKey, normalizedText);
-      setNotes((current) => [...current, createdNote]);
-      setNewText("");
-    } catch (createError) {
-      setError(createError instanceof Error ? createError.message : "Не удалось добавить заметку.");
-    } finally {
-      setIsCreating(false);
-    }
-  }
-
   return (
-    <section className="mb-5 rounded-2xl border border-border/70 bg-white p-4 shadow-[0_12px_32px_-26px_rgba(86,61,38,0.48)] sm:p-5" aria-labelledby="day-note-title">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 id="day-note-title" className="text-sm font-semibold text-foreground sm:text-base">Заметки на день</h3>
-          <p className="mt-0.5 text-xs text-muted">Видны только вам</p>
+    <>
+      <section className="mb-5 rounded-2xl border border-border/70 bg-white p-4 shadow-[0_12px_32px_-26px_rgba(86,61,38,0.48)] sm:p-5" aria-labelledby="day-note-title">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 id="day-note-title" className="text-sm font-semibold text-foreground sm:text-base">Заметки на день</h3>
+            <p className="mt-0.5 text-xs text-muted">Видны только вам</p>
+          </div>
+          <div className="flex w-full items-center gap-3 sm:w-auto">
+            {!isLoading && <span className="shrink-0 text-xs tabular-nums text-muted">{notes.length}</span>}
+            <button type="button" onClick={() => setIsAddModalOpen(true)} disabled={isLoading} className="min-h-10 flex-1 rounded-xl border border-accent/30 bg-accent-soft/55 px-4 text-sm font-semibold text-accent-foreground transition hover:border-accent/45 hover:bg-accent-soft disabled:cursor-wait disabled:opacity-50 sm:flex-none">
+              + Добавить заметку
+            </button>
+          </div>
         </div>
-        {!isLoading && <span className="shrink-0 text-xs tabular-nums text-muted">{notes.length}</span>}
-      </div>
 
-      {isLoading ? (
-        <p className="py-6 text-center text-sm text-muted">Загрузка заметок…</p>
-      ) : (
-        <div className="mt-3 space-y-3">
-          {notes.map((note) => (
-            <EditableDayNote
-              key={note.id}
-              note={note}
-              onSaved={(savedNote) => setNotes((current) => current.map((item) => item.id === savedNote.id ? savedNote : item))}
-            />
-          ))}
-        </div>
-      )}
-
-      <div className={`${notes.length > 0 ? "mt-4 border-t border-border/70 pt-4" : "mt-3"}`}>
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-xs font-medium text-muted">Новая заметка</span>
-          <span className="shrink-0 text-xs tabular-nums text-muted">{newText.length}/500</span>
-        </div>
-      <textarea
-        value={newText}
-        onChange={(event) => {
-          setNewText(event.target.value);
-          setError(undefined);
-        }}
-        maxLength={500}
-        rows={3}
-        disabled={isLoading || isCreating}
-        placeholder="Что важно запомнить об этом дне?"
-        className="mt-3 block min-h-24 w-full resize-y rounded-xl border border-border bg-[#fbfaf8] px-3 py-2.5 text-base leading-6 text-foreground outline-none transition placeholder:text-muted/70 focus:border-accent/55 focus:ring-2 focus:ring-accent/10 disabled:cursor-wait disabled:opacity-60 sm:text-sm"
-      />
-      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-h-5 text-xs text-danger" role="status">{error}</div>
-        <button
-          type="button"
-          onClick={() => void create()}
-          disabled={isLoading || isCreating || !newText.trim()}
-          className="min-h-10 rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isCreating ? "Сохранение…" : "Добавить заметку"}
-        </button>
-      </div>
-      </div>
-    </section>
+        {isLoading ? (
+          <p className="py-6 text-center text-sm text-muted">Загрузка заметок…</p>
+        ) : (
+          <div className="mt-3 space-y-3">
+            {notes.map((note) => (
+              <EditableDayNote
+                key={note.id}
+                note={note}
+                onSaved={(savedNote) => setNotes((current) => current.map((item) => item.id === savedNote.id ? savedNote : item))}
+              />
+            ))}
+          </div>
+        )}
+        {error && <p className={`${errorClass} mt-3`}>{error}</p>}
+      </section>
+      {isAddModalOpen && <AddDayNoteModal dateKey={dateKey} onClose={() => setIsAddModalOpen(false)} onCreated={(createdNote) => setNotes((current) => [...current, createdNote])} />}
+    </>
   );
 }
 
