@@ -606,7 +606,6 @@ function DayNoteEditor({ dateKey }: { dateKey: string }) {
             <p className="mt-0.5 text-xs text-muted">Видны только вам</p>
           </div>
           <div className="flex w-full items-center gap-3 sm:w-auto">
-            {!isLoading && <span className="shrink-0 text-xs tabular-nums text-muted">{notes.length}</span>}
             <button type="button" onClick={() => setIsAddModalOpen(true)} disabled={isLoading} className="min-h-10 flex-1 rounded-xl border border-accent/30 bg-accent-soft/55 px-4 text-sm font-semibold text-accent-foreground transition hover:border-accent/45 hover:bg-accent-soft disabled:cursor-wait disabled:opacity-50 sm:flex-none">
               + Добавить заметку
             </button>
