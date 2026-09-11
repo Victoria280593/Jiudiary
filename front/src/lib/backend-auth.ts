@@ -1297,6 +1297,24 @@ async function saveBackendClientDayNote(accessToken: string, method: "POST" | "P
   }
 }
 
+export async function deleteBackendClientDayNote(accessToken: string, noteId: string): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  try {
+    const response = await fetch(`${backendUrl}/api/trainings/client/day-notes/${encodeURIComponent(noteId)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (response.ok) return { ok: true };
+
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    return { ok: false, status: response.status, error: result?.error ?? "Не удалось удалить заметку." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
 export type SearchBackendSubmissionsResult =
   | { ok: true; submissions: BackendSubmissionSearchResult[] }
   | { ok: false; status: number; error: string };

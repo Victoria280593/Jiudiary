@@ -53,6 +53,10 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         EnsureClientDayNoteDate(inputModel.Date);
         var text = ValidateClientDayNoteText(inputModel.Text);
         var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
+        if (await dbContext.Notes.AnyAsync(note => note.ClientInfoId == clientInfoId && note.Date == inputModel.Date, cancellationToken))
+        {
+            throw new AspNetException("На выбранный день уже добавлена заметка.", StatusCodes.Status409Conflict);
+        }
 
         var note = new ClientDayNote
         {
@@ -95,6 +99,31 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
 
         logger.LogInformation("Дневная заметка обновлена. UserId: {UserId} | ClientDayNoteId: {ClientDayNoteId} | Date: {Date}", user.Id, note.Id, note.Date);
         return new UpdateClientDayNoteOutputModel { Id = note.Id, Date = note.Date, Text = note.Text, CreatedAt = note.CreatedAt, UpdatedAt = note.UpdatedAt };
+    }
+
+    /// <summary>
+    /// Удаляет принадлежащую текущему клиенту дневную заметку.
+    /// </summary>
+    /// <param name="clientDayNoteId">Идентификатор удаляемой заметки.</param>
+    /// <param name="user">Текущий авторизованный пользователь.</param>
+    /// <param name="cancellationToken">Токен отмены операции.</param>
+    public async Task DeleteClientDayNote(Guid clientDayNoteId, AuthenticatedUser user, CancellationToken cancellationToken)
+    {
+        if (clientDayNoteId == Guid.Empty)
+        {
+            throw new AspNetException("Необходимо указать заметку.", StatusCodes.Status400BadRequest);
+        }
+
+        var clientInfoId = await GetCurrentClientInfoId(user, cancellationToken);
+        var note = await dbContext.Notes.SingleOrDefaultAsync(item => item.Id == clientDayNoteId && item.ClientInfoId == clientInfoId, cancellationToken);
+        if (note is null)
+        {
+            throw new AspNetException("Заметка не найдена.", StatusCodes.Status404NotFound);
+        }
+
+        dbContext.Notes.Remove(note);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Дневная заметка удалена. UserId: {UserId} | ClientDayNoteId: {ClientDayNoteId} | Date: {Date}", user.Id, note.Id, note.Date);
     }
 
     /// <summary>

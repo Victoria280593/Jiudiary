@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { createBackendClientDayNote, getBackendClientDayNotes, updateBackendClientDayNote } from "@/lib/backend-auth";
+import { createBackendClientDayNote, deleteBackendClientDayNote, getBackendClientDayNotes, updateBackendClientDayNote } from "@/lib/backend-auth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -45,5 +45,20 @@ export async function PUT(request: Request) {
   const result = await updateBackendClientDayNote(session.accessToken, input.id, input.text);
   return result.ok
     ? NextResponse.json(result.note)
+    : NextResponse.json({ error: result.error }, { status: result.status });
+}
+
+export async function DELETE(request: Request) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Пользователь не авторизован." }, { status: 401 });
+
+  const input = (await request.json().catch(() => null)) as { id?: unknown } | null;
+  if (!input || typeof input.id !== "string") {
+    return NextResponse.json({ error: "Укажите заметку." }, { status: 400 });
+  }
+
+  const result = await deleteBackendClientDayNote(session.accessToken, input.id);
+  return result.ok
+    ? new NextResponse(null, { status: 204 })
     : NextResponse.json({ error: result.error }, { status: result.status });
 }

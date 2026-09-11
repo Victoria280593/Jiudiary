@@ -20,6 +20,16 @@ export async function updateClientDayNote(id: string, text: string): Promise<Cli
   return saveClientDayNote("PUT", { id, text });
 }
 
+export async function deleteClientDayNote(id: string): Promise<void> {
+  const response = await fetch("/api/client-day-notes", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+    cache: "no-store",
+  });
+  if (!response.ok) throw await clientDayNoteError(response, "Не удалось удалить заметку.");
+}
+
 async function saveClientDayNote(method: "POST" | "PUT", body: object): Promise<ClientDayNote> {
   const response = await fetch("/api/client-day-notes", {
     method,

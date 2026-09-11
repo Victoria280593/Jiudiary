@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CreateTrainingForm } from "@/components/CreateTrainingForm";
-import { createClientDayNote, type ClientDayNote, updateClientDayNote } from "@/lib/client-day-notes-client";
+import { createClientDayNote, deleteClientDayNote, type ClientDayNote, updateClientDayNote } from "@/lib/client-day-notes-client";
 import {
   addClientTrainingSubmission,
   type ClientTraining,
@@ -433,18 +433,43 @@ function ClientTrainingModal({
   );
 }
 
-function EditableDayNote({ note, onSaved }: { note: ClientDayNote; onSaved: (note: ClientDayNote) => void }) {
+function EditableDayNote({ note, onSaved, onDeleted }: { note: ClientDayNote; onSaved: (note: ClientDayNote) => void; onDeleted: (noteId: string) => void }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string>();
+
+  async function remove() {
+    setIsDeleting(true);
+    setError(undefined);
+    try {
+      await deleteClientDayNote(note.id);
+      onDeleted(note.id);
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Не удалось удалить заметку.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   return (
     <>
-      <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-[#fbfaf8] p-3 sm:p-4">
-        <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">{note.text}</p>
-        <button type="button" onClick={() => setIsEditModalOpen(true)} aria-label="Редактировать заметку" title="Редактировать заметку" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent/20 bg-accent-soft/70 text-accent shadow-sm transition hover:border-accent/35 hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6.5 17.5 10.5M4 20l4.2-1 10.3-10.3a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" />
-          </svg>
-        </button>
+      <div className="rounded-xl border border-border/70 bg-[#fbfaf8] p-3 sm:p-4">
+        <div className="flex items-start gap-3">
+          <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">{note.text}</p>
+          <div className="flex shrink-0 gap-2">
+            <button type="button" onClick={() => setIsEditModalOpen(true)} disabled={isDeleting} aria-label="Редактировать заметку" title="Редактировать заметку" className="flex h-10 w-10 items-center justify-center rounded-xl border border-accent/20 bg-accent-soft/70 text-accent shadow-sm transition hover:border-accent/35 hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 disabled:opacity-50">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6.5 17.5 10.5M4 20l4.2-1 10.3-10.3a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" />
+              </svg>
+            </button>
+            <button type="button" onClick={() => void remove()} disabled={isDeleting} aria-label="Удалить заметку" title="Удалить заметку" className="flex h-10 w-10 items-center justify-center rounded-xl border border-danger/20 bg-danger-soft text-danger shadow-sm transition hover:border-danger/35 disabled:cursor-wait disabled:opacity-50">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5m4-5v5" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        {error && <p className="mt-2 text-xs text-danger" role="status">{error}</p>}
       </div>
       {isEditModalOpen && <DayNoteModal note={note} onClose={() => setIsEditModalOpen(false)} onSaved={onSaved} />}
     </>
@@ -546,7 +571,7 @@ function DayNoteModal({ dateKey, note, onClose, onSaved }: { dateKey?: string; n
   );
 }
 
-function DayNoteEditor({ dateKey, notes, onNoteSaved }: { dateKey: string; notes: ClientDayNote[]; onNoteSaved: (note: ClientDayNote) => void }) {
+function DayNoteEditor({ dateKey, notes, onNoteSaved, onNoteDeleted }: { dateKey: string; notes: ClientDayNote[]; onNoteSaved: (note: ClientDayNote) => void; onNoteDeleted: (noteId: string) => void }) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   return (
@@ -555,10 +580,10 @@ function DayNoteEditor({ dateKey, notes, onNoteSaved }: { dateKey: string; notes
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 id="day-note-title" className="text-sm font-semibold text-foreground sm:text-base">Заметки на день</h3>
-            <p className="mt-0.5 text-xs text-muted">Видны только вам</p>
+            <p className="mt-0.5 text-xs text-muted">Видны только вам · Одна заметка на день</p>
           </div>
           <div className="flex w-full items-center gap-3 sm:w-auto">
-            <button type="button" onClick={() => setIsAddModalOpen(true)} className="min-h-10 flex-1 rounded-xl border border-accent/30 bg-accent-soft/55 px-4 text-sm font-semibold text-accent-foreground transition hover:border-accent/45 hover:bg-accent-soft sm:flex-none">
+            <button type="button" onClick={() => setIsAddModalOpen(true)} disabled={notes.length > 0} title={notes.length > 0 ? "На этот день уже добавлена заметка" : "Добавить заметку"} className="min-h-10 flex-1 rounded-xl border border-accent/30 bg-accent-soft/55 px-4 text-sm font-semibold text-accent-foreground transition hover:border-accent/45 hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-45 sm:flex-none">
               + Добавить заметку
             </button>
           </div>
@@ -571,6 +596,7 @@ function DayNoteEditor({ dateKey, notes, onNoteSaved }: { dateKey: string; notes
                 key={note.id}
                 note={note}
                 onSaved={onNoteSaved}
+                onDeleted={onNoteDeleted}
               />
             ))}
           </div>
@@ -588,6 +614,7 @@ export function DaySchedulePanel({
   onClose,
   onDateChange,
   onNoteSaved,
+  onNoteDeleted,
   linkBase = "/dashboard/coach/trainings",
   showCreateForm = true,
   onClientTrainingSaved,
@@ -600,6 +627,7 @@ export function DaySchedulePanel({
   onClose: () => void;
   onDateChange: (dateKey: string) => void;
   onNoteSaved: (note: ClientDayNote) => void;
+  onNoteDeleted: (noteId: string) => void;
   linkBase?: string;
   showCreateForm?: boolean;
   onClientTrainingSaved: (clientTraining: ClientTraining) => void;
@@ -769,7 +797,7 @@ export function DaySchedulePanel({
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-5 sm:px-7 sm:pb-7 lg:px-9">
-          <DayNoteEditor dateKey={dateKey} notes={notes} onNoteSaved={onNoteSaved} />
+          <DayNoteEditor dateKey={dateKey} notes={notes} onNoteSaved={onNoteSaved} onNoteDeleted={onNoteDeleted} />
 
           {groups.length > 0 && (
             <div role="group" aria-label="Фильтр тренировок по группе" className="mb-5 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">

@@ -488,6 +488,7 @@ export function TrainingCalendar({
                 ? current.map((note) => note.id === savedNote.id ? savedNote : note)
                 : [...current, savedNote]);
             }}
+            onNoteDeleted={(noteId) => setVisibleNotes((current) => current.filter((note) => note.id !== noteId))}
             onClose={() => {
               setIsDayPanelOpen(false);
               setSelectedDay(null);

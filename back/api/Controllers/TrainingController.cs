@@ -36,6 +36,7 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
     [ProducesResponseType<CreateClientDayNoteOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<CreateClientDayNoteOutputModel>> CreateClientDayNote(CreateClientDayNoteInputModel inputModel, CancellationToken cancellationToken) => Ok(await trainingService.CreateClientDayNote(inputModel, CurrentUser, cancellationToken));
 
     /// <summary>
@@ -50,6 +51,21 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UpdateClientDayNoteOutputModel>> UpdateClientDayNote(Guid clientDayNoteId, UpdateClientDayNoteInputModel inputModel, CancellationToken cancellationToken) => Ok(await trainingService.UpdateClientDayNote(clientDayNoteId, inputModel, CurrentUser, cancellationToken));
+
+    /// <summary>
+    /// Удаляет принадлежащую текущему клиенту дневную заметку.
+    /// </summary>
+    /// <param name="clientDayNoteId">Идентификатор заметки.</param>
+    /// <param name="cancellationToken">Токен отмены запроса.</param>
+    [HttpDelete("client/day-notes/{clientDayNoteId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> DeleteClientDayNote(Guid clientDayNoteId, CancellationToken cancellationToken)
+    {
+        await trainingService.DeleteClientDayNote(clientDayNoteId, CurrentUser, cancellationToken);
+        return NoContent();
+    }
 
     /// <summary>
     /// Ищет приёмы по подстроке в названии или алиасах.
