@@ -2,14 +2,14 @@ import { redirect } from "next/navigation";
 import { TrainingCalendar } from "@/components/TrainingCalendar";
 import { getSession } from "@/lib/auth";
 import { getBackendTrainings } from "@/lib/backend-auth";
-import { getMonthGridRange } from "@/lib/calendar";
+import { getYearRange } from "@/lib/calendar";
 
 export default async function StudentDashboard() {
   const session = await getSession();
   if (!session || session.user.role !== "STUDENT") redirect("/dashboard");
 
   const today = new Date();
-  const initialRange = getMonthGridRange(today.getFullYear(), today.getMonth() + 1);
+  const initialRange = getYearRange(today.getFullYear());
   const calendarData = await getBackendTrainings(session.accessToken, [], initialRange.fromDate, initialRange.toDate);
   const calendarTrainings = (calendarData?.trainings ?? []).map((training) => ({
     id: training.id,

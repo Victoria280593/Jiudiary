@@ -1,7 +1,7 @@
 import { TrainingCalendar } from "@/components/TrainingCalendar";
 import { getSession } from "@/lib/auth";
 import { getBackendTrainings } from "@/lib/backend-auth";
-import { getMonthGridRange } from "@/lib/calendar";
+import { getYearRange } from "@/lib/calendar";
 
 export async function CoachHome({
   firstName,
@@ -12,7 +12,7 @@ export async function CoachHome({
 }) {
   const session = await getSession();
   const today = new Date();
-  const initialRange = getMonthGridRange(today.getFullYear(), today.getMonth() + 1);
+  const initialRange = getYearRange(today.getFullYear());
   const calendarData = session ? await getBackendTrainings(session.accessToken, [], initialRange.fromDate, initialRange.toDate) : null;
   const coachName = [firstName, middleName]
     .filter((value): value is string => Boolean(value?.trim()))

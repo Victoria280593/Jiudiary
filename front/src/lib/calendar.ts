@@ -49,20 +49,10 @@ export function getMonthGrid(year: number, month: number): CalendarCell[][] {
   return weeks;
 }
 
-export function getMonthGridRange(year: number, month: number): CalendarRange {
-  const weeks = getMonthGrid(year, month);
+export function getYearRange(year: number): CalendarRange {
   return {
-    fromDate: dateKey(weeks[0][0].date),
-    toDate: dateKey(weeks.at(-1)!.at(-1)!.date),
-  };
-}
-
-export function getMonthRange(date: Date): CalendarRange {
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  return {
-    fromDate: dateKey(new Date(year, month, 1)),
-    toDate: dateKey(new Date(year, month + 1, 0)),
+    fromDate: dateKey(new Date(year, 0, 1)),
+    toDate: dateKey(new Date(year, 11, 31)),
   };
 }
 

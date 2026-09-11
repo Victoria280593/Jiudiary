@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DaySchedulePanel } from "@/components/DaySchedulePanel";
 import { useGroups } from "@/components/GroupsProvider";
-import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, getMonthGridRange, getMonthRange, dateKey, addMonths, type CalendarRange } from "@/lib/calendar";
+import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, getYearRange, dateKey, addMonths, type CalendarRange } from "@/lib/calendar";
 import { getGroupColorStyle } from "@/lib/group-colors";
 import type { ClientDayNote } from "@/lib/client-day-notes-client";
 import type { ClientTraining } from "@/lib/client-trainings-client";
@@ -97,12 +97,8 @@ export function TrainingCalendar({
 
   const monthWeeks = getMonthGrid(viewYear, viewMonth);
   const weekDays = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
-  const visibleRange = useMemo(
-    () => calendarView === "month"
-      ? getMonthGridRange(viewYear, viewMonth)
-      : getMonthRange(addDays(weekStart, 3)),
-    [calendarView, viewMonth, viewYear, weekStart]
-  );
+  const visibleYear = calendarView === "month" ? viewYear : addDays(weekStart, 3).getFullYear();
+  const visibleRange = useMemo(() => getYearRange(visibleYear), [visibleYear]);
 
   const loadCalendarData = useCallback(async (groupIds: string[], range: CalendarRange) => {
     const requestId = latestTrainingRequestRef.current + 1;
