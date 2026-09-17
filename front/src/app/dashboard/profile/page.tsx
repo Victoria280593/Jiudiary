@@ -7,7 +7,6 @@ import { ProfileHero } from "@/components/ProfileHero";
 import { CoachGroupsCard } from "@/components/CoachGroupsCard";
 import { ClientBeltsCard } from "@/components/ClientBeltsCard";
 import { calculateAge } from "@/lib/belt";
-import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 import type { Role } from "@prisma/client";
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -68,9 +67,6 @@ export default async function ProfilePage() {
         />
       </Card>
 
-      <Card title="Безопасность">
-        <ChangePasswordForm />
-      </Card>
 
     </div>
   );

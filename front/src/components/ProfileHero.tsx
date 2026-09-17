@@ -12,6 +12,7 @@ import { notifyBeltUpdated, useLiveBelt } from "@/components/LiveBelt";
 import { BELT_LABELS, beltsForAge } from "@/lib/belt";
 import { inputClass } from "@/lib/ui";
 import type { Belt } from "@prisma/client";
+import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 
 export function ProfileHero({
   clientInfoId,
@@ -45,10 +46,11 @@ export function ProfileHero({
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-col items-center gap-2 sm:items-start">
+          <div className="flex flex-wrap items-center gap-2 sm:items-start">
             <h2 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">
               {name}
             </h2>
+            <div className="ml-auto"><ChangePasswordForm /></div>
             <span className="rounded-md bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent-foreground">
               {roleLabel}
             </span>
