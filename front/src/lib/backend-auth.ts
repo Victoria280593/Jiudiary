@@ -1233,6 +1233,23 @@ export async function saveBackendClientTraining(
   }
 }
 
+export async function changeBackendPassword(accessToken: string, currentPassword: string, newPassword: string): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  try {
+    const response = await fetch(`${backendUrl}/api/auth/change-password`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword, newPassword }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (response.ok) return { ok: true };
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    return { ok: false, status: response.status, error: result?.error ?? "Не удалось изменить пароль." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к сервису авторизации." };
+  }
+}
+
 export type GetBackendClientDayNotesResult =
   | { ok: true; notes: BackendClientDayNote[] }
   | { ok: false; status: number; error: string };

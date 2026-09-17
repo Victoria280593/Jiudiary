@@ -208,6 +208,39 @@ public sealed class AuthService(
     }
 
     /// <summary>
+    /// Проверяет текущий пароль, сохраняет новый и отзывает все refresh-сессии пользователя.
+    /// </summary>
+    public async Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordInputModel inputModel, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(inputModel.CurrentPassword) || inputModel.NewPassword is null || inputModel.NewPassword.Length is < 8 or > 128)
+        {
+            return false;
+        }
+
+        var user = await dbContext.Users.SingleOrDefaultAsync(item => item.Id == userId, cancellationToken);
+        if (user is null || string.IsNullOrWhiteSpace(user.PasswordHash))
+        {
+            return false;
+        }
+
+        var verification = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, inputModel.CurrentPassword);
+        if (verification == PasswordVerificationResult.Failed)
+        {
+            return false;
+        }
+
+        user.PasswordHash = passwordHasher.HashPassword(user, inputModel.NewPassword);
+        foreach (var session in await dbContext.AuthSessions.Where(item => item.UserId == userId && item.RevokedAt == null).ToListAsync(cancellationToken))
+        {
+            session.RevokedAt = DateTime.Now;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Пароль пользователя изменён и активные сессии отозваны. UserId: {UserId}", userId);
+        return true;
+    }
+
+    /// <summary>
     /// Создаёт access JWT, одноразовый refresh-токен и запись серверной сессии.
     /// </summary>
     private async Task<LoginOutputModel> CreateSessionAsync(

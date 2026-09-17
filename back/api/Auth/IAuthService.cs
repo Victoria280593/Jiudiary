@@ -11,4 +11,6 @@ public interface IAuthService
     Task<LoginOutputModel?> RefreshAsync(RefreshInputModel inputModel, CancellationToken cancellationToken);
 
     Task LogoutAsync(LogoutInputModel inputModel, CancellationToken cancellationToken);
+
+    Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordInputModel inputModel, CancellationToken cancellationToken);
 }

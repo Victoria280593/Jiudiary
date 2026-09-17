@@ -74,8 +74,8 @@ export async function resetPasswordAction(
   if (!password || !confirmPassword) {
     return { error: "Заполните оба поля пароля" };
   }
-  if (password.length < 6) {
-    return { error: "Пароль должен быть не короче 6 символов" };
+  if (password.length < 8 || password.length > 128) {
+    return { error: "Пароль должен содержать от 8 до 128 символов" };
   }
   if (password !== confirmPassword) {
     return { error: "Пароли не совпадают" };
