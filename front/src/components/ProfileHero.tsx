@@ -17,14 +17,12 @@ import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 export function ProfileHero({
   clientInfoId,
   name,
-  roleLabel,
   avatarUrl,
   age,
   belt,
 }: {
   clientInfoId: string;
   name: string;
-  roleLabel: string;
   avatarUrl: string | null;
   age: number | null;
   belt: Belt | null;
@@ -51,9 +49,6 @@ export function ProfileHero({
               {name}
             </h2>
             <div className="ml-auto"><ChangePasswordForm /></div>
-            <span className="rounded-md bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent-foreground">
-              {roleLabel}
-            </span>
           </div>
 
           {age !== null && <p className="mt-3 text-sm text-muted">Возраст: {age}</p>}

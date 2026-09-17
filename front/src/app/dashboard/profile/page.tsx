@@ -7,14 +7,6 @@ import { ProfileHero } from "@/components/ProfileHero";
 import { CoachGroupsCard } from "@/components/CoachGroupsCard";
 import { ClientBeltsCard } from "@/components/ClientBeltsCard";
 import { calculateAge } from "@/lib/belt";
-import type { Role } from "@prisma/client";
-
-const ROLE_LABELS: Record<Role, string> = {
-  ADMIN: "Админ",
-  COACH: "Тренер",
-  STUDENT: "Ученик",
-  PARENT: "Родитель",
-};
 
 export default async function ProfilePage() {
   const session = await getSession();
@@ -42,7 +34,6 @@ export default async function ProfilePage() {
       <ProfileHero
         clientInfoId={clientInfo.id}
         name={user.name}
-        roleLabel={ROLE_LABELS[user.role]}
         avatarUrl={user.avatarUrl}
         age={user.birthDate ? calculateAge(user.birthDate) : null}
         belt={user.belt}
