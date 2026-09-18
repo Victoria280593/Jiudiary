@@ -48,7 +48,7 @@ export function ProfileHero({
             <h2 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">
               {name}
             </h2>
-            <div className="ml-auto"><ChangePasswordForm /></div>
+            <div className="order-3 w-full sm:order-none sm:ml-auto sm:w-auto"><ChangePasswordForm /></div>
           </div>
 
           {age !== null && <p className="mt-3 text-sm text-muted">Возраст: {age}</p>}
