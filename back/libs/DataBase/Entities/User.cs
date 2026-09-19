@@ -32,6 +32,16 @@ public sealed class User : IAuditable
     public string? PasswordHash { get; set; }
 
     /// <summary>
+    /// Дата и время последней успешной авторизации пользователя по московскому времени.
+    /// </summary>
+    public DateTime? LastLoginAt { get; set; }
+
+    /// <summary>
+    /// Дата и время последней установки или смены пароля пользователя по московскому времени.
+    /// </summary>
+    public DateTime? LastPasswordChangedAt { get; set; }
+
+    /// <summary>
     /// Признак разрешённого входа в систему.
     /// </summary>
     public bool IsActive { get; set; }

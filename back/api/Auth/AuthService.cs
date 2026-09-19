@@ -68,6 +68,7 @@ public sealed class AuthService(
 
         // Открытый пароль не записывается в БД и после вычисления хеша больше не используется.
         user.PasswordHash = passwordHasher.HashPassword(user, inputModel.Password!);
+        user.LastPasswordChangedAt = GetMoscowNow();
 
         dbContext.Users.Add(user);
         var clientInfo = new ClientInfo
@@ -120,6 +121,7 @@ public sealed class AuthService(
             }
 
             user.PasswordHash = passwordHasher.HashPassword(user, inputModel.Password!);
+            user.LastPasswordChangedAt = GetMoscowNow();
             await dbContext.SaveChangesAsync(cancellationToken);
             logger.LogInformation("Для пользователя создан первоначальный хеш пароля. UserId: {UserId}", user.Id);
         }
@@ -136,6 +138,7 @@ public sealed class AuthService(
             return null;
         }
 
+        user.LastLoginAt = GetMoscowNow();
         var result = await CreateSessionAsync(user, cancellationToken);
         logger.LogInformation("Пользователь авторизован. UserId: {UserId}", user.Id);
         return result;
@@ -229,10 +232,12 @@ public sealed class AuthService(
             return false;
         }
 
+        var now = GetMoscowNow();
         user.PasswordHash = passwordHasher.HashPassword(user, inputModel.NewPassword);
+        user.LastPasswordChangedAt = now;
         foreach (var session in await dbContext.AuthSessions.Where(item => item.UserId == userId && item.RevokedAt == null).ToListAsync(cancellationToken))
         {
-            session.RevokedAt = DateTime.Now;
+            session.RevokedAt = now;
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -331,6 +336,28 @@ public sealed class AuthService(
     /// </summary>
     private static string HashToken(string token) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
+
+    /// <summary>
+    /// Возвращает текущее московское время для хранения пользовательских событий в DATETIME2.
+    /// </summary>
+    private static DateTime GetMoscowNow()
+    {
+        foreach (var timeZoneId in new[] { "Europe/Moscow", "Russian Standard Time" })
+        {
+            try
+            {
+                return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(timeZoneId));
+            }
+            catch (TimeZoneNotFoundException)
+            {
+            }
+            catch (InvalidTimeZoneException)
+            {
+            }
+        }
+
+        return DateTime.UtcNow.AddHours(3);
+    }
 
     /// <summary>
     /// Сравнивает секреты без утечки времени сравнения.
