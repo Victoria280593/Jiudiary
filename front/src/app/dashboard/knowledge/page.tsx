@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RULE_ORGANIZATIONS, RULE_TOPICS } from "@/lib/knowledge";
+import { RULE_ORGANIZATIONS } from "@/lib/knowledge";
 
 function ArrowIcon() {
   return (
@@ -15,7 +15,7 @@ export default function KnowledgePage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">Знания</h1>
         <p className="mt-1.5 max-w-2xl text-sm text-muted sm:text-base">
-          Правила соревнований по бразильскому джиу-джитсу и грэпплингу для разных организаций.
+          Русскоязычный справочник по официальным правилам крупнейших организаций джиу-джитсу и грэпплинга.
         </p>
       </div>
 
@@ -34,13 +34,14 @@ export default function KnowledgePage() {
               href={`/dashboard/knowledge/${organization.slug}`}
               className="card-shadow group flex min-h-40 items-center gap-4 rounded-2xl border border-border bg-surface p-4 transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-accent/45 hover:shadow-lg sm:p-5"
             >
-              <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-base font-semibold ${organization.badgeClassName}`}>
-                {organization.name}
+              <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-sm font-semibold ${organization.badgeClassName}`}>
+                {organization.shortName}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-lg font-semibold text-foreground">{organization.name}</span>
+                <span className="block text-lg font-semibold text-foreground">{organization.shortName}</span>
+                <span className="mt-0.5 block text-xs font-medium text-accent">{organization.fullName}</span>
                 <span className="mt-1 block text-sm leading-5 text-muted">{organization.description}</span>
-                <span className="mt-3 block text-xs font-medium text-accent">{RULE_TOPICS.length} разделов правил</span>
+                <span className="mt-3 block text-xs font-medium text-accent">Возраст, уровни, время, баллы и ограничения</span>
               </span>
               <span className="shrink-0 text-accent transition-transform duration-200 group-hover:translate-x-1">
                 <ArrowIcon />
@@ -51,7 +52,7 @@ export default function KnowledgePage() {
       </section>
 
       <div className="rounded-2xl border border-border bg-surface-muted px-4 py-3 text-sm leading-5 text-muted">
-        Правила будут храниться отдельно для каждой организации, поэтому структуру можно дополнять, не меняя остальные разделы.
+        Справочник составлен по официальным источникам. Перед регистрацией всегда проверяйте положение конкретного турнира и актуальную редакцию регламента.
       </div>
     </div>
   );
