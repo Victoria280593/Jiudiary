@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { KnowledgeSectionNavigation } from "@/components/KnowledgeSectionNavigation";
 import { RULE_ORGANIZATIONS } from "@/lib/knowledge";
 
 function ArrowIcon() {
@@ -13,16 +14,18 @@ export default function KnowledgePage() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">Знания</h1>
+        <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">База знаний</h1>
         <p className="mt-1.5 max-w-2xl text-sm text-muted sm:text-base">
-          Русскоязычный справочник по официальным правилам крупнейших организаций джиу-джитсу и грэпплинга.
+          Проверенная информация о правилах соревнований и спортивных добавках.
         </p>
       </div>
+
+      <KnowledgeSectionNavigation />
 
       <section aria-labelledby="organizations-title">
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
-            <h2 id="organizations-title" className="text-lg font-semibold text-foreground sm:text-xl">Организации</h2>
+            <h2 id="organizations-title" className="text-lg font-semibold text-foreground sm:text-xl">Правила соревнований</h2>
             <p className="mt-1 text-sm text-muted">Выберите организацию, чтобы открыть структуру её правил.</p>
           </div>
         </div>

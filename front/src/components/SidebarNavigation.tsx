@@ -120,7 +120,7 @@ export function TopNavigation({ role }: { role: Role }) {
       )}
       <Link href="/dashboard/knowledge" data-active={knowledgeIsActive} aria-current={knowledgeIsActive ? "page" : undefined} className="nav-item">
         <KnowledgeIcon />
-        <span>Знания</span>
+        <span className="text-center leading-[0.95rem]">База<br />знаний</span>
       </Link>
     </nav>
   );
