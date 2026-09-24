@@ -14,7 +14,7 @@ export function BeltSelectForm({
   currentBelt: Belt | null;
   availableBelts: Belt[];
 }) {
-  const [state, formAction] = useActionState<FormState, FormData>(
+  const [state, formAction, isPending] = useActionState<FormState, FormData>(
     changeUserBeltAction,
     undefined
   );
@@ -28,8 +28,9 @@ export function BeltSelectForm({
           key={currentBelt}
           name="belt"
           defaultValue={currentBelt ?? ""}
+          disabled={isPending}
           onChange={() => formRef.current?.requestSubmit()}
-          className="rounded-md border border-border bg-surface px-2 py-1 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+          className="rounded-md border border-border bg-surface px-2 py-1 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:cursor-wait disabled:opacity-60"
         >
           <option value="" disabled>
             Выберите пояс

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { Card } from "@/components/Card";
+import { SubmitButton } from "@/components/SubmitButton";
 import {
   StudentRequestDeleteButton,
   StudentTrainerRemoveButton,
@@ -119,12 +120,12 @@ export default async function StudentCoachPage({
             aria-label="Поиск тренеров"
             className={`${inputClass} flex-1`}
           />
-          <button
-            type="submit"
-            className="rounded-md bg-accent px-5 py-2 font-medium text-white transition-colors hover:bg-accent-hover"
+          <SubmitButton
+            pendingText="Поиск…"
+            className="rounded-md bg-accent px-5 py-2 font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-wait disabled:opacity-60"
           >
             Найти
-          </button>
+          </SubmitButton>
         </form>
 
         {!trainers ? (

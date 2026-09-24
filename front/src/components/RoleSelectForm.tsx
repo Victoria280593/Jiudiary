@@ -20,7 +20,7 @@ export function RoleSelectForm({
   currentRole: Role;
   disabled?: boolean;
 }) {
-  const [state, formAction] = useActionState<FormState, FormData>(
+  const [state, formAction, isPending] = useActionState<FormState, FormData>(
     changeUserRoleAction,
     undefined
   );
@@ -34,7 +34,7 @@ export function RoleSelectForm({
           key={currentRole}
           name="role"
           defaultValue={currentRole}
-          disabled={disabled}
+          disabled={disabled || isPending}
           onChange={() => formRef.current?.requestSubmit()}
           className="rounded-md border border-border bg-surface px-2 py-1 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:bg-surface-muted disabled:text-muted"
         >
