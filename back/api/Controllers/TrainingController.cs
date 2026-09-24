@@ -1,4 +1,6 @@
 using JiuDiary.Api.Services;
+using JiuDiary.Api.Auth;
+using JiuDiary.Database.Enums;
 using JiuDiary.Models.ClientDayNote;
 using JiuDiary.Models.ClientTraining;
 using JiuDiary.Models.Submission;
@@ -21,6 +23,7 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
     /// <param name="cancellationToken">Токен отмены запроса.</param>
     /// <returns>Список заметок, отсортированных по времени создания.</returns>
     [HttpGet("client/day-notes")]
+    [AllowedRoles(UserRolesEnum.Coach, UserRolesEnum.Student)]
     [ProducesResponseType<List<GetClientDayNoteOutputModel>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -33,6 +36,7 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
     /// <param name="cancellationToken">Токен отмены запроса.</param>
     /// <returns>Созданная заметка.</returns>
     [HttpPost("client/day-notes")]
+    [AllowedRoles(UserRolesEnum.Coach, UserRolesEnum.Student)]
     [ProducesResponseType<CreateClientDayNoteOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -47,6 +51,7 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
     /// <param name="cancellationToken">Токен отмены запроса.</param>
     /// <returns>Обновлённая заметка.</returns>
     [HttpPut("client/day-notes/{clientDayNoteId:guid}")]
+    [AllowedRoles(UserRolesEnum.Coach, UserRolesEnum.Student)]
     [ProducesResponseType<UpdateClientDayNoteOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -58,6 +63,7 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
     /// <param name="clientDayNoteId">Идентификатор заметки.</param>
     /// <param name="cancellationToken">Токен отмены запроса.</param>
     [HttpDelete("client/day-notes/{clientDayNoteId:guid}")]
+    [AllowedRoles(UserRolesEnum.Coach, UserRolesEnum.Student)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -84,6 +90,7 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
     /// <param name="cancellationToken">Токен отмены запроса.</param>
     /// <returns>Добавленный приём с начальным количеством.</returns>
     [HttpPost("client/{trainingId:guid}/submissions")]
+    [AllowedRoles(UserRolesEnum.Coach, UserRolesEnum.Student)]
     [ProducesResponseType<ClientTrainingSubmissionOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -99,6 +106,7 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
     /// <param name="cancellationToken">Токен отмены запроса.</param>
     /// <returns>Приём с обновлённым количеством.</returns>
     [HttpPut("client/{trainingId:guid}/submissions/{submissionId:int}")]
+    [AllowedRoles(UserRolesEnum.Coach, UserRolesEnum.Student)]
     [ProducesResponseType<ClientTrainingSubmissionOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -111,6 +119,7 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
     /// <param name="submissionId">Идентификатор удаляемого приёма.</param>
     /// <param name="cancellationToken">Токен отмены запроса.</param>
     [HttpDelete("client/{trainingId:guid}/submissions/{submissionId:int}")]
+    [AllowedRoles(UserRolesEnum.Coach, UserRolesEnum.Student)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -124,6 +133,7 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
     /// Создаёт или обновляет отметку текущего клиента о тренировке.
     /// </summary>
     [HttpPut("client/{trainingId:guid}")]
+    [AllowedRoles(UserRolesEnum.Coach, UserRolesEnum.Student)]
     [ProducesResponseType<ClientTrainingOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -134,14 +144,17 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
     /// Получает доступные текущему пользователю тренировки вместе с его отметками и личными заметками по дням.
     /// </summary>
     [HttpGet]
+    [AllowedRoles(UserRolesEnum.Coach, UserRolesEnum.Student)]
     public async Task<ActionResult<TrainingsOutputModel>> GetTrainings([FromQuery] List<Guid>? groupIds, [FromQuery] DateOnly? fromDate, [FromQuery] DateOnly? toDate, CancellationToken cancellationToken)
         => Ok(await trainingService.GetTrainings(CurrentUser, groupIds, fromDate, toDate, cancellationToken));
 
     [HttpPost]
+    [AllowedRoles(UserRolesEnum.Coach)]
     public async Task<ActionResult<TrainingOutputModel>> CreateTraining(CreateTrainingInputModel inputModel, CancellationToken cancellationToken)
         => Ok(await trainingService.CreateTraining(inputModel, CurrentUser, cancellationToken));
 
     [HttpDelete("{trainingId:guid}")]
+    [AllowedRoles(UserRolesEnum.Coach)]
     public async Task<ActionResult> DeleteTraining(
         Guid trainingId,
         CancellationToken cancellationToken,
@@ -152,6 +165,7 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
     }
 
     [HttpPut("{trainingId:guid}")]
+    [AllowedRoles(UserRolesEnum.Coach)]
     public async Task<ActionResult<TrainingOutputModel>> UpdateTraining(
         Guid trainingId,
         UpdateTrainingInputModel inputModel,

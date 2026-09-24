@@ -1,4 +1,6 @@
 using JiuDiary.Api.Services;
+using JiuDiary.Api.Auth;
+using JiuDiary.Database.Enums;
 using JiuDiary.Models.Analytics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +17,7 @@ public sealed class AnalyticsController(AnalyticsService analyticsService) : Bas
     /// Получает общую аналитику тренировок текущего клиента за выбранный период и за всё время.
     /// </summary>
     [HttpGet("fights")]
+    [AllowedRoles(UserRolesEnum.Coach, UserRolesEnum.Student)]
     [ProducesResponseType<FightAnalyticsOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

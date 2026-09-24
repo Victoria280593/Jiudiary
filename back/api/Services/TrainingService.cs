@@ -131,7 +131,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
     /// </summary>
     public async Task<ClientTrainingOutputModel> SaveClientTraining(Guid trainingId, SaveClientTrainingInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
     {
-        EnsureClientTrainingRole(user);
         if (trainingId == Guid.Empty)
         {
             throw new AspNetException("Необходимо указать тренировку.", StatusCodes.Status400BadRequest);
@@ -190,7 +189,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
     /// <returns>Добавленный приём с русским и английским названиями.</returns>
     public async Task<ClientTrainingSubmissionOutputModel> AddClientTrainingSubmission(Guid trainingId, AddClientTrainingSubmissionInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
     {
-        EnsureClientTrainingRole(user);
         if (trainingId == Guid.Empty || inputModel.SubmissionId <= 0)
         {
             throw new AspNetException("Необходимо указать тренировку и приём.", StatusCodes.Status400BadRequest);
@@ -252,7 +250,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
     /// <returns>Приём с обновлённым количеством.</returns>
     public async Task<ClientTrainingSubmissionOutputModel> UpdateClientTrainingSubmission(Guid trainingId, int submissionId, UpdateClientTrainingSubmissionInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
     {
-        EnsureClientTrainingRole(user);
         if (trainingId == Guid.Empty || submissionId <= 0 || inputModel.Count <= 0)
         {
             throw new AspNetException("Количество приёмов должно быть больше нуля.", StatusCodes.Status400BadRequest);
@@ -288,7 +285,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
     /// <param name="cancellationToken">Токен отмены операции.</param>
     public async Task DeleteClientTrainingSubmission(Guid trainingId, int submissionId, AuthenticatedUser user, CancellationToken cancellationToken)
     {
-        EnsureClientTrainingRole(user);
         if (trainingId == Guid.Empty || submissionId <= 0)
         {
             throw new AspNetException("Необходимо указать тренировку и приём.", StatusCodes.Status400BadRequest);
@@ -414,7 +410,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
 
     public async Task<TrainingOutputModel> CreateTraining(CreateTrainingInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
     {
-        EnsureCoach(user, "Создавать тренировки может только тренер.");
         var description = ValidateTrainingInput(inputModel.GroupId, inputModel.Description, inputModel.StartTime, inputModel.EndTime);
 
         var group = await dbContext.CoachGroups
@@ -497,8 +492,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         AuthenticatedUser user,
         CancellationToken cancellationToken)
     {
-        EnsureCoach(user, "Редактировать тренировки может только тренер.");
-
         if (trainingId == Guid.Empty)
         {
             throw new AspNetException("Необходимо указать тренировку.", StatusCodes.Status400BadRequest);
@@ -562,8 +555,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
         AuthenticatedUser user,
         CancellationToken cancellationToken)
     {
-        EnsureCoach(user, "Удалять тренировки может только тренер.");
-
         if (trainingId == Guid.Empty)
         {
             throw new AspNetException("Необходимо указать тренировку.", StatusCodes.Status400BadRequest);
@@ -614,14 +605,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
             trainingsToDelete.Count);
     }
 
-    private static void EnsureCoach(AuthenticatedUser user, string message)
-    {
-        if (user.Role != UserRolesEnum.Coach)
-        {
-            throw new AspNetException(message, StatusCodes.Status403Forbidden);
-        }
-    }
-
     private IQueryable<Training> GetAccessibleTrainings(AuthenticatedUser user)
     {
         return user.Role switch
@@ -636,14 +619,6 @@ public sealed class TrainingService(JiuDiaryDbContext dbContext, ILogger<Trainin
     {
         var clientInfoId = await dbContext.ClientInfos.AsNoTracking().Where(clientInfo => clientInfo.UserId == user.Id).Select(clientInfo => (Guid?)clientInfo.Id).SingleOrDefaultAsync(cancellationToken);
         return clientInfoId ?? throw new AspNetException("Профиль клиента не найден.", StatusCodes.Status404NotFound);
-    }
-
-    private static void EnsureClientTrainingRole(AuthenticatedUser user)
-    {
-        if (user.Role is not UserRolesEnum.Coach and not UserRolesEnum.Student)
-        {
-            throw new AspNetException("Отмечать тренировки может только тренер или ученик.", StatusCodes.Status403Forbidden);
-        }
     }
 
     private static void EnsureClientDayNoteDate(DateOnly date)

@@ -1,4 +1,5 @@
 using JiuDiary.Api.Services;
+using JiuDiary.Api.Auth;
 using JiuDiary.Database.Enums;
 using JiuDiary.Extensions.Models;
 using JiuDiary.Models.Trainer;
@@ -17,7 +18,7 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
     /// Получает доступных для подачи заявки тренеров, исключая уже прикреплённых.
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = nameof(UserRolesEnum.Student))]
+    [AllowedRoles(UserRolesEnum.Student)]
     [ProducesResponseType<PagedResult<TrainerOutputModel>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -27,7 +28,7 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
     }
 
     [HttpPost("{coachId:guid}/students/requests")]
-    [Authorize(Roles = nameof(UserRolesEnum.Student))]
+    [AllowedRoles(UserRolesEnum.Student)]
     [ProducesResponseType<StudentRequestOutputModel>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -38,14 +39,14 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
     }
 
     [HttpGet("requests")]
-    [Authorize(Roles = nameof(UserRolesEnum.Student))]
+    [AllowedRoles(UserRolesEnum.Student)]
     public async Task<ActionResult<List<StudentRequestOutputModel>>> GetStudentRequests(CancellationToken cancellationToken)
     {
         return Ok(await trainerService.GetStudentRequestsAsync(CurrentUser, cancellationToken));
     }
 
     [HttpGet("my")]
-    [Authorize(Roles = nameof(UserRolesEnum.Student))]
+    [AllowedRoles(UserRolesEnum.Student)]
     public async Task<ActionResult<List<TrainerOutputModel>>> GetStudentTrainers(CancellationToken cancellationToken)
     {
         return Ok(await trainerService.GetStudentTrainersAsync(CurrentUser, cancellationToken));
@@ -55,7 +56,7 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
     /// Открепляет текущего ученика от выбранного тренера.
     /// </summary>
     [HttpDelete("my/{coachId:guid}")]
-    [Authorize(Roles = nameof(UserRolesEnum.Student))]
+    [AllowedRoles(UserRolesEnum.Student)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveStudentTrainer(Guid coachId, CancellationToken cancellationToken)
@@ -65,14 +66,14 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
     }
 
     [HttpGet("students/requests")]
-    [Authorize(Roles = nameof(UserRolesEnum.Coach))]
+    [AllowedRoles(UserRolesEnum.Coach)]
     public async Task<ActionResult<List<StudentRequestOutputModel>>> GetCoachRequests(CancellationToken cancellationToken)
     {
         return Ok(await trainerService.GetCoachRequestsAsync(CurrentUser, cancellationToken));
     }
 
     [HttpPatch("students/requests/{requestId:guid}")]
-    [Authorize(Roles = nameof(UserRolesEnum.Coach))]
+    [AllowedRoles(UserRolesEnum.Coach)]
     [ProducesResponseType<StudentRequestOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -84,7 +85,7 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
             cancellationToken));
 
     [HttpDelete("students/requests/{requestId:guid}")]
-    [Authorize(Roles = nameof(UserRolesEnum.Coach) + "," + nameof(UserRolesEnum.Student))]
+    [AllowedRoles(UserRolesEnum.Coach, UserRolesEnum.Student)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteStudentRequest(Guid requestId, CancellationToken cancellationToken)
@@ -99,14 +100,14 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
     }
 
     [HttpGet("students")]
-    [Authorize(Roles = nameof(UserRolesEnum.Coach))]
+    [AllowedRoles(UserRolesEnum.Coach)]
     public async Task<ActionResult<List<StudentOutputModel>>> GetCoachStudents(CancellationToken cancellationToken)
     {
         return Ok(await trainerService.GetCoachStudentsAsync(CurrentUser, cancellationToken));
     }
 
     [HttpPut("students/{studentId:guid}/groups")]
-    [Authorize(Roles = nameof(UserRolesEnum.Coach))]
+    [AllowedRoles(UserRolesEnum.Coach)]
     [ProducesResponseType<List<StudentGroupOutputModel>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -117,7 +118,7 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
         => Ok(await trainerService.UpdateCoachStudentGroupsAsync(CurrentUser, studentId, inputModel, cancellationToken));
 
     [HttpDelete("students/{studentId:guid}")]
-    [Authorize(Roles = nameof(UserRolesEnum.Coach))]
+    [AllowedRoles(UserRolesEnum.Coach)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveCoachStudent(Guid studentId, CancellationToken cancellationToken)

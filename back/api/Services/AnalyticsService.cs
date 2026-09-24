@@ -16,7 +16,6 @@ public sealed class AnalyticsService(JiuDiaryDbContext dbContext, ILogger<Analyt
     /// </summary>
     public async Task<FightAnalyticsOutputModel> GetFights(DateOnly fromDate, DateOnly toDate, AuthenticatedUser user, CancellationToken cancellationToken)
     {
-        EnsureSupportedRole(user);
         ValidatePeriod(fromDate, toDate);
 
         var fromDateTime = fromDate.ToDateTime(TimeOnly.MinValue);
@@ -122,11 +121,4 @@ public sealed class AnalyticsService(JiuDiaryDbContext dbContext, ILogger<Analyt
         }
     }
 
-    private static void EnsureSupportedRole(AuthenticatedUser user)
-    {
-        if (user.Role is not UserRolesEnum.Coach and not UserRolesEnum.Student)
-        {
-            throw new AspNetException("Аналитика доступна только тренеру или ученику.", StatusCodes.Status403Forbidden);
-        }
-    }
 }

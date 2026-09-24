@@ -29,7 +29,7 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
         }
         else
         {
-            throw new AspNetException("Получать список групп может только тренер или ученик.", StatusCodes.Status403Forbidden);
+            throw new InvalidOperationException("Роль пользователя не поддерживает работу с группами.");
         }
 
         if (groupId.HasValue)
@@ -56,11 +56,6 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 
     public async Task DeleteGroup(Guid groupId, AuthenticatedUser user, CancellationToken cancellationToken)
     {
-        if (user.Role != UserRolesEnum.Coach)
-        {
-            throw new AspNetException("Удалять группы может только тренер.", StatusCodes.Status403Forbidden);
-        }
-
         var coachGroup = await dbContext.CoachGroups
             .Include(x => x.Group)
             .SingleOrDefaultAsync(x => x.GroupId == groupId && x.Coach.UserId == user.Id, cancellationToken);
@@ -95,11 +90,6 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 
     public async Task<CreateGroupOutputModel> CreateGroup(CreateGroupInputModel inputModel, AuthenticatedUser user)
     {
-        if (user.Role != UserRolesEnum.Coach)
-        {
-            throw new AspNetException("Создавать группы может только тренер.", StatusCodes.Status403Forbidden);
-        }
-
         if (string.IsNullOrWhiteSpace(inputModel.Name))
         {
             throw new AspNetException("Необходимо указать название группы.", StatusCodes.Status400BadRequest);
@@ -156,8 +146,6 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
     public async Task<List<GetGroupColorsOutputModel>> GetGroupColors(AuthenticatedUser user, CancellationToken cancellationToken)
     {
         logger.LogInformation("Получение цветов групп. UserId: {UserId}", user.Id);
-        EnsureCoach(user, "Получать цвета групп может только тренер.");
-
         var result = await dbContext.Colors
             .AsNoTracking()
             .OrderBy(color => color.Id)
@@ -174,8 +162,6 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
 
     public async Task<UpdateGroupOutputModel> UpdateGroup(Guid groupId, UpdateGroupInputModel inputModel, AuthenticatedUser user, CancellationToken cancellationToken)
     {
-        EnsureCoach(user, "Редактировать группы может только тренер.");
-
         if (string.IsNullOrWhiteSpace(inputModel.Name))
         {
             throw new AspNetException("Необходимо указать название группы.", StatusCodes.Status400BadRequest);
@@ -239,13 +225,6 @@ public sealed class GroupService(JiuDiaryDbContext dbContext, ILogger<GroupServi
         if (defaultEndTime.Value <= defaultStartTime.Value)
         {
             throw new AspNetException("Время окончания тренировки должно быть позже времени начала.", StatusCodes.Status400BadRequest);
-        }
-    }
-    private static void EnsureCoach(AuthenticatedUser user, string message)
-    {
-        if (user.Role != UserRolesEnum.Coach)
-        {
-            throw new AspNetException(message, StatusCodes.Status403Forbidden);
         }
     }
 }

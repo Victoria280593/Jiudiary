@@ -17,7 +17,6 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
     /// </summary>
     public Task<PagedResult<TrainerOutputModel>> GetTrainersAsync(AuthenticatedUser student, Filter filter, CancellationToken cancellationToken)
     {
-        EnsureRole(student, UserRolesEnum.Student);
         var trainers = dbContext.Users
             .AsNoTracking()
             .Where(user => user.IsActive && user.RoleId == (int)UserRolesEnum.Coach && !user.Students.Any(item => item.StudentId == student.Id))
@@ -50,7 +49,6 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
 
     public async Task<StudentRequestOutputModel> CreateStudentRequestAsync(AuthenticatedUser student, Guid coachId, CancellationToken cancellationToken)
     {
-        EnsureRole(student, UserRolesEnum.Student);
 
         var coachExists = await dbContext.Users.AnyAsync(
             user => user.Id == coachId && user.IsActive && user.RoleId == (int)UserRolesEnum.Coach,
@@ -96,7 +94,6 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
 
     public Task<List<StudentRequestOutputModel>> GetStudentRequestsAsync(AuthenticatedUser student, CancellationToken cancellationToken)
     {
-        EnsureRole(student, UserRolesEnum.Student);
         return StudentRequestsQuery(includeDeleted: false)
             .Where(request => request.StudentId == student.Id)
             .OrderByDescending(request => request.CreateDate)
@@ -105,7 +102,6 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
 
     public Task<List<TrainerOutputModel>> GetStudentTrainersAsync(AuthenticatedUser student, CancellationToken cancellationToken)
     {
-        EnsureRole(student, UserRolesEnum.Student);
         return dbContext.CoachStudents
             .AsNoTracking()
             .Where(item => item.StudentId == student.Id)
@@ -128,7 +124,6 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
 
     public Task<List<StudentRequestOutputModel>> GetCoachRequestsAsync(AuthenticatedUser coach, CancellationToken cancellationToken)
     {
-        EnsureRole(coach, UserRolesEnum.Coach);
         return StudentRequestsQuery(includeDeleted: false)
             .Where(request => request.CoachId == coach.Id &&
                               (request.Status == StudentRequestStatusEnum.Pending ||
@@ -139,7 +134,6 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
 
     public Task<List<StudentOutputModel>> GetCoachStudentsAsync(AuthenticatedUser coach, CancellationToken cancellationToken)
     {
-        EnsureRole(coach, UserRolesEnum.Coach);
         return dbContext.CoachStudents
             .AsNoTracking()
             .Where(item => item.CoachId == coach.Id)
@@ -174,7 +168,6 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
 
     public async Task<StudentRequestOutputModel> ResolveStudentRequestAsync(AuthenticatedUser coach, Guid requestId, StudentRequestStatusEnum status, CancellationToken cancellationToken)
     {
-        EnsureRole(coach, UserRolesEnum.Coach);
         if (status is not (StudentRequestStatusEnum.Accepted or StudentRequestStatusEnum.Rejected))
         {
             throw new AspNetException("Заявку можно только принять или отклонить.", StatusCodes.Status400BadRequest);
@@ -228,11 +221,6 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
 
     public async Task<bool> DeleteStudentRequestAsync(AuthenticatedUser user, Guid requestId, CancellationToken cancellationToken)
     {
-        if (user.Role is not (UserRolesEnum.Coach or UserRolesEnum.Student))
-        {
-            throw new AspNetException("Удалить заявку может только тренер или ученик.", StatusCodes.Status403Forbidden);
-        }
-
         var request = await dbContext.StudentsRequests.SingleOrDefaultAsync(
             item => item.Id == requestId &&
                     !item.IsDeleted &&
@@ -251,7 +239,6 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
 
     public async Task<bool> RemoveCoachStudentAsync(AuthenticatedUser coach, Guid studentId, CancellationToken cancellationToken)
     {
-        EnsureRole(coach, UserRolesEnum.Coach);
         return await RemoveCoachStudentLinkAsync(coach.Id, studentId, cancellationToken);
     }
 
@@ -260,7 +247,6 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
     /// </summary>
     public async Task<bool> RemoveStudentTrainerAsync(AuthenticatedUser student, Guid coachId, CancellationToken cancellationToken)
     {
-        EnsureRole(student, UserRolesEnum.Student);
         return await RemoveCoachStudentLinkAsync(coachId, student.Id, cancellationToken);
     }
 
@@ -306,7 +292,6 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
         UpdateStudentGroupsInputModel inputModel,
         CancellationToken cancellationToken)
     {
-        EnsureRole(coach, UserRolesEnum.Coach);
 
         var studentClientInfoId = await dbContext.CoachStudents
             .AsNoTracking()
@@ -385,11 +370,4 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             });
     }
 
-    private static void EnsureRole(AuthenticatedUser user, UserRolesEnum role)
-    {
-        if (user.Role != role)
-        {
-            throw new AspNetException("Недостаточно прав для выполнения операции.", StatusCodes.Status403Forbidden);
-        }
-    }
 }
