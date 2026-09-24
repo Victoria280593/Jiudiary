@@ -142,6 +142,14 @@ export type BackendStudent = {
   groups: BackendStudentGroup[];
 };
 
+export type BackendStudentPage = {
+  items: BackendStudent[];
+  page: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+};
+
 export type BackendStudentGroup = {
   id: string;
   name: string;
@@ -248,6 +256,20 @@ function isBackendStudent(value: unknown): value is BackendStudent {
       typeof (group as Partial<BackendStudentGroup>).name === "string" &&
       typeof (group as Partial<BackendStudentGroup>).colorName === "string"
     )
+  );
+}
+
+function isBackendStudentPage(value: unknown): value is BackendStudentPage {
+  if (!value || typeof value !== "object") return false;
+
+  const page = value as Partial<BackendStudentPage>;
+  return (
+    Array.isArray(page.items) &&
+    page.items.every(isBackendStudent) &&
+    typeof page.page === "number" &&
+    typeof page.itemsPerPage === "number" &&
+    typeof page.totalItems === "number" &&
+    typeof page.totalPages === "number"
   );
 }
 
@@ -730,8 +752,27 @@ export function getBackendCoachStudentRequests(accessToken: string) {
   return getBackendList(accessToken, "/api/trainers/students/requests", isBackendStudentRequest);
 }
 
-export function getBackendCoachStudents(accessToken: string) {
-  return getBackendList(accessToken, "/api/trainers/students", isBackendStudent);
+export async function getBackendCoachStudents(
+  accessToken: string,
+  filter: { page?: number; itemsPerPage?: number }
+): Promise<BackendStudentPage | null> {
+  try {
+    const query = new URLSearchParams({
+      page: String(filter.page ?? 1),
+      itemsPerPage: String(filter.itemsPerPage ?? 25),
+    });
+    const response = await fetch(`${backendUrl}/api/trainers/students?${query}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!response.ok) return null;
+
+    const students: unknown = await response.json();
+    return isBackendStudentPage(students) ? students : null;
+  } catch {
+    return null;
+  }
 }
 
 export type StudentRequestMutationResult =

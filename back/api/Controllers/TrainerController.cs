@@ -101,9 +101,10 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
 
     [HttpGet("students")]
     [AllowedRoles(UserRolesEnum.Coach)]
-    public async Task<ActionResult<List<StudentOutputModel>>> GetCoachStudents(CancellationToken cancellationToken)
+    [ProducesResponseType<PagedResult<StudentOutputModel>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResult<StudentOutputModel>>> GetCoachStudents([FromQuery] Filter filter, CancellationToken cancellationToken)
     {
-        return Ok(await trainerService.GetCoachStudentsAsync(CurrentUser, cancellationToken));
+        return Ok(await trainerService.GetCoachStudentsAsync(CurrentUser, filter, cancellationToken));
     }
 
     [HttpPut("students/{studentId:guid}/groups")]

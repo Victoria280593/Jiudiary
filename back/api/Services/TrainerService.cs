@@ -132,7 +132,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             .ToListAsync(cancellationToken);
     }
 
-    public Task<List<StudentOutputModel>> GetCoachStudentsAsync(AuthenticatedUser coach, CancellationToken cancellationToken)
+    public Task<PagedResult<StudentOutputModel>> GetCoachStudentsAsync(AuthenticatedUser coach, Filter filter, CancellationToken cancellationToken)
     {
         return dbContext.CoachStudents
             .AsNoTracking()
@@ -163,7 +163,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
                         })
                         .ToList()
             })
-            .ToListAsync(cancellationToken);
+            .ToPagedResultAsync(filter, cancellationToken);
     }
 
     public async Task<StudentRequestOutputModel> ResolveStudentRequestAsync(AuthenticatedUser coach, Guid requestId, StudentRequestStatusEnum status, CancellationToken cancellationToken)

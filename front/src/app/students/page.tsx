@@ -16,7 +16,8 @@ type StudentsSection = "students" | "requests";
 type RequestsSection = "pending" | "rejected";
 type PageItem = number | "ellipsis";
 
-const ITEMS_PER_PAGE = 6;
+const STUDENTS_PER_PAGE = 25;
+const REQUESTS_PER_PAGE = 6;
 
 function firstValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -114,19 +115,23 @@ export default async function StudentsPage({
 
   const [requests, students, trainerGroups] = await Promise.all([
     getBackendCoachStudentRequests(session.accessToken),
-    getBackendCoachStudents(session.accessToken),
+    getBackendCoachStudents(session.accessToken, { page: requestedPage, itemsPerPage: STUDENTS_PER_PAGE }),
     getBackendGroups(session.accessToken),
   ]);
 
   const pendingRequests = requests?.filter((request) => request.status === "Pending") ?? [];
   const rejectedRequests = requests?.filter((request) => request.status === "Rejected") ?? [];
   const activeRequests = requestSection === "pending" ? pendingRequests : rejectedRequests;
-  const totalItems = section === "students" ? students?.length ?? 0 : activeRequests.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const totalPages = section === "students"
+    ? Math.max(students?.totalPages ?? 0, 1)
+    : Math.max(1, Math.ceil(activeRequests.length / REQUESTS_PER_PAGE));
   const currentPage = Math.min(requestedPage, totalPages);
-  const pageStart = (currentPage - 1) * ITEMS_PER_PAGE;
-  const visibleStudents = (students ?? []).slice(pageStart, pageStart + ITEMS_PER_PAGE);
-  const visibleRequests = activeRequests.slice(pageStart, pageStart + ITEMS_PER_PAGE);
+  if (section === "students" && students && requestedPage !== currentPage) {
+    redirect(studentsHref(section, requestSection, currentPage));
+  }
+  const requestPageStart = (currentPage - 1) * REQUESTS_PER_PAGE;
+  const visibleStudents = students?.items ?? [];
+  const visibleRequests = activeRequests.slice(requestPageStart, requestPageStart + REQUESTS_PER_PAGE);
 
   return (
     <main className="w-full flex-1 px-4 pb-12 pt-6 sm:px-6 sm:pt-8 xl:px-8">
