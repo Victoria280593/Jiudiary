@@ -140,9 +140,36 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
     public Task<List<StudentOutputModel>> GetCoachStudentsAsync(AuthenticatedUser coach, CancellationToken cancellationToken)
     {
         EnsureRole(coach, UserRolesEnum.Coach);
-        return dbContext.CoachStudents
+        return GetStudentsQuery(dbContext.CoachStudents.Where(item => item.CoachId == coach.Id), coach.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task<List<StudentOutputModel>> GetTeamStudentsAsync(AuthenticatedUser user, CancellationToken cancellationToken)
+    {
+        if (user.Role == UserRolesEnum.Coach)
+        {
+            return GetCoachStudentsAsync(user, cancellationToken);
+        }
+
+        EnsureRole(user, UserRolesEnum.Student);
+        var coachIds = dbContext.CoachStudents
+            .Where(item => item.StudentId == user.Id)
+            .Select(item => item.CoachId);
+
+        var teamLinks = dbContext.CoachStudents
+            .Where(item => coachIds.Contains(item.CoachId) && item.StudentId != user.Id)
+            .GroupBy(item => item.StudentId)
+            .Select(group => group.First());
+
+        return GetStudentsQuery(teamLinks, null).ToListAsync(cancellationToken);
+    }
+
+    private IQueryable<StudentOutputModel> GetStudentsQuery(IQueryable<CoachStudent> links, Guid? coachId)
+    {
+        var thirtyDaysAgo = DateTime.Now.AddDays(-30);
+
+        return links
             .AsNoTracking()
-            .Where(item => item.CoachId == coach.Id)
             .OrderBy(item => item.Student.ClientInfo == null ? "" : item.Student.ClientInfo.LastName)
             .ThenBy(item => item.Student.ClientInfo == null ? "" : item.Student.ClientInfo.FirstName)
             .Select(item => new StudentOutputModel
@@ -156,10 +183,25 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
                 BeltName = item.Student.ClientInfo == null || item.Student.ClientInfo.Belt == null
                     ? null
                     : item.Student.ClientInfo.Belt.Name,
+                TrainingStartedAt = item.Student.ClientInfo == null
+                    ? null
+                    : item.Student.ClientInfo.ClientTrainings
+                        .Select(training => (DateTime?)training.Training.StartTime)
+                        .Min(),
+                TrainingsLast30Days = item.Student.ClientInfo == null
+                    ? 0
+                    : item.Student.ClientInfo.ClientTrainings.Count(training => training.Training.StartTime >= thirtyDaysAgo),
+                TotalFights = item.Student.ClientInfo == null
+                    ? 0
+                    : item.Student.ClientInfo.ClientTrainings.Sum(training => training.Rounds ?? 0),
+                AverageFightsPerTraining = item.Student.ClientInfo == null || item.Student.ClientInfo.ClientTrainings.Count == 0
+                    ? 0
+                    : (double)item.Student.ClientInfo.ClientTrainings.Sum(training => training.Rounds ?? 0) /
+                      item.Student.ClientInfo.ClientTrainings.Count,
                 Groups = item.Student.ClientInfo == null
                     ? new List<StudentGroupOutputModel>()
                     : item.Student.ClientInfo.StudentGroups
-                        .Where(studentGroup => studentGroup.Group.CoachGroups.Any(coachGroup => coachGroup.Coach.UserId == coach.Id))
+                        .Where(studentGroup => !coachId.HasValue || studentGroup.Group.CoachGroups.Any(coachGroup => coachGroup.Coach.UserId == coachId.Value))
                         .OrderBy(studentGroup => studentGroup.Group.Name)
                         .Select(studentGroup => new StudentGroupOutputModel
                         {
@@ -168,8 +210,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
                             ColorName = studentGroup.Group.Color.Name
                         })
                         .ToList()
-            })
-            .ToListAsync(cancellationToken);
+            });
     }
 
     public async Task<StudentRequestOutputModel> ResolveStudentRequestAsync(AuthenticatedUser coach, Guid requestId, StudentRequestStatusEnum status, CancellationToken cancellationToken)

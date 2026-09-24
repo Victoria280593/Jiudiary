@@ -105,7 +105,7 @@ export function TopNavigation({ role }: { role: Role }) {
       {role === "STUDENT" ? (
         <Link href="/dashboard/student/coach" data-active={peopleSectionIsActive} aria-current={peopleSectionIsActive ? "page" : undefined} className="nav-item">
           <ProfileIcon />
-          <span>Тренер</span>
+          <span>Команда</span>
         </Link>
       ) : role === "COACH" ? (
         <Link href="/students" data-active={peopleSectionIsActive} aria-current={peopleSectionIsActive ? "page" : undefined} className="nav-item">
@@ -115,7 +115,7 @@ export function TopNavigation({ role }: { role: Role }) {
       ) : (
         <span className="nav-item nav-item-disabled" data-active="false" aria-disabled="true">
           <UsersIcon />
-          <span>Ученики</span>
+          <span>Команда</span>
         </span>
       )}
       <Link href="/dashboard/knowledge" data-active={knowledgeIsActive} aria-current={knowledgeIsActive ? "page" : undefined} className="nav-item">
