@@ -105,17 +105,6 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
         return Ok(await trainerService.GetCoachStudentsAsync(CurrentUser, cancellationToken));
     }
 
-    /// <summary>
-    /// Получает учеников команды текущего пользователя. Для тренера возвращает его учеников,
-    /// для ученика — других учеников его тренеров.
-    /// </summary>
-    [HttpGet("team")]
-    [Authorize(Roles = nameof(UserRolesEnum.Coach) + "," + nameof(UserRolesEnum.Student))]
-    public async Task<ActionResult<List<StudentOutputModel>>> GetTeamStudents(CancellationToken cancellationToken)
-    {
-        return Ok(await trainerService.GetTeamStudentsAsync(CurrentUser, cancellationToken));
-    }
-
     [HttpPut("students/{studentId:guid}/groups")]
     [Authorize(Roles = nameof(UserRolesEnum.Coach))]
     [ProducesResponseType<List<StudentGroupOutputModel>>(StatusCodes.Status200OK)]

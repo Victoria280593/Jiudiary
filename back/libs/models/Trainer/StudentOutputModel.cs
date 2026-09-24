@@ -12,14 +12,6 @@ public sealed class StudentOutputModel
 
     public string? BeltName { get; set; }
 
-    public DateTime? TrainingStartedAt { get; set; }
-
-    public int TrainingsLast30Days { get; set; }
-
-    public int TotalFights { get; set; }
-
-    public double AverageFightsPerTraining { get; set; }
-
     public List<StudentGroupOutputModel> Groups { get; set; } = [];
 }
 

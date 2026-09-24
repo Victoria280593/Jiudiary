@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { CoachStudentRequestActions } from "@/components/CoachStudentRequestActions";
 import { CoachStudentActions } from "@/components/CoachStudentRemoveButton";
-import { StudentProfileModal } from "@/components/StudentProfileModal";
 import { getSession } from "@/lib/auth";
 import {
   getBackendCoachStudentRequests,
@@ -134,7 +133,7 @@ export default async function StudentsPage({
       <div className="mx-auto flex max-w-5xl flex-col gap-5 sm:gap-6">
         <section>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">Команда</h1>
+            <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">Ученики</h1>
           </div>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted sm:text-base">
             Управляйте своими учениками и заявками на присоединение.
@@ -248,7 +247,6 @@ export default async function StudentsPage({
                         </span>
                       ))}
                     </div>
-                    <StudentProfileModal student={student} />
                     <CoachStudentActions
                       studentId={student.id}
                       studentName={student.name}

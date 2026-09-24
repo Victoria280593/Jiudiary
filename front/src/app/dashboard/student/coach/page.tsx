@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { Card } from "@/components/Card";
-import { StudentProfileModal } from "@/components/StudentProfileModal";
 import {
   StudentRequestDeleteButton,
   StudentTrainerRemoveButton,
@@ -12,7 +11,6 @@ import { getSession } from "@/lib/auth";
 import {
   getBackendStudentTrainerRequests,
   getBackendStudentTrainers,
-  getBackendTeamStudents,
   getBackendTrainers,
   type BackendStudentRequestStatus,
 } from "@/lib/backend-auth";
@@ -44,11 +42,10 @@ export default async function StudentCoachPage({
   const parsedPage = Number.parseInt(params.page ?? "1", 10);
   const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const search = (params.search ?? "").trim();
-  const [trainers, myTrainers, myRequests, teamStudents] = await Promise.all([
+  const [trainers, myTrainers, myRequests] = await Promise.all([
     getBackendTrainers(session.accessToken, { page, itemsPerPage: ITEMS_PER_PAGE, search }),
     getBackendStudentTrainers(session.accessToken),
     getBackendStudentTrainerRequests(session.accessToken),
-    getBackendTeamStudents(session.accessToken),
   ]);
 
   const latestRequestByCoach = new Map<string, BackendStudentRequestStatus>();
@@ -62,10 +59,10 @@ export default async function StudentCoachPage({
     <div className="flex flex-col gap-5">
       <div>
         <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">
-          Команда
+          Тренеры
         </h1>
         <p className="mt-1.5 text-sm text-muted">
-          Присоединяйтесь к тренерам и знакомьтесь со своей командой
+          Найдите тренера и отправьте заявку на присоединение
         </p>
       </div>
 
@@ -85,27 +82,6 @@ export default async function StudentCoachPage({
                   {trainer.beltName && <p className="text-xs text-muted">Пояс: {trainer.beltName}</p>}
                 </div>
                 <StudentTrainerRemoveButton coachId={trainer.id} coachName={trainer.name} />
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      <Card title="Моя команда">
-        {!teamStudents ? (
-          <p className="text-sm text-muted">Не удалось загрузить команду.</p>
-        ) : teamStudents.length === 0 ? (
-          <p className="text-sm text-muted">В вашей команде пока нет других учеников.</p>
-        ) : (
-          <div className="divide-y divide-border/70">
-            {teamStudents.map((student) => (
-              <div key={student.id} className="flex flex-wrap items-center gap-3 py-4 first:pt-0 last:pb-0 sm:flex-nowrap">
-                <Avatar src={null} name={student.name} size={46} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-foreground">{student.name}</p>
-                  <p className="truncate text-sm text-muted">{student.beltName ? `${student.beltName} пояс` : "Пояс не указан"}</p>
-                </div>
-                <StudentProfileModal student={student} />
               </div>
             ))}
           </div>

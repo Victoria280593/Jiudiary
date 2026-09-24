@@ -139,10 +139,6 @@ export type BackendStudent = {
   login: string;
   beltId: number | null;
   beltName: string | null;
-  trainingStartedAt: string | null;
-  trainingsLast30Days: number;
-  totalFights: number;
-  averageFightsPerTraining: number;
   groups: BackendStudentGroup[];
 };
 
@@ -244,10 +240,6 @@ function isBackendStudent(value: unknown): value is BackendStudent {
     typeof student.login === "string" &&
     (student.beltId === null || typeof student.beltId === "number") &&
     (student.beltName === null || typeof student.beltName === "string") &&
-    (student.trainingStartedAt === null || typeof student.trainingStartedAt === "string") &&
-    typeof student.trainingsLast30Days === "number" &&
-    typeof student.totalFights === "number" &&
-    typeof student.averageFightsPerTraining === "number" &&
     Array.isArray(student.groups) &&
     student.groups.every((group) =>
       Boolean(group) &&
@@ -1239,10 +1231,6 @@ export async function saveBackendClientTraining(
   } catch {
     return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
   }
-}
-
-export function getBackendTeamStudents(accessToken: string) {
-  return getBackendList(accessToken, "/api/trainers/team", isBackendStudent);
 }
 
 export async function changeBackendPassword(accessToken: string, currentPassword: string, newPassword: string): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
