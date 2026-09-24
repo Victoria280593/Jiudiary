@@ -59,7 +59,7 @@ export default async function StudentCoachPage({
     <div className="flex flex-col gap-5">
       <div>
         <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">
-          Тренеры
+          Команда
         </h1>
         <p className="mt-1.5 text-sm text-muted">
           Найдите тренера и отправьте заявку на присоединение
