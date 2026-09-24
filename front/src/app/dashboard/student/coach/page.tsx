@@ -74,7 +74,7 @@ export default async function StudentCoachPage({
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {myTrainers.map((trainer) => (
-              <div key={trainer.id} className="flex items-center gap-3 rounded-2xl bg-surface-muted/65 p-4">
+              <div key={trainer.id} className="flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-2xl bg-surface-muted/65 p-4">
                 <Avatar src={null} name={trainer.name} size={46} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-foreground">{trainer.name}</p>
