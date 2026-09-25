@@ -17,7 +17,6 @@ internal sealed class RequestLoggerMiddleware(RequestDelegate next)
 
         using var scope = logger.BeginScope(new Dictionary<string, object>
         {
-            ["UserId"] = identity.UserId,
             ["UserLogin"] = identity.UserLogin,
             ["AuthStatus"] = identity.AuthStatus
         });
@@ -54,7 +53,6 @@ internal sealed class RequestLoggerMiddleware(RequestDelegate next)
                 var completedIdentity = AuthenticationLogContext.Get(context);
                 using var completedScope = logger.BeginScope(new Dictionary<string, object>
                 {
-                    ["UserId"] = completedIdentity.UserId,
                     ["UserLogin"] = completedIdentity.UserLogin,
                     ["AuthStatus"] = completedIdentity.AuthStatus
                 });

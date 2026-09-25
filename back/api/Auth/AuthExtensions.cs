@@ -66,7 +66,6 @@ public static class AuthExtensions
                         AuthenticationLogContext.Set(
                             context.HttpContext,
                             "authenticated",
-                            context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Sub),
                             context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Email));
                         return Task.CompletedTask;
                     },
@@ -76,12 +75,11 @@ public static class AuthExtensions
                             TryReadExpiredTokenIdentity(
                                 context.Request,
                                 options.TokenValidationParameters,
-                                out var userId,
                                 out var login))
                         {
                             // Повторная проверка без lifetime подтверждает подпись, issuer и audience.
                             // Полученные claims используются только для корреляции логов.
-                            AuthenticationLogContext.Set(context.HttpContext, "expired-token", userId, login);
+                            AuthenticationLogContext.Set(context.HttpContext, "expired-token", login);
                         }
                         else
                         {
@@ -99,10 +97,8 @@ public static class AuthExtensions
     private static bool TryReadExpiredTokenIdentity(
         HttpRequest request,
         TokenValidationParameters validationParameters,
-        out string? userId,
         out string? login)
     {
-        userId = null;
         login = null;
 
         var authorization = request.Headers.Authorization.ToString();
@@ -120,9 +116,8 @@ public static class AuthExtensions
                 authorization[bearerPrefix.Length..].Trim(),
                 expiredTokenParameters,
                 out _);
-            userId = principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
             login = principal.FindFirstValue(JwtRegisteredClaimNames.Email);
-            return !string.IsNullOrWhiteSpace(userId) || !string.IsNullOrWhiteSpace(login);
+            return !string.IsNullOrWhiteSpace(login);
         }
         catch (SecurityTokenException)
         {
