@@ -132,9 +132,11 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             .ToListAsync(cancellationToken);
     }
 
-    public Task<PagedResult<StudentOutputModel>> GetCoachStudentsAsync(AuthenticatedUser coach, Filter filter, CancellationToken cancellationToken)
+    public async Task<PagedResult<StudentOutputModel>> GetCoachStudentsAsync(AuthenticatedUser coach, Filter filter, CancellationToken cancellationToken)
     {
-        return dbContext.CoachStudents
+        var thirtyDaysAgo = DateTime.Now.AddDays(-30);
+
+        var result = await dbContext.CoachStudents
             .AsNoTracking()
             .Where(item => item.CoachId == coach.Id)
             .OrderBy(item => item.Student.ClientInfo == null ? "" : item.Student.ClientInfo.LastName)
@@ -150,6 +152,7 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
                 BeltName = item.Student.ClientInfo == null || item.Student.ClientInfo.Belt == null
                     ? null
                     : item.Student.ClientInfo.Belt.Name,
+                StartedAt = item.CreateDate,
                 Groups = item.Student.ClientInfo == null
                     ? new List<StudentGroupOutputModel>()
                     : item.Student.ClientInfo.StudentGroups
@@ -164,6 +167,44 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
                         .ToList()
             })
             .ToPagedResultAsync(filter, cancellationToken);
+
+        var studentIds = result.Items.Select(student => student.Id).ToList();
+        if (studentIds.Count == 0)
+        {
+            return result;
+        }
+
+        var activityByStudentId = await dbContext.ClientInfos
+            .AsNoTracking()
+            .Where(clientInfo => studentIds.Contains(clientInfo.UserId))
+            .Select(clientInfo => new
+            {
+                clientInfo.UserId,
+                FirstTrainingAt = clientInfo.ClientTrainings
+                    .Select(clientTraining => (DateTime?)clientTraining.Training.StartTime)
+                    .Min(),
+                TrainingsLast30Days = clientInfo.ClientTrainings.Count(clientTraining => clientTraining.Training.StartTime >= thirtyDaysAgo),
+                TrainingsCount = clientInfo.ClientTrainings.Count,
+                TotalFightsCount = clientInfo.ClientTrainings.Sum(clientTraining => clientTraining.Rounds ?? 0)
+            })
+            .ToDictionaryAsync(item => item.UserId, cancellationToken);
+
+        foreach (var student in result.Items)
+        {
+            if (!activityByStudentId.TryGetValue(student.Id, out var activity))
+            {
+                continue;
+            }
+
+            student.StartedAt = activity.FirstTrainingAt ?? student.StartedAt;
+            student.TrainingsLast30Days = activity.TrainingsLast30Days;
+            student.TotalFightsCount = activity.TotalFightsCount;
+            student.AverageFightsPerTraining = activity.TrainingsCount == 0
+                ? 0
+                : Math.Round((decimal)activity.TotalFightsCount / activity.TrainingsCount, 1, MidpointRounding.AwayFromZero);
+        }
+
+        return result;
     }
 
     public async Task<StudentRequestOutputModel> ResolveStudentRequestAsync(AuthenticatedUser coach, Guid requestId, StudentRequestStatusEnum status, CancellationToken cancellationToken)

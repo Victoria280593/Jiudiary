@@ -12,6 +12,14 @@ public sealed class StudentOutputModel
 
     public string? BeltName { get; set; }
 
+    public DateTime StartedAt { get; set; }
+
+    public int TrainingsLast30Days { get; set; }
+
+    public int TotalFightsCount { get; set; }
+
+    public decimal AverageFightsPerTraining { get; set; }
+
     public List<StudentGroupOutputModel> Groups { get; set; } = [];
 }
 
