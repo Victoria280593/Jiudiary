@@ -165,16 +165,9 @@ export function CoachStudentCards({
                   Общая информация
                 </h3>
                 <dl className="mt-3 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-border/70 bg-surface-muted/45 p-4">
-                    <dt className="text-xs leading-5 text-muted">Пояс</dt>
-                    <dd className="mt-2">
-                      <span
-                        className="inline-flex whitespace-nowrap rounded-lg border px-2.5 py-1 text-sm font-semibold"
-                        style={getBeltBadgeStyle(selectedStudent.beltId)}
-                      >
-                        {selectedStudent.beltName ?? "Не указан"}
-                      </span>
-                    </dd>
+                  <div className="rounded-2xl border p-4" style={getBeltBadgeStyle(selectedStudent.beltId)}>
+                    <dt className="text-xs leading-5 opacity-70">Пояс</dt>
+                    <dd className="mt-1 text-sm font-semibold leading-6">{selectedStudent.beltName ?? "Не указан"}</dd>
                   </div>
                   <div className="rounded-2xl border border-border/70 bg-surface-muted/45 p-4">
                     <dt className="text-xs leading-5 text-muted">Начал заниматься</dt>
