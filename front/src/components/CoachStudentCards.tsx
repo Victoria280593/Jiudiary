@@ -77,7 +77,7 @@ export function CoachStudentCards({
               onClick={(event) => openStudent(student, event.currentTarget)}
               aria-haspopup="dialog"
               aria-label={`Открыть карточку ученика ${student.name}`}
-              className="group flex min-h-44 w-full cursor-pointer flex-col rounded-2xl p-4 pb-16 pr-14 text-left transition-colors hover:bg-surface-muted/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 sm:p-5 sm:pb-16 sm:pr-16"
+              className="group flex min-h-44 w-full cursor-pointer flex-col rounded-2xl p-4 pr-16 text-left transition-colors hover:bg-surface-muted/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 sm:p-5 sm:pr-20"
             >
               <span className="flex min-w-0 items-center gap-3.5">
                 <Avatar src={null} name={student.name} size={52} />
@@ -106,7 +106,7 @@ export function CoachStudentCards({
                 </span>
               )}
 
-              <span aria-hidden="true" className="absolute bottom-4 right-4 flex h-11 w-11 items-center justify-center rounded-full bg-accent text-white shadow-[0_8px_20px_-10px_rgba(168,112,62,0.8)] transition-colors group-hover:bg-accent-hover sm:bottom-5 sm:right-5">
+              <span aria-hidden="true" className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-accent text-white shadow-[0_8px_20px_-10px_rgba(168,112,62,0.8)] transition-colors group-hover:bg-accent-hover sm:right-5">
                 <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 transition-transform group-hover:translate-x-0.5">
                   <path d="M4 10h12m-4-4 4 4-4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
