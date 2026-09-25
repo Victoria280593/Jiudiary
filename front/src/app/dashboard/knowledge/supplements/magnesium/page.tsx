@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { KnowledgeSectionNavigation } from "@/components/KnowledgeSectionNavigation";
 
 const MAIN_ARTICLE_URL = "https://ods.od.nih.gov/factsheets/Magnesium-HealthProfessional/";
 const PUBMED_REVIEW_URL = "https://pubmed.ncbi.nlm.nih.gov/30684032/";
@@ -52,8 +51,6 @@ export default function MagnesiumPage() {
         <ChevronIcon />
         <span aria-current="page" className="font-medium text-foreground">Магний</span>
       </nav>
-
-      <KnowledgeSectionNavigation />
 
       <section className="card-shadow overflow-hidden rounded-3xl border border-border bg-surface">
         <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-6">

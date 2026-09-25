@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { KnowledgeSectionNavigation } from "@/components/KnowledgeSectionNavigation";
 import { getRuleOrganization, RULE_ORGANIZATIONS } from "@/lib/knowledge";
 
 function ChevronIcon() {
@@ -66,8 +65,6 @@ export default async function OrganizationRulesPage({ params }: { params: Promis
         <ChevronIcon />
         <span aria-current="page" className="font-medium text-foreground">{organization.shortName}</span>
       </nav>
-
-      <KnowledgeSectionNavigation />
 
       <section className="card-shadow overflow-hidden rounded-3xl border border-border bg-surface">
         <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-6">

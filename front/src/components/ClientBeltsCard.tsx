@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { saveStoredClientBeltAction, type FormState } from "@/app/actions/profile";
+import { deleteStoredClientBeltAction, saveStoredClientBeltAction, type FormState } from "@/app/actions/profile";
 import { TiedBeltIcon } from "@/components/TiedBeltIcon";
 import { BELT_BY_ID, BELT_ID_BY_NAME, BELT_LABELS } from "@/lib/belt";
 import { inputClass, labelClass } from "@/lib/ui";
@@ -139,6 +139,8 @@ function StoredBeltModal({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const router = useRouter();
+  const [isDeleting, startDeleting] = useTransition();
+  const [deleteError, setDeleteError] = useState<string>();
   const [state, formAction, isPending] = useActionState<FormState, FormData>(
     saveStoredClientBeltAction,
     undefined
@@ -158,7 +160,23 @@ function StoredBeltModal({
   }, [router, state]);
 
   function closeModal() {
-    if (!isPending) dialogRef.current?.close();
+    if (!isPending && !isDeleting) dialogRef.current?.close();
+  }
+
+  function deleteBelt() {
+    if (!clientBelt || !window.confirm(`Удалить ${clientBelt.beltName.toLowerCase()} пояс со стены?`)) return;
+
+    setDeleteError(undefined);
+    startDeleting(async () => {
+      const result = await deleteStoredClientBeltAction(clientInfoId, clientBelt.id);
+      if (!result.success) {
+        setDeleteError(result.error ?? "Не удалось удалить пояс.");
+        return;
+      }
+
+      dialogRef.current?.close();
+      router.refresh();
+    });
   }
 
   return (
@@ -166,7 +184,7 @@ function StoredBeltModal({
       ref={dialogRef}
       onClose={onClose}
       onCancel={(event) => {
-        if (isPending) event.preventDefault();
+        if (isPending || isDeleting) event.preventDefault();
       }}
       onClick={(event) => {
         if (event.target === dialogRef.current) closeModal();
@@ -180,7 +198,7 @@ function StoredBeltModal({
         <button
           type="button"
           onClick={closeModal}
-          disabled={isPending}
+          disabled={isPending || isDeleting}
           aria-label="Закрыть"
           className="inline-flex h-9 w-9 items-center justify-center rounded-full text-xl text-muted transition hover:bg-surface-muted hover:text-foreground disabled:opacity-50"
         >
@@ -192,7 +210,7 @@ function StoredBeltModal({
         <input type="hidden" name="clientInfoId" value={clientInfoId} />
         {clientBelt && <input type="hidden" name="clientBeltId" value={clientBelt.id} />}
 
-        {state?.error && <p className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">{state.error}</p>}
+        {(state?.error || deleteError) && <p className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">{deleteError ?? state?.error}</p>}
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="stored-belt" className={labelClass}>Пояс</label>
@@ -239,18 +257,28 @@ function StoredBeltModal({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-1">
+        <div className="flex flex-wrap items-center justify-end gap-3 pt-1">
+          {clientBelt && (
+            <button
+              type="button"
+              onClick={deleteBelt}
+              disabled={isPending || isDeleting}
+              className="mr-auto rounded-xl border border-danger/35 px-4 py-2.5 text-sm font-medium text-danger transition hover:bg-danger-soft disabled:cursor-wait disabled:opacity-50"
+            >
+              {isDeleting ? "Удаляем…" : "Удалить пояс"}
+            </button>
+          )}
           <button
             type="button"
             onClick={closeModal}
-            disabled={isPending}
+            disabled={isPending || isDeleting}
             className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium transition hover:bg-surface-muted disabled:opacity-50"
           >
             Отмена
           </button>
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || isDeleting}
             className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60"
           >
             {isPending ? "Сохраняем…" : "Сохранить"}

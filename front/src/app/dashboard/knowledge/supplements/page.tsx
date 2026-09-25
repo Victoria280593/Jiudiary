@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { KnowledgeSectionNavigation } from "@/components/KnowledgeSectionNavigation";
 
 function ArrowIcon() {
   return (
@@ -16,8 +15,6 @@ export default function SupplementsPage() {
         <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">База знаний</h1>
         <p className="mt-1.5 max-w-2xl text-sm text-muted sm:text-base">Проверенная информация о правилах соревнований и спортивных добавках.</p>
       </div>
-
-      <KnowledgeSectionNavigation />
 
       <section aria-labelledby="supplements-title">
         <div className="mb-3">

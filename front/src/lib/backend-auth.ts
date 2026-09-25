@@ -665,6 +665,31 @@ export function updateBackendClientBelt(
   return saveBackendClientBelt(accessToken, clientInfoId, clientBeltId, input);
 }
 
+export async function deleteBackendClientBelt(
+  accessToken: string,
+  clientInfoId: string,
+  clientBeltId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const response = await fetch(
+      `${backendUrl}/api/client-info/${encodeURIComponent(clientInfoId)}/belts/${encodeURIComponent(clientBeltId)}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      }
+    );
+
+    if (response.ok) return { ok: true };
+
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    return { ok: false, error: result?.error ?? "Не удалось удалить пояс." };
+  } catch {
+    return { ok: false, error: "Не удалось подключиться к серверу." };
+  }
+}
+
 export type ChangeBackendCurrentBeltResult =
   | { ok: true; currentBelt: BackendCurrentBelt }
   | { ok: false; error: string };
@@ -760,7 +785,7 @@ export function getBackendCoachStudentRequests(accessToken: string) {
   return getBackendList(accessToken, "/api/trainers/students/requests", isBackendStudentRequest);
 }
 
-export async function getBackendCoachStudents(
+export async function getBackendStudents(
   accessToken: string,
   filter: { page?: number; itemsPerPage?: number }
 ): Promise<BackendStudentPage | null> {

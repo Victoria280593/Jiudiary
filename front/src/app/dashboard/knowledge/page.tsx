@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { KnowledgeSectionNavigation } from "@/components/KnowledgeSectionNavigation";
 import { RULE_ORGANIZATIONS } from "@/lib/knowledge";
 
 function ArrowIcon() {
@@ -16,11 +15,9 @@ export default function KnowledgePage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">База знаний</h1>
         <p className="mt-1.5 max-w-2xl text-sm text-muted sm:text-base">
-          Проверенная информация о правилах соревнований и спортивных добавках.
+          Проверенная информация о правилах соревнований.
         </p>
       </div>
-
-      <KnowledgeSectionNavigation />
 
       <section aria-labelledby="organizations-title">
         <div className="mb-3 flex items-end justify-between gap-3">

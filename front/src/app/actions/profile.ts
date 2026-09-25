@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import {
   changeBackendCurrentBelt,
   createBackendClientBelt,
+  deleteBackendClientBelt,
   updateBackendClientBelt,
 } from "@/lib/backend-auth";
 import { ADULT_BELTS, BELT_ID_BY_NAME, KIDS_BELTS } from "@/lib/belt";
@@ -90,4 +91,19 @@ export async function changeCurrentClientBeltAction(
 
   revalidatePath("/dashboard/profile");
   return { success: true, belt };
+}
+
+export async function deleteStoredClientBeltAction(
+  clientInfoId: string,
+  clientBeltId: string
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await getSession();
+  if (!session) return { error: "Доступ запрещён" };
+  if (!clientInfoId || !clientBeltId) return { error: "Пояс не найден" };
+
+  const result = await deleteBackendClientBelt(session.accessToken, clientInfoId, clientBeltId);
+  if (!result.ok) return { error: result.error };
+
+  revalidatePath("/dashboard/profile");
+  return { success: true };
 }

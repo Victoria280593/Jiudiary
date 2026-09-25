@@ -6,7 +6,7 @@ import { CoachStudentCards } from "@/components/CoachStudentCards";
 import { getSession } from "@/lib/auth";
 import {
   getBackendCoachStudentRequests,
-  getBackendCoachStudents,
+  getBackendStudents,
   getBackendGroups,
 } from "@/lib/backend-auth";
 import { formatDateTime } from "@/lib/format";
@@ -114,7 +114,7 @@ export default async function StudentsPage({
 
   const [requests, students, trainerGroups] = await Promise.all([
     getBackendCoachStudentRequests(session.accessToken),
-    getBackendCoachStudents(session.accessToken, { page: requestedPage, itemsPerPage: STUDENTS_PER_PAGE }),
+    getBackendStudents(session.accessToken, { page: requestedPage, itemsPerPage: STUDENTS_PER_PAGE }),
     getBackendGroups(session.accessToken),
   ]);
 
@@ -157,7 +157,7 @@ export default async function StudentsPage({
                 : "text-muted hover:bg-accent/[0.05] hover:text-foreground"
             }`}
           >
-            <span>Мои ученики</span>
+            <span>Ученики</span>
           </Link>
           <Link
             href={studentsHref("requests", "pending")}
@@ -184,7 +184,7 @@ export default async function StudentsPage({
           <div className="flex flex-col gap-4 border-b border-border/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">
-                {section === "students" ? "Мои ученики" : "Заявки на присоединение"}
+                {section === "students" ? "Ученики" : "Заявки на присоединение"}
               </h2>
               {section === "students" && (
                 <p className="mt-1 text-xs leading-5 text-muted sm:text-sm">

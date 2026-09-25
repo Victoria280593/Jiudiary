@@ -43,9 +43,11 @@ function getBeltBadgeStyle(beltId: number | null) {
 export function CoachStudentCards({
   students,
   trainerGroups,
+  canManage = true,
 }: {
   students: BackendStudent[];
   trainerGroups: BackendGroup[] | null;
+  canManage?: boolean;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -113,14 +115,16 @@ export function CoachStudentCards({
               </span>
             </button>
 
-            <div className="absolute right-3 top-3 z-10">
-              <CoachStudentActions
-                studentId={student.id}
-                studentName={student.name}
-                groups={trainerGroups}
-                assignedGroupIds={student.groups.map((group) => group.id)}
-              />
-            </div>
+            {canManage && (
+              <div className="absolute right-3 top-3 z-10">
+                <CoachStudentActions
+                  studentId={student.id}
+                  studentName={student.name}
+                  groups={trainerGroups}
+                  assignedGroupIds={student.groups.map((group) => group.id)}
+                />
+              </div>
+            )}
           </li>
         ))}
       </ul>
