@@ -4,6 +4,7 @@ import { useId, useRef, useState } from "react";
 import { Avatar } from "@/components/Avatar";
 import { CoachStudentActions } from "@/components/CoachStudentRemoveButton";
 import type { BackendGroup, BackendStudent } from "@/lib/backend-auth";
+import { BELT_BY_ID, BELT_COLORS } from "@/lib/belt";
 import { getGroupColorStyle } from "@/lib/group-colors";
 
 function formatDate(value: string) {
@@ -16,6 +17,27 @@ function formatDate(value: string) {
 
 function formatAverage(value: number) {
   return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 }).format(value);
+}
+
+function getBeltBadgeStyle(beltId: number | null) {
+  const belt = beltId === null ? null : BELT_BY_ID[beltId];
+  if (!belt) {
+    return {
+      borderColor: "#d9cbbc",
+      background: "#f8f4ef",
+      color: "#756555",
+    };
+  }
+
+  const colors = BELT_COLORS[belt];
+  const accent = colors.accent ?? colors.main;
+  return {
+    borderColor: `${colors.main}55`,
+    background: colors.pattern === "split"
+      ? `linear-gradient(90deg, ${colors.main}1F 50%, ${accent}1F 50%)`
+      : `linear-gradient(135deg, ${colors.main}20, ${accent}12)`,
+    color: "#1f2937",
+  };
 }
 
 export function CoachStudentCards({
@@ -55,7 +77,7 @@ export function CoachStudentCards({
               onClick={(event) => openStudent(student, event.currentTarget)}
               aria-haspopup="dialog"
               aria-label={`Открыть карточку ученика ${student.name}`}
-              className="group flex min-h-44 w-full cursor-pointer flex-col rounded-2xl p-4 pr-14 text-left transition-colors hover:bg-surface-muted/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 sm:p-5 sm:pr-16"
+              className="group flex min-h-44 w-full cursor-pointer flex-col rounded-2xl p-4 pb-16 pr-14 text-left transition-colors hover:bg-surface-muted/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 sm:p-5 sm:pb-16 sm:pr-16"
             >
               <span className="flex min-w-0 items-center gap-3.5">
                 <Avatar src={null} name={student.name} size={52} />
@@ -65,27 +87,27 @@ export function CoachStudentCards({
                 </span>
               </span>
 
-              <span className="mt-4 flex flex-wrap gap-1.5">
-                {student.beltName && (
-                  <span className="rounded-lg border border-border bg-surface-muted px-2.5 py-1 text-xs font-medium text-muted">
-                    Пояс: {student.beltName}
-                  </span>
-                )}
-                {student.groups.slice(0, 2).map((group) => (
-                  <span key={group.id} className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${getGroupColorStyle(group.colorName).badge}`}>
-                    {group.name}
-                  </span>
-                ))}
-                {student.groups.length > 2 && (
-                  <span className="rounded-lg border border-border bg-white px-2.5 py-1 text-xs font-medium text-muted">
-                    +{student.groups.length - 2}
-                  </span>
-                )}
+              <span className="mt-4 flex flex-wrap">
+                <span
+                  className="whitespace-nowrap rounded-lg border px-2.5 py-1 text-xs font-semibold"
+                  style={getBeltBadgeStyle(student.beltId)}
+                >
+                  Пояс: {student.beltName ?? "не указан"}
+                </span>
               </span>
 
-              <span className="mt-auto flex items-center gap-2 pt-4 text-sm font-semibold text-accent-foreground">
-                Открыть карточку
-                <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4 transition-transform group-hover:translate-x-0.5">
+              {student.groups.length > 0 && (
+                <span className="mt-2 flex flex-wrap gap-1.5">
+                  {student.groups.map((group) => (
+                    <span key={group.id} className={`whitespace-nowrap rounded-lg border px-2.5 py-1 text-xs font-medium ${getGroupColorStyle(group.colorName).badge}`}>
+                      {group.name}
+                    </span>
+                  ))}
+                </span>
+              )}
+
+              <span aria-hidden="true" className="absolute bottom-4 right-4 flex h-11 w-11 items-center justify-center rounded-full bg-accent text-white shadow-[0_8px_20px_-10px_rgba(168,112,62,0.8)] transition-colors group-hover:bg-accent-hover sm:bottom-5 sm:right-5">
+                <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 transition-transform group-hover:translate-x-0.5">
                   <path d="M4 10h12m-4-4 4 4-4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </span>
