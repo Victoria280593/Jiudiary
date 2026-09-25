@@ -97,6 +97,11 @@ public sealed class AuthController(IAuthService authService) : BaseController
         }
 
         var response = await authService.RefreshAsync(request, cancellationToken);
+        if (response is not null)
+        {
+            AuthenticationLogContext.Set(HttpContext, "refresh-token", response.User.Id, response.User.Login);
+        }
+
         return response is null ? Unauthorized() : Ok(response);
     }
 

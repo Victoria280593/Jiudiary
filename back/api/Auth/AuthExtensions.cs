@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -58,8 +59,78 @@ public static class AuthExtensions
                     NameClaimType = ClaimTypes.Name,
                     RoleClaimType = ClaimTypes.Role
                 };
+                options.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = context =>
+                    {
+                        AuthenticationLogContext.Set(
+                            context.HttpContext,
+                            "authenticated",
+                            context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Sub),
+                            context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Email));
+                        return Task.CompletedTask;
+                    },
+                    OnAuthenticationFailed = context =>
+                    {
+                        if (context.Exception is SecurityTokenExpiredException &&
+                            TryReadExpiredTokenIdentity(
+                                context.Request,
+                                options.TokenValidationParameters,
+                                out var userId,
+                                out var login))
+                        {
+                            // Повторная проверка без lifetime подтверждает подпись, issuer и audience.
+                            // Полученные claims используются только для корреляции логов.
+                            AuthenticationLogContext.Set(context.HttpContext, "expired-token", userId, login);
+                        }
+                        else
+                        {
+                            AuthenticationLogContext.Set(context.HttpContext, "invalid-token");
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
         services.AddAuthorization();
         return services;
+    }
+
+    private static bool TryReadExpiredTokenIdentity(
+        HttpRequest request,
+        TokenValidationParameters validationParameters,
+        out string? userId,
+        out string? login)
+    {
+        userId = null;
+        login = null;
+
+        var authorization = request.Headers.Authorization.ToString();
+        const string bearerPrefix = "Bearer ";
+        if (!authorization.StartsWith(bearerPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        try
+        {
+            var expiredTokenParameters = validationParameters.Clone();
+            expiredTokenParameters.ValidateLifetime = false;
+            var principal = new JwtSecurityTokenHandler().ValidateToken(
+                authorization[bearerPrefix.Length..].Trim(),
+                expiredTokenParameters,
+                out _);
+            userId = principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            login = principal.FindFirstValue(JwtRegisteredClaimNames.Email);
+            return !string.IsNullOrWhiteSpace(userId) || !string.IsNullOrWhiteSpace(login);
+        }
+        catch (SecurityTokenException)
+        {
+            return false;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
     }
 }

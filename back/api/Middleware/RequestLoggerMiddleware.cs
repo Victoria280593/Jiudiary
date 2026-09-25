@@ -1,6 +1,5 @@
 using System.Diagnostics;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+using JiuDiary.Api.Auth;
 
 namespace JiuDiary.Api.Middleware;
 
@@ -10,7 +9,7 @@ internal sealed class RequestLoggerMiddleware(RequestDelegate next)
 
     public async Task InvokeAsync(HttpContext context, ILogger<RequestLoggerMiddleware> logger)
     {
-        var login = GetLogin(context);
+        var identity = AuthenticationLogContext.Get(context);
         var requestSize = context.Request.ContentLength ?? 0;
         var originalResponseBody = context.Response.Body;
         var responseSizeStream = new ResponseSizeStream(originalResponseBody);
@@ -18,7 +17,9 @@ internal sealed class RequestLoggerMiddleware(RequestDelegate next)
 
         using var scope = logger.BeginScope(new Dictionary<string, object>
         {
-            ["UserLogin"] = login
+            ["UserId"] = identity.UserId,
+            ["UserLogin"] = identity.UserLogin,
+            ["AuthStatus"] = identity.AuthStatus
         });
 
         logger.LogInformation(
@@ -50,6 +51,13 @@ internal sealed class RequestLoggerMiddleware(RequestDelegate next)
 
             if (requestException is null)
             {
+                var completedIdentity = AuthenticationLogContext.Get(context);
+                using var completedScope = logger.BeginScope(new Dictionary<string, object>
+                {
+                    ["UserId"] = completedIdentity.UserId,
+                    ["UserLogin"] = completedIdentity.UserLogin,
+                    ["AuthStatus"] = completedIdentity.AuthStatus
+                });
                 logger.LogInformation(
                     "End HTTP {Method} {Path} | Status: {StatusCode} | Response Size: {ResponseSizeBytes} bytes | Time: {Elapsed}",
                     context.Request.Method,
@@ -71,12 +79,6 @@ internal sealed class RequestLoggerMiddleware(RequestDelegate next)
             }
         }
     }
-
-    private static string GetLogin(HttpContext context) =>
-        context.User.FindFirstValue(JwtRegisteredClaimNames.Email)
-        ?? context.User.FindFirstValue(ClaimTypes.Email)
-        ?? context.User.Identity?.Name
-        ?? "anonymous";
 
     private sealed class ResponseSizeStream(Stream innerStream) : Stream
     {
