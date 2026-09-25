@@ -129,13 +129,13 @@ export function CoachStudentActions({
           aria-label={`Действия с учеником «${studentName}»`}
           aria-expanded={isMenuOpen}
           aria-haspopup="menu"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-lg tracking-[0.12em] text-muted transition hover:bg-surface-muted hover:text-foreground"
+          className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-lg tracking-[0.12em] text-muted transition hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <span aria-hidden="true" className="-translate-y-1">…</span>
         </button>
 
         {isMenuOpen && (
-          <div role="menu" className="absolute right-0 top-10 z-20 w-52 overflow-hidden rounded-xl border border-border/70 bg-white p-1.5 shadow-[0_18px_45px_-18px_rgba(43,36,29,0.42)]">
+          <div role="menu" className="absolute right-0 top-12 z-20 w-52 overflow-hidden rounded-xl border border-border/70 bg-white p-1.5 shadow-[0_18px_45px_-18px_rgba(43,36,29,0.42)]">
             <button type="button" role="menuitem" onClick={openGroupsDialog} className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm text-foreground transition hover:bg-surface-muted">
               Добавить в группу
             </button>

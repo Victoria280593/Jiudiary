@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { CoachStudentRequestActions } from "@/components/CoachStudentRequestActions";
-import { CoachStudentActions } from "@/components/CoachStudentRemoveButton";
+import { CoachStudentCards } from "@/components/CoachStudentCards";
 import { getSession } from "@/lib/auth";
 import {
   getBackendCoachStudentRequests,
@@ -10,7 +10,6 @@ import {
   getBackendGroups,
 } from "@/lib/backend-auth";
 import { formatDateTime } from "@/lib/format";
-import { getGroupColorStyle } from "@/lib/group-colors";
 
 type StudentsSection = "students" | "requests";
 type RequestsSection = "pending" | "rejected";
@@ -232,35 +231,7 @@ export default async function StudentsPage({
             ) : visibleStudents.length === 0 ? (
               <p className="px-5 py-10 text-center text-sm text-muted">Учеников пока нет. Принятые заявки появятся здесь.</p>
             ) : (
-              <ul className="divide-y divide-border/70">
-                {visibleStudents.map((student) => (
-                  <li key={student.id} className="flex min-w-0 flex-wrap items-center gap-3 px-4 py-4 sm:flex-nowrap sm:px-6">
-                    <Avatar src={null} name={student.name} size={46} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground sm:text-base">{student.name}</p>
-                      <p className="mt-0.5 truncate text-xs text-muted sm:text-sm">{student.login}</p>
-                    </div>
-                    <div className="order-last flex w-full flex-wrap items-center gap-1.5 pl-[3.625rem] sm:order-none sm:w-auto sm:max-w-[48%] sm:justify-end sm:pl-0">
-                      {student.beltName && (
-                        <span className="rounded-lg border border-border bg-surface-muted px-2.5 py-1 text-xs font-medium text-muted">
-                          {student.beltName}
-                        </span>
-                      )}
-                      {student.groups.map((group) => (
-                        <span key={group.id} className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${getGroupColorStyle(group.colorName).badge}`}>
-                          {group.name}
-                        </span>
-                      ))}
-                    </div>
-                    <CoachStudentActions
-                      studentId={student.id}
-                      studentName={student.name}
-                      groups={trainerGroups}
-                      assignedGroupIds={student.groups.map((group) => group.id)}
-                    />
-                  </li>
-                ))}
-              </ul>
+              <CoachStudentCards students={visibleStudents} trainerGroups={trainerGroups} />
             )
           ) : !requests ? (
             <p className="px-5 py-10 text-center text-sm text-muted">Не удалось загрузить заявки.</p>

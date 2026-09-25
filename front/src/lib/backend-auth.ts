@@ -139,6 +139,10 @@ export type BackendStudent = {
   login: string;
   beltId: number | null;
   beltName: string | null;
+  startedAt: string;
+  trainingsLast30Days: number;
+  totalFightsCount: number;
+  averageFightsPerTraining: number;
   groups: BackendStudentGroup[];
 };
 
@@ -248,6 +252,10 @@ function isBackendStudent(value: unknown): value is BackendStudent {
     typeof student.login === "string" &&
     (student.beltId === null || typeof student.beltId === "number") &&
     (student.beltName === null || typeof student.beltName === "string") &&
+    typeof student.startedAt === "string" &&
+    typeof student.trainingsLast30Days === "number" &&
+    typeof student.totalFightsCount === "number" &&
+    typeof student.averageFightsPerTraining === "number" &&
     Array.isArray(student.groups) &&
     student.groups.every((group) =>
       Boolean(group) &&
