@@ -54,6 +54,22 @@ public sealed class ClientBeltController(ClientBeltService clientBeltService) : 
             cancellationToken));
     }
 
+    [HttpDelete("{clientBeltId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(
+        Guid clientInfoId,
+        Guid clientBeltId,
+        CancellationToken cancellationToken)
+    {
+        await clientBeltService.DeleteAsync(
+            clientInfoId,
+            clientBeltId,
+            CurrentUser,
+            cancellationToken);
+        return NoContent();
+    }
+
     [HttpPut("current")]
     [ProducesResponseType<CurrentBeltOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

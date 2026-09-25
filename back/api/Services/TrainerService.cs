@@ -132,41 +132,84 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<PagedResult<StudentOutputModel>> GetCoachStudentsAsync(AuthenticatedUser coach, Filter filter, CancellationToken cancellationToken)
+    public async Task<PagedResult<StudentOutputModel>> GetStudentsAsync(AuthenticatedUser user, Filter filter, CancellationToken cancellationToken)
     {
         var thirtyDaysAgo = DateTime.Now.AddDays(-30);
+        IQueryable<StudentOutputModel> students;
 
-        var result = await dbContext.CoachStudents
-            .AsNoTracking()
-            .Where(item => item.CoachId == coach.Id)
-            .OrderBy(item => item.Student.ClientInfo == null ? "" : item.Student.ClientInfo.LastName)
-            .ThenBy(item => item.Student.ClientInfo == null ? "" : item.Student.ClientInfo.FirstName)
-            .Select(item => new StudentOutputModel
-            {
-                Id = item.Student.Id,
-                Name = item.Student.ClientInfo == null
-                    ? item.Student.Login
-                    : item.Student.ClientInfo.LastName + " " + item.Student.ClientInfo.FirstName + (item.Student.ClientInfo.MiddleName == null || item.Student.ClientInfo.MiddleName == "" ? "" : " " + item.Student.ClientInfo.MiddleName),
-                Login = item.Student.Login,
-                BeltId = item.Student.ClientInfo == null ? null : item.Student.ClientInfo.BeltId,
-                BeltName = item.Student.ClientInfo == null || item.Student.ClientInfo.Belt == null
-                    ? null
-                    : item.Student.ClientInfo.Belt.Name,
-                StartedAt = item.CreateDate,
-                Groups = item.Student.ClientInfo == null
-                    ? new List<StudentGroupOutputModel>()
-                    : item.Student.ClientInfo.StudentGroups
-                        .Where(studentGroup => studentGroup.Group.CoachGroups.Any(coachGroup => coachGroup.Coach.UserId == coach.Id))
-                        .OrderBy(studentGroup => studentGroup.Group.Name)
-                        .Select(studentGroup => new StudentGroupOutputModel
-                        {
-                            Id = studentGroup.GroupId,
-                            Name = studentGroup.Group.Name,
-                            ColorName = studentGroup.Group.Color.Name
-                        })
-                        .ToList()
-            })
-            .ToPagedResultAsync(filter, cancellationToken);
+        if (user.Role == UserRolesEnum.Coach)
+        {
+            students = dbContext.Users
+                .AsNoTracking()
+                .Where(student => student.IsActive &&
+                                  student.RoleId == (int)UserRolesEnum.Student &&
+                                  student.Coaches.Any(link => link.CoachId == user.Id))
+                .OrderBy(student => student.ClientInfo == null ? "" : student.ClientInfo.LastName)
+                .ThenBy(student => student.ClientInfo == null ? "" : student.ClientInfo.FirstName)
+                .Select(student => new StudentOutputModel
+                {
+                    Id = student.Id,
+                    Name = student.ClientInfo == null
+                        ? student.Login
+                        : student.ClientInfo.LastName + " " + student.ClientInfo.FirstName + (student.ClientInfo.MiddleName == null || student.ClientInfo.MiddleName == "" ? "" : " " + student.ClientInfo.MiddleName),
+                    Login = student.Login,
+                    BeltId = student.ClientInfo == null ? null : student.ClientInfo.BeltId,
+                    BeltName = student.ClientInfo == null || student.ClientInfo.Belt == null ? null : student.ClientInfo.Belt.Name,
+                    StartedAt = student.Coaches.Where(link => link.CoachId == user.Id).Min(link => link.CreateDate),
+                    Groups = student.ClientInfo == null
+                        ? new List<StudentGroupOutputModel>()
+                        : student.ClientInfo.StudentGroups
+                            .Where(studentGroup => studentGroup.Group.CoachGroups.Any(coachGroup => coachGroup.Coach.UserId == user.Id))
+                            .OrderBy(studentGroup => studentGroup.Group.Name)
+                            .Select(studentGroup => new StudentGroupOutputModel
+                            {
+                                Id = studentGroup.GroupId,
+                                Name = studentGroup.Group.Name,
+                                ColorName = studentGroup.Group.Color.Name
+                            })
+                            .ToList()
+                });
+        }
+        else
+        {
+            var coachIds = dbContext.CoachStudents
+                .Where(link => link.StudentId == user.Id)
+                .Select(link => link.CoachId);
+
+            students = dbContext.Users
+                .AsNoTracking()
+                .Where(student => student.IsActive &&
+                                  student.Id != user.Id &&
+                                  student.RoleId == (int)UserRolesEnum.Student &&
+                                  student.Coaches.Any(link => coachIds.Contains(link.CoachId)))
+                .OrderBy(student => student.ClientInfo == null ? "" : student.ClientInfo.LastName)
+                .ThenBy(student => student.ClientInfo == null ? "" : student.ClientInfo.FirstName)
+                .Select(student => new StudentOutputModel
+                {
+                    Id = student.Id,
+                    Name = student.ClientInfo == null
+                        ? student.Login
+                        : student.ClientInfo.LastName + " " + student.ClientInfo.FirstName + (student.ClientInfo.MiddleName == null || student.ClientInfo.MiddleName == "" ? "" : " " + student.ClientInfo.MiddleName),
+                    Login = student.Login,
+                    BeltId = student.ClientInfo == null ? null : student.ClientInfo.BeltId,
+                    BeltName = student.ClientInfo == null || student.ClientInfo.Belt == null ? null : student.ClientInfo.Belt.Name,
+                    StartedAt = student.Coaches.Where(link => coachIds.Contains(link.CoachId)).Min(link => link.CreateDate),
+                    Groups = student.ClientInfo == null
+                        ? new List<StudentGroupOutputModel>()
+                        : student.ClientInfo.StudentGroups
+                            .Where(studentGroup => studentGroup.Group.CoachGroups.Any(coachGroup => coachIds.Contains(coachGroup.Coach.UserId)))
+                            .OrderBy(studentGroup => studentGroup.Group.Name)
+                            .Select(studentGroup => new StudentGroupOutputModel
+                            {
+                                Id = studentGroup.GroupId,
+                                Name = studentGroup.Group.Name,
+                                ColorName = studentGroup.Group.Color.Name
+                            })
+                            .ToList()
+                });
+        }
+
+        var result = await students.ToPagedResultAsync(filter, cancellationToken);
 
         var studentIds = result.Items.Select(student => student.Id).ToList();
         if (studentIds.Count == 0)

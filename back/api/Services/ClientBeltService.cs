@@ -116,6 +116,31 @@ public sealed class ClientBeltService(JiuDiaryDbContext dbContext, ILogger<Clien
         return await GetByIdAsync(clientInfoId, clientBeltId, cancellationToken);
     }
 
+    public async Task DeleteAsync(
+        Guid clientInfoId,
+        Guid clientBeltId,
+        AuthenticatedUser user,
+        CancellationToken cancellationToken)
+    {
+        await EnsureAccessAsync(clientInfoId, user, cancellationToken);
+
+        var clientBelt = await dbContext.ClientBelts.SingleOrDefaultAsync(
+            item => item.Id == clientBeltId && item.ClientInfoId == clientInfoId,
+            cancellationToken);
+        if (clientBelt is null)
+        {
+            throw new AspNetException("Запись о поясе не найдена.", StatusCodes.Status404NotFound);
+        }
+
+        dbContext.ClientBelts.Remove(clientBelt);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Запись о поясе удалена. ClientInfoId: {ClientInfoId} | ClientBeltId: {ClientBeltId}",
+            clientInfoId,
+            clientBeltId);
+    }
+
     public async Task<CurrentBeltOutputModel> ChangeCurrentAsync(
         Guid clientInfoId,
         ChangeCurrentBeltInputModel inputModel,
