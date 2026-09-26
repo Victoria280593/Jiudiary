@@ -32,4 +32,6 @@ VALUES
     (28, N'Луп чок',                    N'Loop choke'),
     (29, N'Север-юг',                   N'North-south choke'),
     (30, N'Бейсбол чок',                N'Baseball choke'),
-    (31, N'Джокер-чок',                 N'Joker choke');
+    (31, N'Джокер-чок',                 N'Joker choke'),
+    (32, N'Ручной треугольник',         N'Arm triangle choke'),
+    (33, N'Чой-бар',                    N'Choi bar');

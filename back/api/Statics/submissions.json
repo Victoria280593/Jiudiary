@@ -30,6 +30,8 @@
     { "id": 28, "nameRu": "Луп чок", "nameEn": "Loop choke", "aliases": ["петельное удушение"] },
     { "id": 29, "nameRu": "Север-юг", "nameEn": "North-south choke", "aliases": ["норд-саут"] },
     { "id": 30, "nameRu": "Бейсбол чок", "nameEn": "Baseball choke", "aliases": ["бейсболл чок"] },
-    { "id": 31, "nameRu": "Джокер-чок", "nameEn": "Joker choke", "aliases": ["джокер чок"] }
+    { "id": 31, "nameRu": "Джокер-чок", "nameEn": "Joker choke", "aliases": ["джокер чок"] },
+    { "id": 32, "nameRu": "Ручной треугольник", "nameEn": "Arm triangle choke", "aliases": ["арм триангл", "arm triangle", "ката гатаме", "kata gatame", "треугольник руками"] },
+    { "id": 33, "nameRu": "Чой-бар", "nameEn": "Choi bar", "aliases": ["чои бар", "чой бар", "choibar"] }
   ]
 }
