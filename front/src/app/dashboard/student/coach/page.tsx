@@ -57,7 +57,9 @@ export default async function StudentCoachPage({
   const studentsPage = Number.isFinite(parsedStudentsPage) && parsedStudentsPage > 0 ? parsedStudentsPage : 1;
   const search = (params.search ?? "").trim();
   const [trainers, myTrainers, myRequests, students] = await Promise.all([
-    getBackendTrainers(session.accessToken, { page, itemsPerPage: ITEMS_PER_PAGE, search }),
+    search
+      ? getBackendTrainers(session.accessToken, { page, itemsPerPage: ITEMS_PER_PAGE, search })
+      : Promise.resolve(null),
     getBackendStudentTrainers(session.accessToken),
     getBackendStudentTrainerRequests(session.accessToken),
     getBackendStudents(session.accessToken, { page: studentsPage, itemsPerPage: STUDENTS_PER_PAGE }),
@@ -176,7 +178,11 @@ export default async function StudentCoachPage({
           </SubmitButton>
         </form>
 
-        {!trainers ? (
+        {!search ? (
+          <p className="mt-4 text-sm text-muted">
+            Введите имя или email тренера, чтобы начать поиск.
+          </p>
+        ) : !trainers ? (
           <p className="mt-4 text-sm text-muted">Не удалось загрузить список тренеров.</p>
         ) : trainers.items.length === 0 ? (
           <p className="mt-4 text-sm text-muted">
