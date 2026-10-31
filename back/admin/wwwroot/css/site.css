@@ -126,7 +126,8 @@ code { color: #80919a; font-family: ui-monospace, SFMono-Regular, Consolas, mono
 .form-success { margin: 0 0 18px; padding: 11px 13px; border-radius: 8px; background: #e2f4e9; color: #227044; font-weight: 700; }
 .form-hint { color: var(--muted); font-size: 12px; }
 .empty-state { max-width: 520px; margin: 18vh auto; text-align: center; }
-.user-detail-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr); gap: 20px; max-width: 1320px; margin: 0 auto; }
+.user-detail-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(320px, .8fr); gap: 20px; max-width: none; margin: 0; }
+.user-detail-grid > .panel { width: 100%; max-width: none; margin: 0; }
 .detail-panel { padding: 26px; }
 .detail-heading, .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .detail-heading h2, .section-heading h2 { margin: 0; color: var(--navy); font-size: 24px; letter-spacing: -.04em; }
