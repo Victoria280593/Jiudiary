@@ -77,7 +77,7 @@ export default function FightTrendChart({ points }: { points: FightChartPoint[] 
     return () => mediaQuery.removeEventListener("change", updateLabelMode);
   }, []);
 
-  const minimumWidth = Math.max(560, points.length * 88);
+  const minimumWidth = points.length > 7 ? points.length * 88 : undefined;
 
   return (
     <div className="h-full w-full min-w-0" style={minimumWidth ? { minWidth: minimumWidth } : undefined}>
