@@ -26,6 +26,10 @@
                     <span class="navigation-icon">◒</span>
                     Мониторинг
                 </a>
+                <a class="navigation-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Audit" ? "active" : "")" asp-controller="Audit" asp-action="Index">
+                    <span class="navigation-icon">≋</span>
+                    Аудит
+                </a>
             </nav>
             @if (User.Identity?.IsAuthenticated == true)
             {

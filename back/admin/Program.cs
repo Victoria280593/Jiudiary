@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using JiuDiary.Admin.Services;
+using JiuDiary.Admin.Middleware;
 using JiuDiary.Database;
 using JiuDiary.Database.Entities;
 using JiuDiary.Database.Enums;
@@ -11,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddScoped<AdminUserService>();
 builder.Services.AddScoped<DatabaseBackupService>();
+builder.Services.AddScoped<AdminAuditService>();
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -44,6 +46,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<AdminAuditMiddleware>();
 
 app.MapControllerRoute(
     name: "default",

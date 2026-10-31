@@ -2,6 +2,7 @@ using System.Security.Claims;
 using JiuDiary.Database;
 using JiuDiary.Database.Entities;
 using JiuDiary.Database.Enums;
+using JiuDiary.Admin.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -13,7 +14,8 @@ namespace JiuDiary.Admin.Controllers;
 
 public sealed class AccountController(
     JiuDiaryDbContext dbContext,
-    IPasswordHasher<User> passwordHasher) : Controller
+    IPasswordHasher<User> passwordHasher,
+    AdminAuditService auditService) : Controller
 {
     [AllowAnonymous]
     [HttpGet]
@@ -39,6 +41,7 @@ public sealed class AccountController(
     {
         if (string.IsNullOrWhiteSpace(login) || string.IsNullOrWhiteSpace(password))
         {
+            await auditService.WriteAsync(login?.Trim() ?? "unknown", "Авторизация", "POST", "/account/login", 400, "Пустые учетные данные", HttpContext.Connection.RemoteIpAddress?.ToString(), cancellationToken);
             ModelState.AddModelError(string.Empty, "Введите логин и пароль.");
             ViewData["ReturnUrl"] = returnUrl;
             return View();
@@ -54,6 +57,7 @@ public sealed class AccountController(
         if (user is null || !user.IsActive || string.IsNullOrWhiteSpace(user.PasswordHash) ||
             passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password) == PasswordVerificationResult.Failed)
         {
+            await auditService.WriteAsync(login.Trim(), "Авторизация", "POST", "/account/login", 401, "Неверный логин или пароль", HttpContext.Connection.RemoteIpAddress?.ToString(), cancellationToken);
             ModelState.AddModelError(string.Empty, "Неверный логин или пароль.");
             ViewData["ReturnUrl"] = returnUrl;
             return View();
@@ -72,6 +76,7 @@ public sealed class AccountController(
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(identity));
+        await auditService.WriteAsync(user.Login, "Авторизация", "POST", "/account/login", 200, "Успешный вход", HttpContext.Connection.RemoteIpAddress?.ToString(), cancellationToken);
 
         return Url.IsLocalUrl(returnUrl)
             ? Redirect(returnUrl!)
@@ -81,8 +86,9 @@ public sealed class AccountController(
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Logout()
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
     {
+        await auditService.WriteAsync(User.Identity?.Name ?? "unknown", "Выход", "POST", "/account/logout", 200, "Выход из админки", HttpContext.Connection.RemoteIpAddress?.ToString(), cancellationToken);
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return RedirectToAction(nameof(Login));
     }
