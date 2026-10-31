@@ -1,0 +1,62 @@
+@model UserDetailsViewModel
+@{
+    ViewData["Title"] = "Карточка пользователя";
+    var success = TempData["Success"] as string;
+}
+
+<header class="page-header">
+    <div>
+        <span class="eyebrow">Доступ и аккаунты</span>
+        <h1>Карточка пользователя</h1>
+        <p>Основная информация об учётной записи и управление паролем.</p>
+    </div>
+    <a class="secondary-button" asp-action="Index">← К пользователям</a>
+</header>
+
+<div class="user-detail-grid">
+    <section class="panel detail-panel">
+        <div class="detail-heading">
+            <div>
+                <span class="eyebrow">Профиль</span>
+                <h2>@(string.IsNullOrWhiteSpace(Model.FullName) ? Model.Login : Model.FullName)</h2>
+                <p class="detail-login">@Model.Login</p>
+            </div>
+            <span class="status @(Model.IsActive ? "status-active" : "status-inactive")">@(Model.IsActive ? "Активен" : "Отключён")</span>
+        </div>
+        <dl class="detail-list">
+            <div><dt>ID</dt><dd><code>@Model.Id</code></dd></div>
+            <div><dt>ФИО</dt><dd>@(string.IsNullOrWhiteSpace(Model.FullName) ? "—" : Model.FullName)</dd></div>
+            <div><dt>Роль</dt><dd><span class="role-badge role-@Model.Role.ToLowerInvariant()">@Model.Role</span></dd></div>
+            <div><dt>Пояс</dt><dd>@(string.IsNullOrWhiteSpace(Model.Belt) ? "—" : Model.Belt)</dd></div>
+            <div><dt>Создан</dt><dd>@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</dd></div>
+            <div><dt>Последний вход</dt><dd>@(Model.LastLoginAt?.ToString("dd.MM.yyyy HH:mm") ?? "—")</dd></div>
+            <div><dt>Смена пароля</dt><dd>@(Model.LastPasswordChangedAt?.ToString("dd.MM.yyyy HH:mm") ?? "—")</dd></div>
+        </dl>
+    </section>
+
+    <section class="panel detail-panel">
+        <div class="section-heading">
+            <h2>Смена пароля</h2>
+            <p>Новый пароль будет применён сразу.</p>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(success))
+        {
+            <p class="form-success">@success</p>
+        }
+        <form class="admin-form" asp-action="ChangePassword" asp-route-id="@Model.Id" method="post">
+            <div asp-validation-summary="ModelOnly" class="form-error"></div>
+            <div class="form-field">
+                <label for="NewPassword">Новый пароль</label>
+                <input id="NewPassword" name="NewPassword" type="password" minlength="8" autocomplete="new-password" required />
+                <span class="form-hint">Минимум 8 символов.</span>
+            </div>
+            <div class="form-field">
+                <label for="ConfirmPassword">Повторите пароль</label>
+                <input id="ConfirmPassword" name="ConfirmPassword" type="password" minlength="8" autocomplete="new-password" required />
+            </div>
+            <div class="form-actions">
+                <button class="primary-button" type="submit">Сменить пароль</button>
+            </div>
+        </form>
+    </section>
+</div>

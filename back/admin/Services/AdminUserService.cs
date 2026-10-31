@@ -97,4 +97,55 @@ public sealed class AdminUserService(
             })
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<UserDetailsViewModel?> GetUserDetailsAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        return await dbContext.Users
+            .AsNoTracking()
+            .Include(user => user.Role)
+            .Include(user => user.ClientInfo)
+            .ThenInclude(clientInfo => clientInfo!.Belt)
+            .Where(user => user.Id == userId)
+            .Select(user => new UserDetailsViewModel
+            {
+                Id = user.Id,
+                Login = user.Login,
+                FullName = user.ClientInfo == null
+                    ? string.Empty
+                    : string.Join(" ", new[]
+                    {
+                        user.ClientInfo.LastName,
+                        user.ClientInfo.FirstName,
+                        user.ClientInfo.MiddleName
+                    }.Where(value => !string.IsNullOrWhiteSpace(value))),
+                Belt = user.ClientInfo != null && user.ClientInfo.Belt != null
+                    ? user.ClientInfo.Belt.Name
+                    : string.Empty,
+                Role = user.Role.Name,
+                CreatedAt = user.CreatedAt,
+                LastLoginAt = user.LastLoginAt,
+                LastPasswordChangedAt = user.LastPasswordChangedAt,
+                IsActive = user.IsActive
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<bool> ChangePasswordAsync(
+        Guid userId,
+        string password,
+        CancellationToken cancellationToken)
+    {
+        var user = await dbContext.Users.SingleOrDefaultAsync(user => user.Id == userId, cancellationToken);
+        if (user is null)
+        {
+            return false;
+        }
+
+        user.PasswordHash = passwordHasher.HashPassword(user, password);
+        user.LastPasswordChangedAt = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
 }

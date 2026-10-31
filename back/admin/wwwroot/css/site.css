@@ -73,6 +73,8 @@ td { padding: 18px 22px; border-top: 1px solid #edf2f1; color: #465862; }
 tbody tr:hover { background: #fbfdfc; }
 code { color: #80919a; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; }
 .login-cell { color: var(--navy); font-weight: 700; }
+.user-link { color: inherit; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: .18s ease; }
+.user-link:hover, .user-link:focus-visible { color: var(--teal-dark); text-decoration-color: currentColor; }
 .role-badge, .status { display: inline-flex; align-items: center; border-radius: 999px; padding: 5px 9px; font-size: 11px; font-weight: 800; }
 .role-admin { background: #fdf0db; color: #956124; }
 .role-coach { background: #e1f1ef; color: #19726d; }
@@ -121,7 +123,18 @@ code { color: #80919a; font-family: ui-monospace, SFMono-Regular, Consolas, mono
 .login-form input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(27,141,135,.14); }
 .login-form .primary-button { margin-top: 15px; }
 .form-error { color: #a44848; font-size: 12px; }
+.form-success { margin: 0 0 18px; padding: 11px 13px; border-radius: 8px; background: #e2f4e9; color: #227044; font-weight: 700; }
+.form-hint { color: var(--muted); font-size: 12px; }
 .empty-state { max-width: 520px; margin: 18vh auto; text-align: center; }
+.user-detail-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr); gap: 20px; max-width: 1320px; margin: 0 auto; }
+.detail-panel { padding: 26px; }
+.detail-heading, .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.detail-heading h2, .section-heading h2 { margin: 0; color: var(--navy); font-size: 24px; letter-spacing: -.04em; }
+.detail-login, .section-heading p { margin: 7px 0 0; color: var(--muted); }
+.detail-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; margin: 28px 0 0; }
+.detail-list div { padding: 14px 0; border-top: 1px solid #edf2f1; }
+.detail-list dt { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.detail-list dd { margin: 6px 0 0; color: var(--ink); font-weight: 600; }
 .form-panel { max-width: 760px; padding: 26px; }
 .admin-form { display: grid; gap: 20px; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }

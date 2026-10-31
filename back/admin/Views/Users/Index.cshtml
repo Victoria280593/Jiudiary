@@ -52,8 +52,8 @@
                 foreach (var user in Model)
                 {
                     <tr>
-                        <td data-label="ID"><code>@user.Id</code></td>
-                        <td data-label="Логин" class="login-cell">@user.Login</td>
+                        <td data-label="ID"><a class="user-link" asp-action="Details" asp-route-id="@user.Id"><code>@user.Id</code></a></td>
+                        <td data-label="Логин" class="login-cell"><a class="user-link" asp-action="Details" asp-route-id="@user.Id">@user.Login</a></td>
                         <td data-label="ФИО">@(string.IsNullOrWhiteSpace(user.FullName) ? "—" : user.FullName)</td>
                         <td data-label="Пояс">
                             @if (string.IsNullOrWhiteSpace(user.Belt))
