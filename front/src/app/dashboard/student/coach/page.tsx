@@ -97,6 +97,7 @@ export default async function StudentCoachPage({
                   <p className="truncate font-semibold text-foreground">{trainer.name}</p>
                   <p className="truncate text-sm text-muted">{trainer.login}</p>
                   {trainer.beltName && <p className="text-xs text-muted">Пояс: {trainer.beltName}</p>}
+                  <p className="text-xs text-muted">Учеников: {trainer.studentsCount}</p>
                 </div>
                 <StudentTrainerRemoveButton coachId={trainer.id} coachName={trainer.name} />
               </div>
@@ -202,6 +203,7 @@ export default async function StudentCoachPage({
                       {trainer.beltName && (
                         <p className="mt-1 text-xs text-muted">Пояс: {trainer.beltName}</p>
                       )}
+                      <p className="mt-1 text-xs text-muted">Учеников: {trainer.studentsCount}</p>
                     </div>
                   </div>
                   <StudentTrainerRequestButton

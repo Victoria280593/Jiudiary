@@ -41,7 +41,8 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
                 BeltId = user.ClientInfo == null ? null : user.ClientInfo.BeltId,
                 BeltName = user.ClientInfo == null || user.ClientInfo.Belt == null
                     ? null
-                    : user.ClientInfo.Belt.Name
+                    : user.ClientInfo.Belt.Name,
+                StudentsCount = user.Students.Count
             });
 
         return trainers.ToPagedResultAsync(filter, cancellationToken);
@@ -117,7 +118,8 @@ public sealed class TrainerService(JiuDiaryDbContext dbContext)
                 BeltId = item.Coach.ClientInfo == null ? null : item.Coach.ClientInfo.BeltId,
                 BeltName = item.Coach.ClientInfo == null || item.Coach.ClientInfo.Belt == null
                     ? null
-                    : item.Coach.ClientInfo.Belt.Name
+                    : item.Coach.ClientInfo.Belt.Name,
+                StudentsCount = item.Coach.Students.Count
             })
             .ToListAsync(cancellationToken);
     }
