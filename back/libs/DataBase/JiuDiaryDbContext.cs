@@ -16,8 +16,6 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
 
     public DbSet<AuthSession> AuthSessions => Set<AuthSession>();
 
-    public DbSet<AdminAuditLog> AdminAuditLogs => Set<AdminAuditLog>();
-
     public DbSet<ClientInfo> ClientInfos => Set<ClientInfo>();
 
     public DbSet<Belt> Belts => Set<Belt>();
