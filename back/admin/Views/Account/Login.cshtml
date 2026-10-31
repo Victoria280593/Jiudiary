@@ -1,6 +1,7 @@
 @{
     Layout = null;
     var returnUrl = ViewData["ReturnUrl"] as string;
+    var loginValue = ViewData["Login"] as string ?? string.Empty;
 }
 <!DOCTYPE html>
 <html lang="ru">
@@ -22,7 +23,7 @@
             <input type="hidden" name="returnUrl" value="@returnUrl" />
             <div asp-validation-summary="ModelOnly" class="form-error"></div>
             <label for="login">Логин</label>
-            <input id="login" name="login" type="text" autocomplete="username" required autofocus />
+            <input id="login" name="login" type="text" value="@loginValue" autocomplete="username" required autofocus />
             <label for="password">Пароль</label>
             <input id="password" name="password" type="password" autocomplete="current-password" required />
             <button class="primary-button" type="submit">Войти</button>

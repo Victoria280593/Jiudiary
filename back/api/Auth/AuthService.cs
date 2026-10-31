@@ -102,7 +102,7 @@ public sealed class AuthService(
             .Include(x => x.ClientInfo)
             .SingleOrDefaultAsync(
                 x => x.Login == normalizedLogin.Trim() &&
-                     (x.RoleId == (int)inputModel.Role || x.RoleId == (int)UserRolesEnum.Admin),
+                     x.RoleId == (int)inputModel.Role,
                 cancellationToken);
 
         if (user is null || !user.IsActive)

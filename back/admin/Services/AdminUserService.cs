@@ -39,7 +39,7 @@ public sealed class AdminUserService(
             RoleId = role.Id,
             Role = role,
             PasswordHash = string.Empty,
-            LastPasswordChangedAt = DateTime.UtcNow
+            LastPasswordChangedAt = GetMoscowNow()
         };
         user.PasswordHash = passwordHasher.HashPassword(user, input.Password);
         user.ClientInfo = new ClientInfo
@@ -96,5 +96,65 @@ public sealed class AdminUserService(
                 IsActive = user.IsActive
             })
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<UserDetailsViewModel?> GetUserDetailsAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var user = (await GetUsersAsync(null, cancellationToken))
+            .SingleOrDefault(item => item.Id == userId);
+        return user is null
+            ? null
+            : new UserDetailsViewModel
+            {
+                Id = user.Id,
+                Login = user.Login,
+                FullName = user.FullName,
+                Belt = user.Belt,
+                Role = user.Role,
+                CreatedAt = user.CreatedAt,
+                LastLoginAt = user.LastLoginAt,
+                LastPasswordChangedAt = user.LastPasswordChangedAt,
+                IsActive = user.IsActive
+            };
+    }
+
+    public async Task<bool> ChangePasswordAsync(
+        Guid userId,
+        string password,
+        CancellationToken cancellationToken)
+    {
+        var user = await dbContext.Users.SingleOrDefaultAsync(user => user.Id == userId, cancellationToken);
+        if (user is null)
+        {
+            return false;
+        }
+
+        user.PasswordHash = passwordHasher.HashPassword(user, password);
+        user.LastPasswordChangedAt = GetMoscowNow();
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    private static DateTime GetMoscowNow()
+    {
+        foreach (var timeZoneId in new[] { "Europe/Moscow", "Russian Standard Time" })
+        {
+            try
+            {
+                return TimeZoneInfo.ConvertTimeFromUtc(
+                    DateTime.UtcNow,
+                    TimeZoneInfo.FindSystemTimeZoneById(timeZoneId));
+            }
+            catch (TimeZoneNotFoundException)
+            {
+            }
+            catch (InvalidTimeZoneException)
+            {
+            }
+        }
+
+        return DateTime.UtcNow.AddHours(3);
     }
 }

@@ -17,6 +17,36 @@ public sealed class UsersController(AdminUserService adminUserService) : Control
     }
 
     [HttpGet]
+    public async Task<IActionResult> Details(Guid id, CancellationToken cancellationToken)
+    {
+        var user = await adminUserService.GetUserDetailsAsync(id, cancellationToken);
+        return user is null ? NotFound() : View(user);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(
+        Guid id,
+        ChangeUserPasswordInputModel input,
+        CancellationToken cancellationToken)
+    {
+        var user = await adminUserService.GetUserDetailsAsync(id, cancellationToken);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View("Details", user);
+        }
+
+        await adminUserService.ChangePasswordAsync(id, input.NewPassword, cancellationToken);
+        TempData["Success"] = "Пароль пользователя изменён.";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpGet]
     public IActionResult Create() => View(new CreateUserInputModel());
 
     [HttpPost]

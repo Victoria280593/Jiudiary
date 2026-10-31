@@ -109,6 +109,7 @@ export type BackendTrainer = {
   login: string;
   beltId: number | null;
   beltName: string | null;
+  studentsCount: number;
 };
 
 export type BackendTrainerPage = {
@@ -207,7 +208,8 @@ function isBackendTrainer(value: unknown): value is BackendTrainer {
     typeof trainer.name === "string" &&
     typeof trainer.login === "string" &&
     (trainer.beltId === null || typeof trainer.beltId === "number") &&
-    (trainer.beltName === null || typeof trainer.beltName === "string")
+    (trainer.beltName === null || typeof trainer.beltName === "string") &&
+    typeof trainer.studentsCount === "number"
   );
 }
 

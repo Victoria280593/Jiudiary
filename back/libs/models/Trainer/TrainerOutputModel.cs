@@ -11,4 +11,6 @@ public sealed class TrainerOutputModel
     public int? BeltId { get; set; }
 
     public string? BeltName { get; set; }
+
+    public int StudentsCount { get; set; }
 }
