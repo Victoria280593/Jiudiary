@@ -102,34 +102,22 @@ public sealed class AdminUserService(
         Guid userId,
         CancellationToken cancellationToken)
     {
-        return await dbContext.Users
-            .AsNoTracking()
-            .Include(user => user.Role)
-            .Include(user => user.ClientInfo)
-            .ThenInclude(clientInfo => clientInfo!.Belt)
-            .Where(user => user.Id == userId)
-            .Select(user => new UserDetailsViewModel
+        var user = (await GetUsersAsync(null, cancellationToken))
+            .SingleOrDefault(item => item.Id == userId);
+        return user is null
+            ? null
+            : new UserDetailsViewModel
             {
                 Id = user.Id,
                 Login = user.Login,
-                FullName = user.ClientInfo == null
-                    ? string.Empty
-                    : string.Join(" ", new[]
-                    {
-                        user.ClientInfo.LastName,
-                        user.ClientInfo.FirstName,
-                        user.ClientInfo.MiddleName
-                    }.Where(value => !string.IsNullOrWhiteSpace(value))),
-                Belt = user.ClientInfo != null && user.ClientInfo.Belt != null
-                    ? user.ClientInfo.Belt.Name
-                    : string.Empty,
-                Role = user.Role.Name,
+                FullName = user.FullName,
+                Belt = user.Belt,
+                Role = user.Role,
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
                 LastPasswordChangedAt = user.LastPasswordChangedAt,
                 IsActive = user.IsActive
-            })
-            .SingleOrDefaultAsync(cancellationToken);
+            };
     }
 
     public async Task<bool> ChangePasswordAsync(
