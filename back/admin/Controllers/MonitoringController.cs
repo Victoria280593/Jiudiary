@@ -17,7 +17,7 @@ public sealed class MonitoringController(
     public async Task<IActionResult> Backups(CancellationToken cancellationToken)
     {
         var backups = await databaseBackupService.GetBackupsAsync(50, cancellationToken);
-        return View(new BackupPageViewModel
+        return View("Index", new BackupPageViewModel
         {
             Items = backups,
             TotalBytes = backups.Sum(item => item.SizeBytes)
