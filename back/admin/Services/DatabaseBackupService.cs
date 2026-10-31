@@ -53,7 +53,7 @@ public sealed class DatabaseBackupService(IConfiguration configuration)
             {
                 BackupDate = reader.GetDateTime(0),
                 Type = GetBackupType(reader.GetString(1)),
-                SizeBytes = reader.IsDBNull(2) ? 0 : reader.GetInt64(2),
+                SizeBytes = reader.IsDBNull(2) ? 0 : Convert.ToInt64(reader.GetValue(2)),
                 Device = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
             });
         }
