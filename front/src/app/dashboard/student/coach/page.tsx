@@ -95,7 +95,6 @@ export default async function StudentCoachPage({
                 <Avatar src={null} name={trainer.name} size={46} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-foreground">{trainer.name}</p>
-                  <p className="truncate text-sm text-muted">{trainer.login}</p>
                   {trainer.beltName && <p className="text-xs text-muted">Пояс: {trainer.beltName}</p>}
                   <p className="text-xs text-muted">Учеников: {trainer.studentsCount}</p>
                 </div>
@@ -146,7 +145,6 @@ export default async function StudentCoachPage({
               <div key={request.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
                 <div className="min-w-0">
                   <p className="truncate font-medium text-foreground">{request.coachName}</p>
-                  <p className="truncate text-sm text-muted">{request.coachLogin}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <span className="rounded-full bg-surface-muted px-3 py-1 text-xs font-semibold text-muted">
@@ -199,7 +197,6 @@ export default async function StudentCoachPage({
                     <Avatar src={null} name={trainer.name} size={52} />
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-foreground">{trainer.name}</p>
-                      <p className="truncate text-sm text-muted">{trainer.login}</p>
                       {trainer.beltName && (
                         <p className="mt-1 text-xs text-muted">Пояс: {trainer.beltName}</p>
                       )}
