@@ -13,6 +13,8 @@ public sealed class AdminUserService(JiuDiaryDbContext dbContext)
         var query = dbContext.Users
             .AsNoTracking()
             .Include(user => user.Role)
+            .Include(user => user.ClientInfo)
+            .ThenInclude(clientInfo => clientInfo!.Belt)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -27,6 +29,17 @@ public sealed class AdminUserService(JiuDiaryDbContext dbContext)
             {
                 Id = user.Id,
                 Login = user.Login,
+                FullName = user.ClientInfo == null
+                    ? string.Empty
+                    : string.Join(" ", new[]
+                    {
+                        user.ClientInfo.LastName,
+                        user.ClientInfo.FirstName,
+                        user.ClientInfo.MiddleName
+                    }.Where(value => !string.IsNullOrWhiteSpace(value))),
+                Belt = user.ClientInfo != null && user.ClientInfo.Belt != null
+                    ? user.ClientInfo.Belt.Name
+                    : string.Empty,
                 Role = user.Role.Name,
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,

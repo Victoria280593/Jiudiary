@@ -6,6 +6,10 @@ public sealed class UserListItemViewModel
 
     public string Login { get; init; } = string.Empty;
 
+    public string FullName { get; init; } = string.Empty;
+
+    public string Belt { get; init; } = string.Empty;
+
     public string Role { get; init; } = string.Empty;
 
     public DateTime CreatedAt { get; init; }
