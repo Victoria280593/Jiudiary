@@ -39,7 +39,7 @@ public sealed class AdminUserService(
             RoleId = role.Id,
             Role = role,
             PasswordHash = string.Empty,
-            LastPasswordChangedAt = DateTime.UtcNow
+            LastPasswordChangedAt = GetMoscowNow()
         };
         user.PasswordHash = passwordHasher.HashPassword(user, input.Password);
         user.ClientInfo = new ClientInfo
@@ -132,8 +132,29 @@ public sealed class AdminUserService(
         }
 
         user.PasswordHash = passwordHasher.HashPassword(user, password);
-        user.LastPasswordChangedAt = DateTime.UtcNow;
+        user.LastPasswordChangedAt = GetMoscowNow();
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    private static DateTime GetMoscowNow()
+    {
+        foreach (var timeZoneId in new[] { "Europe/Moscow", "Russian Standard Time" })
+        {
+            try
+            {
+                return TimeZoneInfo.ConvertTimeFromUtc(
+                    DateTime.UtcNow,
+                    TimeZoneInfo.FindSystemTimeZoneById(timeZoneId));
+            }
+            catch (TimeZoneNotFoundException)
+            {
+            }
+            catch (InvalidTimeZoneException)
+            {
+            }
+        }
+
+        return DateTime.UtcNow.AddHours(3);
     }
 }
