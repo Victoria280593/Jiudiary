@@ -44,12 +44,9 @@ export function ProfileHero({
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2 sm:items-start">
-            <h2 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">
-              {name}
-            </h2>
-            <div className="order-3 w-full sm:order-none sm:ml-auto sm:w-auto"><ChangePasswordForm /></div>
-          </div>
+          <h2 className="text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">
+            {name}
+          </h2>
 
           {age !== null && <p className="mt-3 text-sm text-muted">Возраст: {age}</p>}
 
@@ -71,6 +68,10 @@ export function ProfileHero({
               </button>
             </div>
           </div>
+        </div>
+
+        <div className="w-full sm:w-auto sm:shrink-0">
+          <ChangePasswordForm />
         </div>
       </div>
 
