@@ -28,7 +28,6 @@ export type BackendClientInfo = {
   birthDate: string | null;
   beltId: number | null;
   beltName: string | null;
-  studentsCount: number;
 };
 
 export type BackendClientBelt = {
@@ -110,6 +109,7 @@ export type BackendTrainer = {
   login: string;
   beltId: number | null;
   beltName: string | null;
+  studentsCount: number;
 };
 
 export type BackendTrainerPage = {
