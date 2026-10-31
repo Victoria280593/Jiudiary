@@ -127,6 +127,7 @@ code { color: #80919a; font-family: ui-monospace, SFMono-Regular, Consolas, mono
 .form-hint { color: var(--muted); font-size: 12px; }
 .empty-state { max-width: 520px; margin: 18vh auto; text-align: center; }
 .user-detail-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(320px, .8fr); gap: 20px; max-width: none; margin: 0; }
+.user-detail-header { max-width: none; margin-left: 0; margin-right: 0; }
 .user-detail-grid > .panel { width: 100%; max-width: none; margin: 0; }
 .detail-panel { padding: 26px; }
 .detail-heading, .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
