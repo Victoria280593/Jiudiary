@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddScoped<AdminUserService>();
 builder.Services.AddScoped<DatabaseBackupService>();
+builder.Services.AddSingleton<LogFileService>();
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

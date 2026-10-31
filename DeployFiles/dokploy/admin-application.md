@@ -42,3 +42,13 @@ ConnectionStrings__Default=Server=217.114.15.222,1433;Database=JiuDiary;User Id=
 | Protocol | `TCP` |
 
 Адрес после публикации: `http://217.114.15.222:5138`.
+
+## Логи backend
+
+Для вкладки «Мониторинг → Логи» добавьте в **Advanced → Volumes** read-only bind mount:
+
+| Поле | Значение |
+|---|---|
+| Host Path | `/logs/jiuDiary` |
+| Mount Path | `/logs/jiuDiary` |
+| Read Only | включён |

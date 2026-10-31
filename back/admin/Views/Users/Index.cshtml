@@ -3,7 +3,7 @@
     ViewData["Title"] = "Пользователи";
     var search = ViewData["Search"] as string;
 }
-<header class="page-header">
+<header class="page-header full-width-page-header">
     <div>
         <span class="eyebrow">Доступ и аккаунты</span>
         <h1>Пользователи</h1>
@@ -15,7 +15,7 @@
     </div>
 </header>
 
-<section class="panel">
+<section class="panel users-panel">
     <form class="toolbar" method="get">
         <label class="search-label" for="search">Поиск по логину</label>
         <div class="search-row">
@@ -55,7 +55,16 @@
                         <td data-label="ID"><code>@user.Id</code></td>
                         <td data-label="Логин" class="login-cell">@user.Login</td>
                         <td data-label="ФИО">@(string.IsNullOrWhiteSpace(user.FullName) ? "—" : user.FullName)</td>
-                        <td data-label="Пояс">@(string.IsNullOrWhiteSpace(user.Belt) ? "—" : user.Belt)</td>
+                        <td data-label="Пояс">
+                            @if (string.IsNullOrWhiteSpace(user.Belt))
+                            {
+                                <span>—</span>
+                            }
+                            else
+                            {
+                                <span class="belt-badge belt-@GetBeltClass(user.Belt)">@user.Belt</span>
+                            }
+                        </td>
                         <td data-label="Роль"><span class="role-badge role-@user.Role.ToLowerInvariant()">@user.Role</span></td>
                         <td data-label="Создан">@user.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
                         <td data-label="Последний вход">@(user.LastLoginAt?.ToString("dd.MM.yyyy HH:mm") ?? "—")</td>
@@ -68,3 +77,17 @@
         </table>
     </div>
 </section>
+
+@functions {
+    private static string GetBeltClass(string belt) => belt.Trim().ToLowerInvariant() switch
+    {
+        "белый" or "white" => "white",
+        "синий" or "blue" => "blue",
+        "фиолетовый" or "purple" => "purple",
+        "коричневый" or "brown" => "brown",
+        "чёрный" or "черный" or "black" => "black",
+        "красный" or "red" => "red",
+        "жёлтый" or "желтый" or "yellow" => "yellow",
+        _ => "other"
+    };
+}

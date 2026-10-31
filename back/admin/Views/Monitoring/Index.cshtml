@@ -1,4 +1,4 @@
-@model IReadOnlyList<BackupListItemViewModel>
+@model BackupPageViewModel
 @{
     ViewData["Title"] = "Мониторинг";
 }
@@ -7,9 +7,9 @@
     <div>
         <span class="eyebrow">Состояние данных</span>
         <h1>Мониторинг</h1>
-        <p>История резервных копий базы JiuDiary из SQL Server.</p>
+        <p>Резервные копии базы и файлы логов backend.</p>
     </div>
-    <div class="header-count"><strong>@Model.Count</strong><span>бэкапов</span></div>
+    <div class="header-count"><strong>@FormatBytes(Model.TotalBytes)</strong><span>объём бэкапов</span></div>
 </header>
 
 <section class="panel">
@@ -18,6 +18,10 @@
             <h2>Резервные копии базы</h2>
             <p>Размер указан по сжатому файлу, если SQL Server сохраняет это значение.</p>
         </div>
+        <nav class="monitor-tabs" aria-label="Мониторинг">
+            <a class="monitor-tab active" asp-action="Backups">Бэкапы</a>
+            <a class="monitor-tab" asp-action="Logs">Логи</a>
+        </nav>
     </div>
     <div class="table-wrap">
         <table>
@@ -30,13 +34,13 @@
                 </tr>
             </thead>
             <tbody>
-            @if (Model.Count == 0)
+            @if (Model.Items.Count == 0)
             {
                 <tr><td colspan="4" class="table-empty">В SQL Server пока нет записей о резервных копиях.</td></tr>
             }
             else
             {
-                foreach (var backup in Model)
+                foreach (var backup in Model.Items)
                 {
                     <tr>
                         <td class="date-cell">@backup.BackupDate.ToString("dd.MM.yyyy HH:mm")</td>
