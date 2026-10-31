@@ -23,12 +23,12 @@ export function RegisterForm() {
           <span
             aria-hidden="true"
             className={`absolute bottom-1 left-1 top-1 w-[calc(50%-0.25rem)] rounded-lg bg-surface shadow-sm transition-transform duration-300 ease-out ${
-              role === "STUDENT" ? "translate-x-full" : "translate-x-0"
+              role === "COACH" ? "translate-x-full" : "translate-x-0"
             }`}
           />
           {([
-            ["COACH", "Тренер"],
             ["STUDENT", "Ученик"],
+            ["COACH", "Тренер"],
           ] as const).map(([value, label]) => (
             <button
               key={value}
