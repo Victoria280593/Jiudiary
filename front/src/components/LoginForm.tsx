@@ -7,7 +7,8 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { errorClass, inputClass, labelClass } from "@/lib/ui";
 
 export function LoginForm() {
-  const [role, setRole] = useState<"COACH" | "STUDENT">("COACH");
+  const [role, setRole] = useState<"COACH" | "STUDENT">("STUDENT");
+  const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [state, formAction] = useActionState<FormState, FormData>(
     loginAction,
@@ -64,6 +65,8 @@ export function LoginForm() {
           maxLength={256}
           autoComplete="username"
           className={inputClass}
+          value={login}
+          onChange={(event) => setLogin(event.target.value)}
         />
       </div>
       <div className="flex flex-col gap-1">
