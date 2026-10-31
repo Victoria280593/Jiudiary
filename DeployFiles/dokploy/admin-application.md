@@ -36,9 +36,9 @@ ConnectionStrings__Default=Server=217.114.15.222,1433;Database=JiuDiary;User Id=
 
 | Поле | Значение |
 |---|---|
-| Published Port | `5137` |
+| Published Port | `5138` |
 | Published Port Mode | `Ingress` |
 | Target Port | `8080` |
 | Protocol | `TCP` |
 
-Адрес после публикации: `http://217.114.15.222:5137`.
+Адрес после публикации: `http://217.114.15.222:5138`.

@@ -63,6 +63,25 @@ code { color: #80919a; font-family: ui-monospace, SFMono-Regular, Consolas, mono
 .status-active { background: #e2f4e9; color: #227044; }
 .status-inactive { background: #f5e4e4; color: #a44848; }
 .table-empty { padding: 60px; color: var(--muted); text-align: center; }
+.section-intro { display: flex; justify-content: space-between; gap: 24px; padding: 24px 26px; border-bottom: 1px solid var(--line); }
+.section-intro h2 { margin: 0; color: var(--navy); font-size: 20px; letter-spacing: -.03em; }
+.section-intro p { margin: 7px 0 0; color: var(--muted); }
+.date-cell, .size-cell { color: var(--navy); font-weight: 700; }
+.device-cell { max-width: 360px; overflow: hidden; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; text-overflow: ellipsis; }
+.backup-type { display: inline-flex; padding: 5px 9px; border-radius: 999px; background: #e1f1ef; color: #19726d; font-size: 11px; font-weight: 800; }
+.topology-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; max-width: 1320px; margin: 0 auto; }
+.topology-card { min-height: 190px; padding: 22px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 16px 45px rgba(21,52,67,.06); }
+.topology-card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.topology-card h2 { margin: 27px 0 8px; color: var(--navy); font-size: 22px; letter-spacing: -.04em; }
+.topology-card p { min-height: 20px; margin: 0 0 17px; color: var(--muted); }
+.environment-badge, .service-port { font-size: 11px; font-weight: 800; }
+.environment-badge { display: inline-flex; padding: 5px 9px; border-radius: 999px; }
+.environment-test { background: #e9edf5; color: #536787; }
+.environment-production { background: #e2f4e9; color: #227044; }
+.environment-shared { background: #fdf0db; color: #956124; }
+.service-port { color: var(--muted); }
+.topology-address { display: inline-block; max-width: 100%; overflow: hidden; color: var(--teal-dark); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.topology-address:hover { color: var(--navy); text-decoration: underline; }
 .login-page { display: grid; min-height: 100vh; place-items: center; background: radial-gradient(circle at 20% 10%, #dcefeb, transparent 34%), var(--canvas); }
 .login-card { width: min(100% - 40px, 420px); padding: 38px; border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 22px 70px rgba(21,52,67,.12); }
 .login-brand { margin-bottom: 50px; color: var(--navy); }
@@ -81,6 +100,7 @@ code { color: #80919a; font-family: ui-monospace, SFMono-Regular, Consolas, mono
     .sidebar-footer { display: none; }
     .main-content { width: 100%; padding: 36px 18px; }
     .page-header { align-items: flex-start; flex-direction: column; }
+    .topology-grid { grid-template-columns: 1fr; }
     .panel { border-radius: 12px; }
     .toolbar { padding: 16px; }
     th, td { padding-right: 16px; padding-left: 16px; }

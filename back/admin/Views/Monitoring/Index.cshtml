@@ -1,0 +1,62 @@
+@model IReadOnlyList<BackupListItemViewModel>
+@{
+    ViewData["Title"] = "Мониторинг";
+}
+
+<header class="page-header">
+    <div>
+        <span class="eyebrow">Состояние данных</span>
+        <h1>Мониторинг</h1>
+        <p>История резервных копий базы JiuDiary из SQL Server.</p>
+    </div>
+    <div class="header-count"><strong>@Model.Count</strong><span>бэкапов</span></div>
+</header>
+
+<section class="panel">
+    <div class="section-intro">
+        <div>
+            <h2>Резервные копии базы</h2>
+            <p>Размер указан по сжатому файлу, если SQL Server сохраняет это значение.</p>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Дата и время</th>
+                    <th>Тип</th>
+                    <th>Размер</th>
+                    <th>Устройство</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr><td colspan="4" class="table-empty">В SQL Server пока нет записей о резервных копиях.</td></tr>
+            }
+            else
+            {
+                foreach (var backup in Model)
+                {
+                    <tr>
+                        <td class="date-cell">@backup.BackupDate.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td><span class="backup-type">@backup.Type</span></td>
+                        <td class="size-cell">@FormatBytes(backup.SizeBytes)</td>
+                        <td class="device-cell">@(string.IsNullOrWhiteSpace(backup.Device) ? "—" : backup.Device)</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@functions {
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} Б";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024d:0.##} КБ";
+        if (bytes < 1024L * 1024 * 1024) return $"{bytes / (1024d * 1024):0.##} МБ";
+        return $"{bytes / (1024d * 1024 * 1024):0.##} ГБ";
+    }
+}

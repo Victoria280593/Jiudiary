@@ -18,6 +18,14 @@
                     <span class="navigation-icon">◌</span>
                     Пользователи
                 </a>
+                <a class="navigation-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Topology" ? "active" : "")" asp-controller="Topology" asp-action="Index">
+                    <span class="navigation-icon">⌘</span>
+                    Топология
+                </a>
+                <a class="navigation-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Monitoring" ? "active" : "")" asp-controller="Monitoring" asp-action="Index">
+                    <span class="navigation-icon">◒</span>
+                    Мониторинг
+                </a>
             </nav>
             @if (User.Identity?.IsAuthenticated == true)
             {

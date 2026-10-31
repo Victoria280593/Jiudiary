@@ -11,4 +11,4 @@ services:
       TZ: Europe/Moscow
       ConnectionStrings__Default: "${API_MSSQL_CONNECTION_STRING:?Set API_MSSQL_CONNECTION_STRING in .env}"
     ports:
-      - "${ADMIN_HOST_PORT:-5137}:8080"
+      - "${ADMIN_HOST_PORT:-5138}:8080"
