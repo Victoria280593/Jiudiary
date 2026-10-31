@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { loginAction, type FormState } from "@/app/actions/auth";
 import { PasswordInput } from "@/components/PasswordInput";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -8,10 +8,17 @@ import { errorClass, inputClass, labelClass } from "@/lib/ui";
 
 export function LoginForm() {
   const [role, setRole] = useState<"COACH" | "STUDENT">("COACH");
+  const [password, setPassword] = useState("");
   const [state, formAction] = useActionState<FormState, FormData>(
     loginAction,
     undefined
   );
+
+  useEffect(() => {
+    if (state?.error) {
+      setPassword("");
+    }
+  }, [state]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -68,6 +75,8 @@ export function LoginForm() {
           name="password"
           required
           autoComplete="current-password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
         />
       </div>
       <SubmitButton>Войти</SubmitButton>

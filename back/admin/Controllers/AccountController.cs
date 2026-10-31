@@ -40,6 +40,7 @@ public sealed class AccountController(
         if (string.IsNullOrWhiteSpace(login) || string.IsNullOrWhiteSpace(password))
         {
             ModelState.AddModelError(string.Empty, "Введите логин и пароль.");
+            ViewData["Login"] = login?.Trim();
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
@@ -55,6 +56,7 @@ public sealed class AccountController(
             passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password) == PasswordVerificationResult.Failed)
         {
             ModelState.AddModelError(string.Empty, "Неверный логин или пароль.");
+            ViewData["Login"] = login.Trim();
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
