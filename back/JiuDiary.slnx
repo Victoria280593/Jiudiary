@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="admin/JiuDiary.Admin.csproj" />
   <Project Path="api/JiuDiary.Api.csproj" />
   <Project Path="libs/JiraDiary.AspCore/JiraDiary.AspCore.csproj" />
   <Project Path="libs/DataBase/JiuDiary.DataBase.csproj" />

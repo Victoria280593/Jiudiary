@@ -148,11 +148,17 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
     public async Task<ActionResult<TrainingsOutputModel>> GetTrainings([FromQuery] List<Guid>? groupIds, [FromQuery] DateOnly? fromDate, [FromQuery] DateOnly? toDate, CancellationToken cancellationToken)
         => Ok(await trainingService.GetTrainings(CurrentUser, groupIds, fromDate, toDate, cancellationToken));
 
+    /// <summary>
+    /// Создаёт тренировку тренера.
+    /// </summary>
     [HttpPost]
     [AllowedRoles(UserRolesEnum.Coach)]
     public async Task<ActionResult<TrainingOutputModel>> CreateTraining(CreateTrainingInputModel inputModel, CancellationToken cancellationToken)
         => Ok(await trainingService.CreateTraining(inputModel, CurrentUser, cancellationToken));
 
+    /// <summary>
+    /// Удаляет тренировку и при необходимости последующие тренировки.
+    /// </summary>
     [HttpDelete("{trainingId:guid}")]
     [AllowedRoles(UserRolesEnum.Coach)]
     public async Task<ActionResult> DeleteTraining(
@@ -164,6 +170,9 @@ public sealed class TrainingController(TrainingService trainingService, Submissi
         return NoContent();
     }
 
+    /// <summary>
+    /// Обновляет тренировку тренера.
+    /// </summary>
     [HttpPut("{trainingId:guid}")]
     [AllowedRoles(UserRolesEnum.Coach)]
     public async Task<ActionResult<TrainingOutputModel>> UpdateTraining(

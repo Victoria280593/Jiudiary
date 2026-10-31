@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] — JiuDiary Admin</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <span class="brand-mark">JD</span>
+                <span>JiuDiary <small>admin</small></span>
+            </div>
+            <nav class="navigation" aria-label="Основная навигация">
+                <a class="navigation-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")" asp-controller="Users" asp-action="Index">
+                    <span class="navigation-icon">◌</span>
+                    Пользователи
+                </a>
+            </nav>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="sidebar-footer">
+                    <div class="user-caption">Вы вошли как</div>
+                    <div class="user-login">@User.Identity.Name</div>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        <button class="logout-button" type="submit">Выйти</button>
+                    </form>
+                </div>
+            }
+        </aside>
+        <main class="main-content">
+            @RenderBody()
+        </main>
+    </div>
+</body>
+</html>

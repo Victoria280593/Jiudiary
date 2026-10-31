@@ -19,6 +19,9 @@ public abstract class BaseController : ControllerBase
                 "Не удалось получить данные авторизованного пользователя.",
                 StatusCodes.Status401Unauthorized);
 
+    /// <summary>
+    /// Пытается получить текущего пользователя из контекста запроса.
+    /// </summary>
     protected bool TryGetCurrentUser(out AuthenticatedUser user)
     {
         if (HttpContext.Items.TryGetValue(AuthenticatedUserMiddleware.HttpContextItemKey, out var value) &&

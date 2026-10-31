@@ -11,6 +11,9 @@ namespace JiuDiary.Api.Controllers;
 [Produces("application/json")]
 public sealed class ClientBeltController(ClientBeltService clientBeltService) : BaseController
 {
+    /// <summary>
+    /// Возвращает пояса клиента.
+    /// </summary>
     [HttpGet]
     [ProducesResponseType<List<ClientBeltOutputModel>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<List<ClientBeltOutputModel>>> Get(
@@ -20,6 +23,9 @@ public sealed class ClientBeltController(ClientBeltService clientBeltService) : 
         return Ok(await clientBeltService.GetAsync(clientInfoId, CurrentUser, cancellationToken));
     }
 
+    /// <summary>
+    /// Добавляет пояс клиенту.
+    /// </summary>
     [HttpPost]
     [ProducesResponseType<ClientBeltOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -36,6 +42,9 @@ public sealed class ClientBeltController(ClientBeltService clientBeltService) : 
             cancellationToken));
     }
 
+    /// <summary>
+    /// Обновляет пояс клиента.
+    /// </summary>
     [HttpPut("{clientBeltId:guid}")]
     [ProducesResponseType<ClientBeltOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -54,6 +63,9 @@ public sealed class ClientBeltController(ClientBeltService clientBeltService) : 
             cancellationToken));
     }
 
+    /// <summary>
+    /// Удаляет пояс клиента.
+    /// </summary>
     [HttpDelete("{clientBeltId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -70,6 +82,9 @@ public sealed class ClientBeltController(ClientBeltService clientBeltService) : 
         return NoContent();
     }
 
+    /// <summary>
+    /// Меняет текущий пояс клиента.
+    /// </summary>
     [HttpPut("current")]
     [ProducesResponseType<CurrentBeltOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

@@ -27,6 +27,9 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
         return Ok(await trainerService.GetTrainersAsync(CurrentUser, filter, cancellationToken));
     }
 
+    /// <summary>
+    /// Создаёт заявку ученика к тренеру.
+    /// </summary>
     [HttpPost("{coachId:guid}/students/requests")]
     [AllowedRoles(UserRolesEnum.Student)]
     [ProducesResponseType<StudentRequestOutputModel>(StatusCodes.Status201Created)]
@@ -38,6 +41,9 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
         return StatusCode(StatusCodes.Status201Created, request);
     }
 
+    /// <summary>
+    /// Возвращает заявки текущего ученика.
+    /// </summary>
     [HttpGet("requests")]
     [AllowedRoles(UserRolesEnum.Student)]
     public async Task<ActionResult<List<StudentRequestOutputModel>>> GetStudentRequests(CancellationToken cancellationToken)
@@ -45,6 +51,9 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
         return Ok(await trainerService.GetStudentRequestsAsync(CurrentUser, cancellationToken));
     }
 
+    /// <summary>
+    /// Возвращает тренеров текущего ученика.
+    /// </summary>
     [HttpGet("my")]
     [AllowedRoles(UserRolesEnum.Student)]
     public async Task<ActionResult<List<TrainerOutputModel>>> GetStudentTrainers(CancellationToken cancellationToken)
@@ -65,6 +74,9 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
         return removed ? NoContent() : NotFound(new { error = "Связь с тренером не найдена." });
     }
 
+    /// <summary>
+    /// Возвращает заявки тренеру от учеников.
+    /// </summary>
     [HttpGet("students/requests")]
     [AllowedRoles(UserRolesEnum.Coach)]
     public async Task<ActionResult<List<StudentRequestOutputModel>>> GetCoachRequests(CancellationToken cancellationToken)
@@ -72,6 +84,9 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
         return Ok(await trainerService.GetCoachRequestsAsync(CurrentUser, cancellationToken));
     }
 
+    /// <summary>
+    /// Принимает или отклоняет заявку ученика.
+    /// </summary>
     [HttpPatch("students/requests/{requestId:guid}")]
     [AllowedRoles(UserRolesEnum.Coach)]
     [ProducesResponseType<StudentRequestOutputModel>(StatusCodes.Status200OK)]
@@ -84,6 +99,9 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
             inputModel.Status,
             cancellationToken));
 
+    /// <summary>
+    /// Удаляет заявку ученика или тренера.
+    /// </summary>
     [HttpDelete("students/requests/{requestId:guid}")]
     [AllowedRoles(UserRolesEnum.Coach, UserRolesEnum.Student)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -99,6 +117,9 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
         return NoContent();
     }
 
+    /// <summary>
+    /// Возвращает учеников текущей команды.
+    /// </summary>
     [HttpGet("students")]
     [AllowedRoles(UserRolesEnum.Coach, UserRolesEnum.Student)]
     [ProducesResponseType<PagedResult<StudentOutputModel>>(StatusCodes.Status200OK)]
@@ -107,6 +128,9 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
         return Ok(await trainerService.GetStudentsAsync(CurrentUser, filter, cancellationToken));
     }
 
+    /// <summary>
+    /// Обновляет группы ученика.
+    /// </summary>
     [HttpPut("students/{studentId:guid}/groups")]
     [AllowedRoles(UserRolesEnum.Coach)]
     [ProducesResponseType<List<StudentGroupOutputModel>>(StatusCodes.Status200OK)]
@@ -118,6 +142,9 @@ public sealed class TrainerController(TrainerService trainerService) : BaseContr
         CancellationToken cancellationToken)
         => Ok(await trainerService.UpdateCoachStudentGroupsAsync(CurrentUser, studentId, inputModel, cancellationToken));
 
+    /// <summary>
+    /// Удаляет ученика из команды тренера.
+    /// </summary>
     [HttpDelete("students/{studentId:guid}")]
     [AllowedRoles(UserRolesEnum.Coach)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

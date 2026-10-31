@@ -13,6 +13,9 @@ namespace JiuDiary.Api.Controllers;
 [Produces("application/json")]
 public sealed class GroupController(GroupService groupService) : BaseController
 {
+    /// <summary>
+    /// Возвращает группы текущего пользователя.
+    /// </summary>
     [HttpGet]
     [AllowedRoles(UserRolesEnum.Coach, UserRolesEnum.Student)]
     public async Task<ActionResult<List<GetGroupsOutputModel>>> GetGroups([FromQuery] Guid? groupId)
@@ -20,6 +23,9 @@ public sealed class GroupController(GroupService groupService) : BaseController
         return Ok(await groupService.GetGroups(CurrentUser, groupId));
     }
 
+    /// <summary>
+    /// Удаляет группу тренера.
+    /// </summary>
     [HttpDelete("{groupId:guid}")]
     [AllowedRoles(UserRolesEnum.Coach)]
     public async Task<IActionResult> DeleteGroup(Guid groupId, CancellationToken cancellationToken)
@@ -28,6 +34,9 @@ public sealed class GroupController(GroupService groupService) : BaseController
         return NoContent();
     }
 
+    /// <summary>
+    /// Создаёт группу тренера.
+    /// </summary>
     [HttpPost]
     [AllowedRoles(UserRolesEnum.Coach)]
     public async Task<ActionResult<CreateGroupOutputModel>> CreateGroup(CreateGroupInputModel inputModel)
@@ -35,6 +44,9 @@ public sealed class GroupController(GroupService groupService) : BaseController
         return Ok(await groupService.CreateGroup(inputModel, CurrentUser));
     }
 
+    /// <summary>
+    /// Возвращает доступные цвета групп.
+    /// </summary>
     [HttpGet("colors")]
     [AllowedRoles(UserRolesEnum.Coach)]
     public async Task<ActionResult<List<GetGroupColorsOutputModel>>> GetGroupColors(CancellationToken cancellationToken)
@@ -42,6 +54,9 @@ public sealed class GroupController(GroupService groupService) : BaseController
         return Ok(await groupService.GetGroupColors(CurrentUser, cancellationToken));
     }
 
+    /// <summary>
+    /// Обновляет группу тренера.
+    /// </summary>
     [HttpPut("{groupId:guid}")]
     [AllowedRoles(UserRolesEnum.Coach)]
     public async Task<ActionResult<UpdateGroupOutputModel>> UpdateGroup(Guid groupId, UpdateGroupInputModel inputModel, CancellationToken cancellationToken)

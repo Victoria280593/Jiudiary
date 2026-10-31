@@ -11,6 +11,9 @@ namespace JiuDiary.Api.Controllers;
 [Produces("application/json")]
 public sealed class ClientInfoController(ClientInfoService clientInfoService) : BaseController
 {
+    /// <summary>
+    /// Возвращает информацию о текущем клиенте.
+    /// </summary>
     [HttpGet]
     [ProducesResponseType<ClientInfoOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -19,6 +22,9 @@ public sealed class ClientInfoController(ClientInfoService clientInfoService) : 
         return Ok(await clientInfoService.GetAsync(CurrentUser.Id, cancellationToken));
     }
 
+    /// <summary>
+    /// Обновляет информацию о текущем клиенте.
+    /// </summary>
     [HttpPut]
     [ProducesResponseType<ClientInfoOutputModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
