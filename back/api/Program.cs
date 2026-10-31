@@ -2,6 +2,7 @@ using System.Threading.RateLimiting;
 using JiuDiary.Api.Auth;
 using JiuDiary.Api.Extensions;
 using JiuDiary.Api.Middleware;
+using JiuDiary.Api.Services;
 using JiuDiary.Database;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi;
@@ -62,6 +63,7 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+_ = app.Services.GetRequiredService<SubmissionSearchService>();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseSwagger();

@@ -44,7 +44,8 @@ export async function createTrainingAction(
 
   const parsed = readTrainingInput(formData);
   if ("error" in parsed) return parsed;
-  const result = await createBackendTraining(session.accessToken, parsed.input);
+  const repeatEveryWeek = formData.get("repeatEveryWeek") === "on";
+  const result = await createBackendTraining(session.accessToken, { ...parsed.input, repeatEveryWeek });
 
   if (!result.ok) {
     return { error: result.error };

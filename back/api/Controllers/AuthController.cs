@@ -97,6 +97,11 @@ public sealed class AuthController(IAuthService authService) : BaseController
         }
 
         var response = await authService.RefreshAsync(request, cancellationToken);
+        if (response is not null)
+        {
+            AuthenticationLogContext.Set(HttpContext, "refresh-token", response.User.Login);
+        }
+
         return response is null ? Unauthorized() : Ok(response);
     }
 
@@ -116,6 +121,25 @@ public sealed class AuthController(IAuthService authService) : BaseController
             Name = CurrentUser.Name,
             Role = CurrentUser.Role.ToString().ToUpperInvariant()
         });
+
+    /// <summary>
+    /// Меняет пароль текущего пользователя и завершает все его refresh-сессии.
+    /// </summary>
+    [Authorize]
+    [HttpPost("change-password")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ChangePassword(ChangePasswordInputModel request, CancellationToken cancellationToken)
+    {
+        if (request.NewPassword is null || request.NewPassword.Length is < 8 or > 128)
+        {
+            return BadRequest(new { error = "Новый пароль должен содержать от 8 до 128 символов." });
+        }
+
+        var changed = await authService.ChangePasswordAsync(CurrentUser.Id, request, cancellationToken);
+        return changed ? NoContent() : Unauthorized(new { error = "Текущий пароль указан неверно." });
+    }
 
     /// <summary>
     /// Отзывает refresh-сессию пользователя.

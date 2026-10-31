@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace JiuDiary.Database.Entities;
 
 [Table("Trainings")]
-public sealed class Training
+public sealed class Training : IAuditable
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
@@ -25,7 +25,13 @@ public sealed class Training
     [Required]
     public DateTime EndTime { get; set; }
 
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
     public ClientInfo Coach { get; set; } = null!;
 
     public Group Group { get; set; } = null!;
+
+    public ICollection<ClientTraining> ClientTrainings { get; set; } = [];
 }

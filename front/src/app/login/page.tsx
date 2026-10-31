@@ -39,7 +39,7 @@ export default async function LoginPage({
       )}
       {registered === "success" && (
         <p className="mb-4 rounded-md bg-success-soft px-3 py-2 text-sm text-success">
-          Аккаунт тренера создан. Теперь войдите с указанными данными.
+          Аккаунт создан. Теперь войдите с указанными данными.
         </p>
       )}
       <LoginForm />

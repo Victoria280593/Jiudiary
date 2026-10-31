@@ -6,6 +6,11 @@ namespace JiuDiary.Models.ClientInfo;
 public sealed class ClientInfoOutputModel
 {
     /// <summary>
+    /// Идентификатор профиля клиента.
+    /// </summary>
+    public Guid Id { get; set; }
+
+    /// <summary>
     /// Имя клиента.
     /// </summary>
     public string FirstName { get; set; } = string.Empty;

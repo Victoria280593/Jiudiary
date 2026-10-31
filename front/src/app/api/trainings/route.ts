@@ -11,8 +11,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Пользователь не авторизован." }, { status: 401 });
   }
 
-  const groupId = new URL(request.url).searchParams.get("groupId") ?? undefined;
-  const trainings = await getBackendTrainings(session.accessToken, groupId);
+  const searchParams = new URL(request.url).searchParams;
+  const groupIds = searchParams.getAll("groupIds");
+  const trainings = await getBackendTrainings(session.accessToken, groupIds, searchParams.get("fromDate") ?? undefined, searchParams.get("toDate") ?? undefined);
 
   return trainings
     ? NextResponse.json(trainings, { headers: { "Cache-Control": "no-store" } })
@@ -25,12 +26,14 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Пользователь не авторизован." }, { status: 401 });
   }
 
-  const trainingId = new URL(request.url).searchParams.get("trainingId");
+  const searchParams = new URL(request.url).searchParams;
+  const trainingId = searchParams.get("trainingId");
   if (!trainingId) {
     return NextResponse.json({ error: "Необходимо указать тренировку." }, { status: 400 });
   }
 
-  const result = await deleteBackendTraining(session.accessToken, trainingId);
+  const deleteAllAfterThis = searchParams.get("deleteAllAfterThis") === "true";
+  const result = await deleteBackendTraining(session.accessToken, trainingId, deleteAllAfterThis);
   return result.ok
     ? new NextResponse(null, { status: 204 })
     : NextResponse.json({ error: result.error }, { status: result.status });

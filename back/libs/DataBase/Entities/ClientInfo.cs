@@ -9,7 +9,7 @@ namespace JiuDiary.Database.Entities;
 /// </summary>
 [Table("ClientInfo")]
 [Index(nameof(UserId), IsUnique = true)]
-public sealed class ClientInfo
+public sealed class ClientInfo : IAuditable
 {
     /// <summary>
     /// Идентификатор пользователя и первичный ключ записи.
@@ -61,6 +61,10 @@ public sealed class ClientInfo
     [ForeignKey(nameof(Belt))]
     public int? BeltId { get; set; }
 
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
     /// <summary>
     /// Пользователь, которому принадлежит информация.
     /// </summary>
@@ -71,4 +75,15 @@ public sealed class ClientInfo
     public ICollection<CoachGroup> CoachGroups { get; set; } = [];
 
     public ICollection<Training> Trainings { get; set; } = [];
+
+    public ICollection<StudentGroup> StudentGroups { get; set; } = [];
+
+    public ICollection<ClientBelt> ClientBelts { get; set; } = [];
+
+    public ICollection<ClientTraining> ClientTrainings { get; set; } = [];
+
+    /// <summary>
+    /// Личные заметки клиента по календарным дням.
+    /// </summary>
+    public ICollection<ClientDayNote> ClientDayNotes { get; set; } = [];
 }

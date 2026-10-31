@@ -1,0 +1,28 @@
+@model TopologyViewModel
+@{
+    ViewData["Title"] = "Топология";
+}
+
+<header class="page-header">
+    <div>
+        <span class="eyebrow">Сервисы и окружения</span>
+        <h1>Топология</h1>
+        <p>Адреса и порты компонентов JiuDiary для тестового и рабочего контуров.</p>
+    </div>
+    <div class="header-count"><strong>@Model.Items.Count</strong><span>сервисов</span></div>
+</header>
+
+<section class="topology-grid">
+    @foreach (var item in Model.Items)
+    {
+        <article class="topology-card">
+            <div class="topology-card-header">
+                <span class="environment-badge environment-@item.EnvironmentKey">@item.Environment</span>
+                <span class="service-port">порт @item.Port</span>
+            </div>
+            <h2>@item.Service</h2>
+            <p>@item.Description</p>
+            <a class="topology-address" href="@(item.Address.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? item.Address : "#")">@item.Address</a>
+        </article>
+    }
+</section>

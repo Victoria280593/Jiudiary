@@ -1,5 +1,31 @@
 import type { Belt } from "@prisma/client";
 
+export const BELT_BY_ID: Record<number, Belt> = {
+  1: "WHITE",
+  2: "GREY_WHITE",
+  3: "GREY",
+  4: "GREY_BLACK",
+  5: "YELLOW_WHITE",
+  6: "YELLOW",
+  7: "YELLOW_BLACK",
+  8: "ORANGE_WHITE",
+  9: "ORANGE",
+  10: "ORANGE_BLACK",
+  11: "GREEN_WHITE",
+  12: "GREEN",
+  13: "GREEN_BLACK",
+  14: "BLUE",
+  15: "PURPLE",
+  16: "BROWN",
+  17: "BLACK",
+  18: "BLACK_RED",
+  19: "RED",
+};
+
+export const BELT_ID_BY_NAME = Object.fromEntries(
+  Object.entries(BELT_BY_ID).map(([id, name]) => [name, Number(id)])
+) as Record<Belt, number>;
+
 export const BELT_LABELS: Record<Belt, string> = {
   WHITE: "Белый",
   GREY_WHITE: "Серо-белый",

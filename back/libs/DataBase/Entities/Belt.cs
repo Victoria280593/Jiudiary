@@ -17,4 +17,6 @@ public sealed class Belt
     public string Name { get; set; } = string.Empty;
 
     public ICollection<ClientInfo> ClientInfos { get; set; } = [];
+
+    public ICollection<ClientBelt> ClientBelts { get; set; } = [];
 }

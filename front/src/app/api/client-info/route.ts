@@ -30,7 +30,6 @@ export async function PUT(request: Request) {
     lastName: string;
     middleName: string | null;
     birthDate: string | null;
-    beltId: number | null;
   };
 
   if (
@@ -41,8 +40,7 @@ export async function PUT(request: Request) {
     !input.lastName.trim() ||
     input.lastName.trim().length > 200 ||
     (input.middleName !== null && typeof input.middleName !== "string") ||
-    (typeof input.middleName === "string" && input.middleName.trim().length > 200) ||
-    input.beltId !== null && !Number.isInteger(input.beltId)
+    (typeof input.middleName === "string" && input.middleName.trim().length > 200)
   ) {
     return NextResponse.json({ error: "Некорректные данные профиля" }, { status: 400 });
   }

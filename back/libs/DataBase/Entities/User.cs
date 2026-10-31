@@ -9,7 +9,7 @@ namespace JiuDiary.Database.Entities;
 /// </summary>
 [Table("Users")]
 [Index(nameof(Login), nameof(RoleId), IsUnique = true)]
-public sealed class User
+public sealed class User : IAuditable
 {
     /// <summary>
     /// Уникальный идентификатор пользователя.
@@ -32,6 +32,16 @@ public sealed class User
     public string? PasswordHash { get; set; }
 
     /// <summary>
+    /// Дата и время последней успешной авторизации пользователя по московскому времени.
+    /// </summary>
+    public DateTime? LastLoginAt { get; set; }
+
+    /// <summary>
+    /// Дата и время последней установки или смены пароля пользователя по московскому времени.
+    /// </summary>
+    public DateTime? LastPasswordChangedAt { get; set; }
+
+    /// <summary>
     /// Признак разрешённого входа в систему.
     /// </summary>
     public bool IsActive { get; set; }
@@ -41,6 +51,10 @@ public sealed class User
     /// </summary>
     [ForeignKey(nameof(Role))]
     public int RoleId { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
 
     /// <summary>
     /// Назначенная пользователю роль.

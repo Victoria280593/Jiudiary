@@ -1,6 +1,7 @@
 import { TrainingCalendar } from "@/components/TrainingCalendar";
 import { getSession } from "@/lib/auth";
 import { getBackendTrainings } from "@/lib/backend-auth";
+import { getYearRange } from "@/lib/calendar";
 
 export async function CoachHome({
   firstName,
@@ -10,12 +11,14 @@ export async function CoachHome({
   middleName: string | null;
 }) {
   const session = await getSession();
-  const trainings = session ? await getBackendTrainings(session.accessToken) : null;
+  const today = new Date();
+  const initialRange = getYearRange(today.getFullYear());
+  const calendarData = session ? await getBackendTrainings(session.accessToken, [], initialRange.fromDate, initialRange.toDate) : null;
   const coachName = [firstName, middleName]
     .filter((value): value is string => Boolean(value?.trim()))
     .join(" ");
 
-  const calendarTrainings = (trainings ?? []).map((training) => ({
+  const calendarTrainings = (calendarData?.trainings ?? []).map((training) => ({
     id: training.id,
     groupId: training.groupId,
     title: training.description ?? "",
@@ -23,6 +26,7 @@ export async function CoachHome({
     endDate: training.endTime,
     groupName: training.groupName,
     groupColorName: training.groupColorName,
+    clientTraining: training.clientTraining,
   }));
 
   return (
@@ -42,6 +46,7 @@ export async function CoachHome({
         <TrainingCalendar
           key={calendarTrainings.map((training) => training.id).join(",")}
           trainings={calendarTrainings}
+          notes={calendarData?.notes ?? []}
           linkBase=""
           showGroupFilter
         />

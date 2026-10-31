@@ -34,7 +34,7 @@ export function CreateTrainingForm({
     startTime: string;
     endTime: string;
   };
-  onSaved?: (training: NonNullable<NonNullable<FormState>["training"]>) => void;
+  onSaved?: (training: NonNullable<NonNullable<FormState>["training"]>, repeatEveryWeek?: boolean) => void;
 }) {
   const isEditing = Boolean(training);
   const [state, formAction] = useActionState<FormState, FormData>(
@@ -45,6 +45,7 @@ export function CreateTrainingForm({
   const formRef = useRef<HTMLFormElement>(null);
   const startTimeInputRef = useRef<HTMLInputElement>(null);
   const endTimeInputRef = useRef<HTMLInputElement>(null);
+  const repeatEveryWeekRef = useRef(false);
   const initialDateTime = training?.startTime ?? defaultDateTime;
   const [defaultDate = "", rawStartTime = "09:00"] = initialDateTime?.split("T") ?? [];
   const defaultStartTime = toTimeInputValue(rawStartTime) || "09:00";
@@ -57,8 +58,11 @@ export function CreateTrainingForm({
   useEffect(() => {
     if (!state?.success) return;
 
-    if (state.training) onSaved?.(state.training);
-    if (!isEditing) formRef.current?.reset();
+    if (state.training) onSaved?.(state.training, isEditing ? undefined : repeatEveryWeekRef.current);
+    if (!isEditing) {
+      formRef.current?.reset();
+      repeatEveryWeekRef.current = false;
+    }
   }, [isEditing, onSaved, state]);
 
   const groupsAreLoading = groupsStatus === "idle" || groupsStatus === "loading";
@@ -143,6 +147,25 @@ export function CreateTrainingForm({
           />
         </div>
       </div>
+
+      {!isEditing && (
+        <label
+          htmlFor={`${idPrefix}repeatEveryWeek`}
+          className="flex min-h-10 cursor-pointer items-center gap-2.5 text-sm text-foreground/80"
+        >
+          <input
+            id={`${idPrefix}repeatEveryWeek`}
+            name="repeatEveryWeek"
+            type="checkbox"
+            defaultChecked={false}
+            onChange={(event) => {
+              repeatEveryWeekRef.current = event.target.checked;
+            }}
+            className="h-4 w-4 rounded border-border text-accent focus:ring-1 focus:ring-accent"
+          />
+          Повторять каждую неделю
+        </label>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor={`${idPrefix}description`} className={labelClass}>

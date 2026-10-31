@@ -1,5 +1,6 @@
 import "server-only";
 import type { Role } from "@prisma/client";
+import type { FightAnalytics } from "@/lib/analytics-client";
 
 const backendUrl = (process.env.BACKEND_URL || "http://localhost:5136").replace(/\/$/, "");
 
@@ -20,10 +21,24 @@ export type BackendSession = {
 };
 
 export type BackendClientInfo = {
+  id: string;
   firstName: string;
   lastName: string;
   middleName: string | null;
   birthDate: string | null;
+  beltId: number | null;
+  beltName: string | null;
+};
+
+export type BackendClientBelt = {
+  id: string;
+  beltId: number;
+  beltName: string;
+  receivedDate: string | null;
+  stripesCount: number;
+};
+
+export type BackendCurrentBelt = {
   beltId: number | null;
   beltName: string | null;
 };
@@ -51,6 +66,41 @@ export type BackendTraining = {
   description: string | null;
   startTime: string;
   endTime: string;
+  clientTraining: BackendClientTraining | null;
+};
+
+export type BackendTrainings = {
+  trainings: BackendTraining[];
+  notes: BackendClientDayNote[];
+};
+
+export type BackendClientTraining = {
+  id: string;
+  trainingId: string;
+  rounds: number | null;
+  submissions: BackendClientTrainingSubmission[];
+  createdAt: string;
+};
+
+export type BackendClientDayNote = {
+  id: string;
+  date: string;
+  text: string;
+  createdAt: string;
+  updatedAt: string | null;
+};
+
+export type BackendClientTrainingSubmission = {
+  submissionId: number;
+  nameRu: string;
+  nameEn: string;
+  count: number;
+};
+
+export type BackendSubmissionSearchResult = {
+  id: number;
+  nameRu: string;
+  nameEn: string;
 };
 
 export type BackendTrainer = {
@@ -89,6 +139,25 @@ export type BackendStudent = {
   login: string;
   beltId: number | null;
   beltName: string | null;
+  startedAt: string;
+  trainingsLast30Days: number;
+  totalFightsCount: number;
+  averageFightsPerTraining: number;
+  groups: BackendStudentGroup[];
+};
+
+export type BackendStudentPage = {
+  items: BackendStudent[];
+  page: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+};
+
+export type BackendStudentGroup = {
+  id: string;
+  name: string;
+  colorName: string;
 };
 
 function isBackendGroup(value: unknown): value is BackendGroup {
@@ -124,7 +193,8 @@ function isBackendTraining(value: unknown): value is BackendTraining {
     typeof training.groupColorName === "string" &&
     (training.description === null || typeof training.description === "string") &&
     typeof training.startTime === "string" &&
-    typeof training.endTime === "string"
+    typeof training.endTime === "string" &&
+    (training.clientTraining === null || isBackendClientTraining(training.clientTraining))
   );
 }
 
@@ -181,7 +251,154 @@ function isBackendStudent(value: unknown): value is BackendStudent {
     typeof student.name === "string" &&
     typeof student.login === "string" &&
     (student.beltId === null || typeof student.beltId === "number") &&
-    (student.beltName === null || typeof student.beltName === "string")
+    (student.beltName === null || typeof student.beltName === "string") &&
+    typeof student.startedAt === "string" &&
+    typeof student.trainingsLast30Days === "number" &&
+    typeof student.totalFightsCount === "number" &&
+    typeof student.averageFightsPerTraining === "number" &&
+    Array.isArray(student.groups) &&
+    student.groups.every((group) =>
+      Boolean(group) &&
+      typeof group === "object" &&
+      typeof (group as Partial<BackendStudentGroup>).id === "string" &&
+      typeof (group as Partial<BackendStudentGroup>).name === "string" &&
+      typeof (group as Partial<BackendStudentGroup>).colorName === "string"
+    )
+  );
+}
+
+function isBackendStudentPage(value: unknown): value is BackendStudentPage {
+  if (!value || typeof value !== "object") return false;
+
+  const page = value as Partial<BackendStudentPage>;
+  return (
+    Array.isArray(page.items) &&
+    page.items.every(isBackendStudent) &&
+    typeof page.page === "number" &&
+    typeof page.itemsPerPage === "number" &&
+    typeof page.totalItems === "number" &&
+    typeof page.totalPages === "number"
+  );
+}
+
+function isBackendClientBelt(value: unknown): value is BackendClientBelt {
+  if (!value || typeof value !== "object") return false;
+
+  const clientBelt = value as Partial<BackendClientBelt>;
+  return (
+    typeof clientBelt.id === "string" &&
+    typeof clientBelt.beltId === "number" &&
+    typeof clientBelt.beltName === "string" &&
+    (clientBelt.receivedDate === null || typeof clientBelt.receivedDate === "string") &&
+    typeof clientBelt.stripesCount === "number"
+  );
+}
+
+function isBackendClientTraining(value: unknown): value is BackendClientTraining {
+  if (!value || typeof value !== "object") return false;
+
+  const clientTraining = value as Partial<BackendClientTraining>;
+  return (
+    typeof clientTraining.id === "string" &&
+    typeof clientTraining.trainingId === "string" &&
+    (clientTraining.rounds === null || typeof clientTraining.rounds === "number") &&
+    Array.isArray(clientTraining.submissions) &&
+    clientTraining.submissions.every(isBackendClientTrainingSubmission) &&
+    typeof clientTraining.createdAt === "string"
+  );
+}
+
+function isBackendTrainings(value: unknown): value is BackendTrainings {
+  if (!value || typeof value !== "object") return false;
+
+  const result = value as Partial<BackendTrainings>;
+  return (
+    Array.isArray(result.trainings) &&
+    result.trainings.every(isBackendTraining) &&
+    Array.isArray(result.notes) &&
+    result.notes.every(isBackendClientDayNote)
+  );
+}
+
+function isBackendClientDayNote(value: unknown): value is BackendClientDayNote {
+  if (!value || typeof value !== "object") return false;
+
+  const note = value as Partial<BackendClientDayNote>;
+  return (
+    typeof note.id === "string" &&
+    typeof note.date === "string" &&
+    typeof note.text === "string" &&
+    typeof note.createdAt === "string" &&
+    (note.updatedAt === null || typeof note.updatedAt === "string")
+  );
+}
+
+function isBackendClientTrainingSubmission(value: unknown): value is BackendClientTrainingSubmission {
+  if (!value || typeof value !== "object") return false;
+
+  const submission = value as Partial<BackendClientTrainingSubmission>;
+  return (
+    typeof submission.submissionId === "number" &&
+    typeof submission.nameRu === "string" &&
+    typeof submission.nameEn === "string" &&
+    typeof submission.count === "number"
+  );
+}
+
+function isBackendSubmissionSearchResult(value: unknown): value is BackendSubmissionSearchResult {
+  if (!value || typeof value !== "object") return false;
+
+  const submission = value as Partial<BackendSubmissionSearchResult>;
+  return typeof submission.id === "number" && typeof submission.nameRu === "string" && typeof submission.nameEn === "string";
+}
+
+function isFightAnalytics(value: unknown): value is FightAnalytics {
+  if (!value || typeof value !== "object") return false;
+
+  const analytics = value as Partial<FightAnalytics>;
+  return (
+    typeof analytics.fromDate === "string" &&
+    typeof analytics.toDate === "string" &&
+    typeof analytics.allTimeFightsCount === "number" &&
+    typeof analytics.periodFightsCount === "number" &&
+    typeof analytics.allTimeTrainingsCount === "number" &&
+    typeof analytics.periodTrainingsCount === "number" &&
+    typeof analytics.allTimeSubmissionsCount === "number" &&
+    typeof analytics.periodSubmissionsCount === "number" &&
+    typeof analytics.allTimeAverageFightsPerTraining === "number" &&
+    typeof analytics.periodAverageFightsPerTraining === "number" &&
+    Array.isArray(analytics.points) &&
+    analytics.points.every((point) =>
+      Boolean(point) &&
+      typeof point.date === "string" &&
+      typeof point.fightsCount === "number"
+    ) &&
+    Array.isArray(analytics.submissionDistribution) &&
+    analytics.submissionDistribution.every((submission) =>
+      Boolean(submission) &&
+      typeof submission.submissionId === "number" &&
+      typeof submission.nameRu === "string" &&
+      typeof submission.nameEn === "string" &&
+      typeof submission.count === "number"
+    ) &&
+    Array.isArray(analytics.allTimeSubmissionDistribution) &&
+    analytics.allTimeSubmissionDistribution.every((submission) =>
+      Boolean(submission) &&
+      typeof submission.submissionId === "number" &&
+      typeof submission.nameRu === "string" &&
+      typeof submission.nameEn === "string" &&
+      typeof submission.count === "number"
+    )
+  );
+}
+
+function isBackendCurrentBelt(value: unknown): value is BackendCurrentBelt {
+  if (!value || typeof value !== "object") return false;
+
+  const currentBelt = value as Partial<BackendCurrentBelt>;
+  return (
+    (currentBelt.beltId === null || typeof currentBelt.beltId === "number") &&
+    (currentBelt.beltName === null || typeof currentBelt.beltName === "string")
   );
 }
 
@@ -358,6 +575,159 @@ export async function getBackendClientInfo(accessToken: string): Promise<Backend
   }
 }
 
+export async function getBackendClientBelts(
+  accessToken: string,
+  clientInfoId: string
+): Promise<BackendClientBelt[] | null> {
+  try {
+    const response = await fetch(
+      `${backendUrl}/api/client-info/${encodeURIComponent(clientInfoId)}/belts`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      }
+    );
+
+    if (!response.ok) return null;
+
+    const clientBelts: unknown = await response.json();
+    return Array.isArray(clientBelts) && clientBelts.every(isBackendClientBelt)
+      ? clientBelts
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export type SaveBackendClientBeltResult =
+  | { ok: true; clientBelt: BackendClientBelt }
+  | { ok: false; error: string };
+
+type StoredClientBeltInput = {
+  beltId: number;
+  receivedDate: string | null;
+  stripesCount: number;
+};
+
+async function saveBackendClientBelt(
+  accessToken: string,
+  clientInfoId: string,
+  clientBeltId: string | null,
+  input: StoredClientBeltInput
+): Promise<SaveBackendClientBeltResult> {
+  try {
+    const path = clientBeltId
+      ? `/api/client-info/${encodeURIComponent(clientInfoId)}/belts/${encodeURIComponent(clientBeltId)}`
+      : `/api/client-info/${encodeURIComponent(clientInfoId)}/belts`;
+    const response = await fetch(
+      `${backendUrl}${path}`,
+      {
+        method: clientBeltId ? "PUT" : "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(input),
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      }
+    );
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, error: result?.error ?? "Не удалось сохранить пояс." };
+    }
+
+    const clientBelt: unknown = await response.json();
+    return isBackendClientBelt(clientBelt)
+      ? { ok: true, clientBelt }
+      : { ok: false, error: "Сервер вернул некорректные данные пояса." };
+  } catch {
+    return { ok: false, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export function createBackendClientBelt(
+  accessToken: string,
+  clientInfoId: string,
+  input: StoredClientBeltInput
+): Promise<SaveBackendClientBeltResult> {
+  return saveBackendClientBelt(accessToken, clientInfoId, null, input);
+}
+
+export function updateBackendClientBelt(
+  accessToken: string,
+  clientInfoId: string,
+  clientBeltId: string,
+  input: StoredClientBeltInput
+): Promise<SaveBackendClientBeltResult> {
+  return saveBackendClientBelt(accessToken, clientInfoId, clientBeltId, input);
+}
+
+export async function deleteBackendClientBelt(
+  accessToken: string,
+  clientInfoId: string,
+  clientBeltId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const response = await fetch(
+      `${backendUrl}/api/client-info/${encodeURIComponent(clientInfoId)}/belts/${encodeURIComponent(clientBeltId)}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      }
+    );
+
+    if (response.ok) return { ok: true };
+
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    return { ok: false, error: result?.error ?? "Не удалось удалить пояс." };
+  } catch {
+    return { ok: false, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export type ChangeBackendCurrentBeltResult =
+  | { ok: true; currentBelt: BackendCurrentBelt }
+  | { ok: false; error: string };
+
+export async function changeBackendCurrentBelt(
+  accessToken: string,
+  clientInfoId: string,
+  beltId: number | null
+): Promise<ChangeBackendCurrentBeltResult> {
+  try {
+    const response = await fetch(
+      `${backendUrl}/api/client-info/${encodeURIComponent(clientInfoId)}/belts/current`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ beltId }),
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      }
+    );
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, error: result?.error ?? "Не удалось изменить текущий пояс." };
+    }
+
+    const currentBelt: unknown = await response.json();
+    return isBackendCurrentBelt(currentBelt)
+      ? { ok: true, currentBelt }
+      : { ok: false, error: "Сервер вернул некорректные данные текущего пояса." };
+  } catch {
+    return { ok: false, error: "Не удалось подключиться к серверу." };
+  }
+}
+
 export async function getBackendTrainers(
   accessToken: string,
   filter: { page?: number; itemsPerPage?: number; search?: string }
@@ -415,8 +785,27 @@ export function getBackendCoachStudentRequests(accessToken: string) {
   return getBackendList(accessToken, "/api/trainers/students/requests", isBackendStudentRequest);
 }
 
-export function getBackendCoachStudents(accessToken: string) {
-  return getBackendList(accessToken, "/api/trainers/students", isBackendStudent);
+export async function getBackendStudents(
+  accessToken: string,
+  filter: { page?: number; itemsPerPage?: number }
+): Promise<BackendStudentPage | null> {
+  try {
+    const query = new URLSearchParams({
+      page: String(filter.page ?? 1),
+      itemsPerPage: String(filter.itemsPerPage ?? 25),
+    });
+    const response = await fetch(`${backendUrl}/api/trainers/students?${query}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!response.ok) return null;
+
+    const students: unknown = await response.json();
+    return isBackendStudentPage(students) ? students : null;
+  } catch {
+    return null;
+  }
 }
 
 export type StudentRequestMutationResult =
@@ -445,6 +834,34 @@ export async function resolveBackendStudentRequest(
     "PATCH",
     { status }
   );
+}
+
+export async function deleteBackendStudentRequest(
+  accessToken: string,
+  requestId: string
+): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  try {
+    const response = await fetch(
+      `${backendUrl}/api/trainers/students/requests/${encodeURIComponent(requestId)}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      }
+    );
+
+    if (response.ok) return { ok: true };
+
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    return {
+      ok: false,
+      status: response.status,
+      error: result?.error ?? "Не удалось удалить заявку.",
+    };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
 }
 
 async function mutateBackendStudentRequest(
@@ -510,6 +927,80 @@ export async function removeBackendCoachStudent(
   }
 }
 
+export async function removeBackendStudentTrainer(
+  accessToken: string,
+  coachId: string
+): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  try {
+    const response = await fetch(
+      `${backendUrl}/api/trainers/my/${encodeURIComponent(coachId)}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      }
+    );
+
+    if (response.ok) return { ok: true };
+
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    return {
+      ok: false,
+      status: response.status,
+      error: result?.error ?? "Не удалось открепиться от тренера.",
+    };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export async function updateBackendCoachStudentGroups(
+  accessToken: string,
+  studentId: string,
+  groupIds: string[]
+): Promise<{ ok: true; groups: BackendStudentGroup[] } | { ok: false; status: number; error: string }> {
+  try {
+    const response = await fetch(
+      `${backendUrl}/api/trainers/students/${encodeURIComponent(studentId)}/groups`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ groupIds }),
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      }
+    );
+    const result: unknown = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        status: response.status,
+        error: (result as { error?: string } | null)?.error ?? "Не удалось обновить группы ученика.",
+      };
+    }
+
+    const groups = Array.isArray(result) ? result : null;
+    if (!groups || !groups.every((group) =>
+      Boolean(group) &&
+      typeof group === "object" &&
+      typeof (group as Partial<BackendStudentGroup>).id === "string" &&
+      typeof (group as Partial<BackendStudentGroup>).name === "string" &&
+      typeof (group as Partial<BackendStudentGroup>).colorName === "string"
+    )) {
+      return { ok: false, status: 502, error: "Сервер вернул некорректные данные групп ученика." };
+    }
+
+    return { ok: true, groups };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
 export async function updateBackendClientInfo(
   accessToken: string,
   data: {
@@ -517,7 +1008,6 @@ export async function updateBackendClientInfo(
     lastName: string;
     middleName: string | null;
     birthDate: string | null;
-    beltId: number | null;
   }
 ): Promise<BackendClientInfo | null> {
   try {
@@ -672,6 +1162,7 @@ export type BackendTrainingInput = {
   description: string | null;
   startTime: string;
   endTime: string;
+  repeatEveryWeek?: boolean;
 };
 
 export async function createBackendTraining(
@@ -735,9 +1226,13 @@ export async function updateBackendTraining(
   }
 }
 
-export async function getBackendTrainings(accessToken: string, groupId?: string): Promise<BackendTraining[] | null> {
+export async function getBackendTrainings(accessToken: string, groupIds: string[] = [], fromDate?: string, toDate?: string): Promise<BackendTrainings | null> {
   try {
-    const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : "";
+    const searchParams = new URLSearchParams();
+    groupIds.forEach((groupId) => searchParams.append("groupIds", groupId));
+    if (fromDate) searchParams.set("fromDate", fromDate);
+    if (toDate) searchParams.set("toDate", toDate);
+    const query = searchParams.size > 0 ? `?${searchParams.toString()}` : "";
     const response = await fetch(`${backendUrl}/api/trainings${query}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: "no-store",
@@ -746,12 +1241,250 @@ export async function getBackendTrainings(accessToken: string, groupId?: string)
 
     if (!response.ok) return null;
 
-    const trainings: unknown = await response.json();
-    return Array.isArray(trainings) && trainings.every(isBackendTraining)
-      ? trainings
+    const result: unknown = await response.json();
+    return isBackendTrainings(result)
+      ? result
       : null;
   } catch {
     return null;
+  }
+}
+
+export async function getBackendFightAnalytics(accessToken: string, fromDate: string, toDate: string): Promise<FightAnalytics | null> {
+  try {
+    const searchParams = new URLSearchParams({ fromDate, toDate });
+    const response = await fetch(`${backendUrl}/api/analytics/fights?${searchParams.toString()}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) return null;
+
+    const analytics: unknown = await response.json();
+    return isFightAnalytics(analytics) ? analytics : null;
+  } catch {
+    return null;
+  }
+}
+
+export type SaveBackendClientTrainingResult =
+  | { ok: true; clientTraining: BackendClientTraining }
+  | { ok: false; status: number; error: string };
+
+export async function saveBackendClientTraining(
+  accessToken: string,
+  trainingId: string,
+  rounds: number | null
+): Promise<SaveBackendClientTrainingResult> {
+  try {
+    const response = await fetch(`${backendUrl}/api/trainings/client/${encodeURIComponent(trainingId)}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ rounds }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return {
+        ok: false,
+        status: response.status,
+        error: result?.error ?? "Не удалось отметить тренировку.",
+      };
+    }
+
+    const clientTraining: unknown = await response.json();
+    return isBackendClientTraining(clientTraining)
+      ? { ok: true, clientTraining }
+      : { ok: false, status: 502, error: "Сервер вернул некорректные данные тренировки." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export async function changeBackendPassword(accessToken: string, currentPassword: string, newPassword: string): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  try {
+    const response = await fetch(`${backendUrl}/api/auth/change-password`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword, newPassword }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (response.ok) return { ok: true };
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    return { ok: false, status: response.status, error: result?.error ?? "Не удалось изменить пароль." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к сервису авторизации." };
+  }
+}
+
+export type GetBackendClientDayNotesResult =
+  | { ok: true; notes: BackendClientDayNote[] }
+  | { ok: false; status: number; error: string };
+
+export async function getBackendClientDayNotes(accessToken: string, date: string): Promise<GetBackendClientDayNotesResult> {
+  try {
+    const response = await fetch(`${backendUrl}/api/trainings/client/day-notes?date=${encodeURIComponent(date)}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (response.status === 204) return { ok: true, notes: [] };
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, status: response.status, error: result?.error ?? "Не удалось загрузить заметку." };
+    }
+
+    const notes: unknown = await response.json();
+    return Array.isArray(notes) && notes.every(isBackendClientDayNote)
+      ? { ok: true, notes }
+      : { ok: false, status: 502, error: "Сервер вернул некорректные данные заметок." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export type SaveBackendClientDayNoteResult =
+  | { ok: true; note: BackendClientDayNote }
+  | { ok: false; status: number; error: string };
+
+export async function createBackendClientDayNote(accessToken: string, date: string, text: string): Promise<SaveBackendClientDayNoteResult> {
+  return saveBackendClientDayNote(accessToken, "POST", { date, text });
+}
+
+export async function updateBackendClientDayNote(accessToken: string, noteId: string, text: string): Promise<SaveBackendClientDayNoteResult> {
+  return saveBackendClientDayNote(accessToken, "PUT", { text }, noteId);
+}
+
+async function saveBackendClientDayNote(accessToken: string, method: "POST" | "PUT", body: object, noteId?: string): Promise<SaveBackendClientDayNoteResult> {
+  try {
+    const suffix = noteId ? `/${encodeURIComponent(noteId)}` : "";
+    const response = await fetch(`${backendUrl}/api/trainings/client/day-notes${suffix}`, {
+      method,
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, status: response.status, error: result?.error ?? "Не удалось сохранить заметку." };
+    }
+
+    const note: unknown = await response.json();
+    return isBackendClientDayNote(note)
+      ? { ok: true, note }
+      : { ok: false, status: 502, error: "Сервер вернул некорректные данные заметки." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export async function deleteBackendClientDayNote(accessToken: string, noteId: string): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  try {
+    const response = await fetch(`${backendUrl}/api/trainings/client/day-notes/${encodeURIComponent(noteId)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (response.ok) return { ok: true };
+
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    return { ok: false, status: response.status, error: result?.error ?? "Не удалось удалить заметку." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export type SearchBackendSubmissionsResult =
+  | { ok: true; submissions: BackendSubmissionSearchResult[] }
+  | { ok: false; status: number; error: string };
+
+export async function searchBackendSubmissions(accessToken: string, query: string): Promise<SearchBackendSubmissionsResult> {
+  try {
+    const response = await fetch(`${backendUrl}/api/trainings/submissions/search?query=${encodeURIComponent(query)}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, status: response.status, error: result?.error ?? "Не удалось найти приём." };
+    }
+
+    const submissions: unknown = await response.json();
+    return Array.isArray(submissions) && submissions.every(isBackendSubmissionSearchResult)
+      ? { ok: true, submissions }
+      : { ok: false, status: 502, error: "Сервер вернул некорректные результаты поиска." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export type SaveBackendClientTrainingSubmissionResult =
+  | { ok: true; submission: BackendClientTrainingSubmission }
+  | { ok: false; status: number; error: string };
+
+export async function addBackendClientTrainingSubmission(accessToken: string, trainingId: string, submissionId: number): Promise<SaveBackendClientTrainingSubmissionResult> {
+  return saveBackendClientTrainingSubmission(accessToken, trainingId, submissionId, "POST");
+}
+
+export async function updateBackendClientTrainingSubmission(accessToken: string, trainingId: string, submissionId: number, count: number): Promise<SaveBackendClientTrainingSubmissionResult> {
+  return saveBackendClientTrainingSubmission(accessToken, trainingId, submissionId, "PUT", count);
+}
+
+async function saveBackendClientTrainingSubmission(accessToken: string, trainingId: string, submissionId: number, method: "POST" | "PUT", count?: number): Promise<SaveBackendClientTrainingSubmissionResult> {
+  try {
+    const suffix = method === "POST" ? "" : `/${submissionId}`;
+    const body = method === "POST" ? { submissionId } : { count };
+    const response = await fetch(`${backendUrl}/api/trainings/client/${encodeURIComponent(trainingId)}/submissions${suffix}`, {
+      method,
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, status: response.status, error: result?.error ?? "Не удалось сохранить приём." };
+    }
+
+    const submission: unknown = await response.json();
+    return isBackendClientTrainingSubmission(submission)
+      ? { ok: true, submission }
+      : { ok: false, status: 502, error: "Сервер вернул некорректные данные приёма." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
+  }
+}
+
+export async function deleteBackendClientTrainingSubmission(accessToken: string, trainingId: string, submissionId: number): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  try {
+    const response = await fetch(`${backendUrl}/api/trainings/client/${encodeURIComponent(trainingId)}/submissions/${submissionId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (response.ok) return { ok: true };
+
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    return { ok: false, status: response.status, error: result?.error ?? "Не удалось удалить приём." };
+  } catch {
+    return { ok: false, status: 502, error: "Не удалось подключиться к серверу." };
   }
 }
 
@@ -759,9 +1492,14 @@ export type DeleteBackendTrainingResult =
   | { ok: true }
   | { ok: false; status: number; error: string };
 
-export async function deleteBackendTraining(accessToken: string, trainingId: string): Promise<DeleteBackendTrainingResult> {
+export async function deleteBackendTraining(
+  accessToken: string,
+  trainingId: string,
+  deleteAllAfterThis = false
+): Promise<DeleteBackendTrainingResult> {
   try {
-    const response = await fetch(`${backendUrl}/api/trainings/${encodeURIComponent(trainingId)}`, {
+    const query = deleteAllAfterThis ? "?deleteAllAfterThis=true" : "";
+    const response = await fetch(`${backendUrl}/api/trainings/${encodeURIComponent(trainingId)}${query}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: "no-store",

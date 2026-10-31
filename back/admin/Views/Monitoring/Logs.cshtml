@@ -1,0 +1,60 @@
+@model LogsPageViewModel
+@{
+    ViewData["Title"] = "Логи";
+}
+
+<header class="page-header">
+    <div>
+        <span class="eyebrow">Состояние сервисов</span>
+        <h1>Мониторинг</h1>
+        <p>Файлы логов backend, подключённые из общего каталога сервера.</p>
+    </div>
+    <div class="header-count"><strong>@FormatBytes(Model.TotalBytes)</strong><span>объём логов</span></div>
+</header>
+
+<section class="panel">
+    <div class="section-intro">
+        <div>
+            <h2>Логи backend</h2>
+            <p>@Model.Items.Count файлов · @Model.DirectoryPath</p>
+        </div>
+        <nav class="monitor-tabs" aria-label="Мониторинг">
+            <a class="monitor-tab" asp-action="Backups">Бэкапы</a>
+            <a class="monitor-tab active" asp-action="Logs">Логи</a>
+        </nav>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Файл</th><th>Изменён</th><th>Размер</th></tr>
+            </thead>
+            <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="3" class="table-empty">Логи не найдены. Проверьте подключение каталога /logs/jiuDiary.</td></tr>
+            }
+            else
+            {
+                foreach (var log in Model.Items)
+                {
+                    <tr>
+                        <td class="device-cell">@log.Name</td>
+                        <td class="date-cell">@log.ModifiedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td class="size-cell">@FormatBytes(log.SizeBytes)</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@functions {
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} Б";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024d:0.##} КБ";
+        if (bytes < 1024L * 1024 * 1024) return $"{bytes / (1024d * 1024):0.##} МБ";
+        return $"{bytes / (1024d * 1024 * 1024):0.##} ГБ";
+    }
+}

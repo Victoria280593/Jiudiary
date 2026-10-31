@@ -1,0 +1,54 @@
+@model CreateUserInputModel
+@using JiuDiary.Database.Enums
+@{
+    ViewData["Title"] = "Создать пользователя";
+}
+
+<header class="page-header">
+    <div>
+        <span class="eyebrow">Новая учётная запись</span>
+        <h1>Создать пользователя</h1>
+        <p>Администратор может создать пользователя любой роли.</p>
+    </div>
+</header>
+
+<section class="panel form-panel">
+    <form asp-action="Create" method="post" class="admin-form">
+        <div asp-validation-summary="ModelOnly" class="form-error"></div>
+        <div class="form-grid">
+            <div class="form-field form-field-wide">
+                <label asp-for="Login">Логин</label>
+                <input asp-for="Login" autocomplete="username" />
+                <span asp-validation-for="Login" class="form-error"></span>
+            </div>
+            <div class="form-field">
+                <label asp-for="Role">Роль</label>
+                <select asp-for="Role" asp-items="Html.GetEnumSelectList<UserRolesEnum>()"></select>
+                <span asp-validation-for="Role" class="form-error"></span>
+            </div>
+            <div class="form-field">
+                <label asp-for="LastName">Фамилия</label>
+                <input asp-for="LastName" autocomplete="family-name" />
+                <span asp-validation-for="LastName" class="form-error"></span>
+            </div>
+            <div class="form-field">
+                <label asp-for="FirstName">Имя</label>
+                <input asp-for="FirstName" autocomplete="given-name" />
+                <span asp-validation-for="FirstName" class="form-error"></span>
+            </div>
+            <div class="form-field">
+                <label asp-for="MiddleName">Отчество</label>
+                <input asp-for="MiddleName" />
+            </div>
+            <div class="form-field">
+                <label asp-for="Password">Пароль</label>
+                <input asp-for="Password" type="password" autocomplete="new-password" />
+                <span asp-validation-for="Password" class="form-error"></span>
+            </div>
+        </div>
+        <div class="form-actions">
+            <a class="secondary-button" asp-action="Index">Отмена</a>
+            <button class="primary-button" type="submit">Создать пользователя</button>
+        </div>
+    </form>
+</section>

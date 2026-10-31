@@ -25,8 +25,4 @@ public sealed class UpdateClientInfoInputModel
     /// </summary>
     public DateOnly? BirthDate { get; set; }
 
-    /// <summary>
-    /// Идентификатор пояса клиента.
-    /// </summary>
-    public int? BeltId { get; set; }
 }

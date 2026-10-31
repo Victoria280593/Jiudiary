@@ -5,7 +5,7 @@ using System.ComponentModel;
 namespace JiuDiary.Database.Entities;
 
 [Table("Groups")]
-public sealed class Group
+public sealed class Group : IAuditable
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -24,13 +24,16 @@ public sealed class Group
 
     public TimeSpan? DefaultEndTime { get; set; }
 
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTime CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
 
     public GroupColor Color { get; set; } = null!;
 
     public ICollection<CoachGroup> CoachGroups { get; set; } = [];
 
     public ICollection<Training> Trainings { get; set; } = [];
+
+    public ICollection<StudentGroup> StudentGroups { get; set; } = [];
 }
 

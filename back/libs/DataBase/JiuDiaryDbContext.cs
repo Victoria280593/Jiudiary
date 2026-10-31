@@ -20,6 +20,10 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
 
     public DbSet<Belt> Belts => Set<Belt>();
 
+    public DbSet<ClientBelt> ClientBelts => Set<ClientBelt>();
+
+    public DbSet<Submission> Submissions => Set<Submission>();
+
     public DbSet<Group> Groups => Set<Group>();
 
     public DbSet<GroupColor> Colors => Set<GroupColor>();
@@ -28,9 +32,33 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
 
     public DbSet<Training> Trainings => Set<Training>();
 
+    public DbSet<ClientTraining> ClientTrainings => Set<ClientTraining>();
+
+    public DbSet<ClientTrainingSubmission> ClientTrainingSubmissions => Set<ClientTrainingSubmission>();
+
+    public DbSet<ClientDayNote> Notes => Set<ClientDayNote>();
+
     public DbSet<StudentRequest> StudentsRequests => Set<StudentRequest>();
 
     public DbSet<CoachStudent> CoachStudents => Set<CoachStudent>();
+
+    public DbSet<StudentGroup> StudentGroups => Set<StudentGroup>();
+
+    public override int SaveChanges() => SaveChanges(true);
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        ApplyAuditableDates();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => SaveChangesAsync(true, cancellationToken);
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        ApplyAuditableDates();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -62,5 +90,74 @@ public sealed class JiuDiaryDbContext(DbContextOptions<JiuDiaryDbContext> option
                 .HasForeignKey(item => item.StudentId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<StudentGroup>(entity =>
+        {
+            entity.HasOne(item => item.Student)
+                .WithMany(student => student.StudentGroups)
+                .HasForeignKey(item => item.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(item => item.Group)
+                .WithMany(group => group.StudentGroups)
+                .HasForeignKey(item => item.GroupId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ClientTraining>(entity =>
+        {
+            entity.HasOne(item => item.ClientInfo)
+                .WithMany(clientInfo => clientInfo.ClientTrainings)
+                .HasForeignKey(item => item.ClientInfoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(item => item.Training)
+                .WithMany(training => training.ClientTrainings)
+                .HasForeignKey(item => item.TrainingId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ClientTrainingSubmission>(entity =>
+        {
+            entity.HasKey(item => new { item.ClientTrainingId, item.SubmissionId });
+
+            entity.HasOne(item => item.ClientTraining)
+                .WithMany(clientTraining => clientTraining.Submissions)
+                .HasForeignKey(item => item.ClientTrainingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(item => item.Submission)
+                .WithMany(submission => submission.ClientTrainingSubmissions)
+                .HasForeignKey(item => item.SubmissionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.ToTable(table => table.HasCheckConstraint("CK_ClientTrainingSubmissions_Count", "[Count] > 0"));
+        });
+
+        modelBuilder.Entity<ClientDayNote>(entity =>
+        {
+            entity.HasOne(item => item.ClientInfo)
+                .WithMany(clientInfo => clientInfo.ClientDayNotes)
+                .HasForeignKey(item => item.ClientInfoId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+
+    private void ApplyAuditableDates()
+    {
+        var now = DateTime.Now;
+        foreach (var entry in ChangeTracker.Entries<IAuditable>())
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedAt = now;
+                entry.Entity.UpdatedAt = null;
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Property(nameof(IAuditable.CreatedAt)).IsModified = false;
+                entry.Entity.UpdatedAt = now;
+            }
+        }
     }
 }

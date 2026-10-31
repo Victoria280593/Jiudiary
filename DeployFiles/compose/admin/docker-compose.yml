@@ -1,0 +1,17 @@
+services:
+  admin:
+    build:
+      context: ../../../back
+      dockerfile: admin/Dockerfile
+    image: jiudiary-admin:local
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      TZ: Europe/Moscow
+      JIUDIARY_LOG_DIRECTORY: "/logs/jiuDiary"
+      ConnectionStrings__Default: "${API_MSSQL_CONNECTION_STRING:?Set API_MSSQL_CONNECTION_STRING in .env}"
+    ports:
+      - "${ADMIN_HOST_PORT:-5138}:8080"
+    volumes:
+      - "${API_LOGS_HOST_PATH:-/logs/jiuDiary}:/logs/jiuDiary:ro"

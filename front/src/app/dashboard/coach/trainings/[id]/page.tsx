@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { updateAttendanceAction } from "@/app/actions/training";
 import { formatDateTime } from "@/lib/format";
 import { Card } from "@/components/Card";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function TrainingAttendancePage({
   params,
@@ -108,12 +109,12 @@ export default async function TrainingAttendancePage({
                       defaultValue={attendance?.comment ?? ""}
                       className="rounded-md border border-border bg-surface px-2 py-1 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent sm:w-48"
                     />
-                    <button
-                      type="submit"
-                      className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-foreground hover:bg-accent-hover"
+                    <SubmitButton
+                      pendingText="Сохранение…"
+                      className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-foreground hover:bg-accent-hover disabled:cursor-wait disabled:opacity-60"
                     >
                       Сохранить
-                    </button>
+                    </SubmitButton>
                   </form>
                 </li>
               );

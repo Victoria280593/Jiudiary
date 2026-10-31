@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DaySchedulePanel } from "@/components/DaySchedulePanel";
 import { useGroups } from "@/components/GroupsProvider";
-import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, dateKey, addMonths } from "@/lib/calendar";
+import { WEEKDAY_LABELS, MONTH_LABELS, getMonthGrid, getYearRange, dateKey, addMonths, type CalendarRange } from "@/lib/calendar";
 import { getGroupColorStyle } from "@/lib/group-colors";
+import type { ClientDayNote } from "@/lib/client-day-notes-client";
+import type { ClientTraining } from "@/lib/client-trainings-client";
 import { getTrainings } from "@/lib/trainings-client";
 
-type TrainingItem = { id: string; groupId?: string; title: string; date: string; endDate?: string; groupName?: string; coachName?: string; groupColorName?: string };
+type TrainingItem = { id: string; groupId?: string; title: string; date: string; endDate?: string; groupName?: string; coachName?: string; groupColorName?: string; clientTraining?: ClientTraining | null };
 type CalendarView = "month" | "week";
 
 function ArrowIcon({ direction }: { direction: "left" | "right" }) {
@@ -51,11 +53,13 @@ function weekTitle(weekStart: Date) {
 
 export function TrainingCalendar({
   trainings,
+  notes = [],
   linkBase = "/dashboard/coach/trainings",
   showCreateForm = true,
   showGroupFilter = false,
 }: {
   trainings: TrainingItem[];
+  notes?: ClientDayNote[];
   linkBase?: string;
   showCreateForm?: boolean;
   showGroupFilter?: boolean;
@@ -68,10 +72,14 @@ export function TrainingCalendar({
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [isDayPanelOpen, setIsDayPanelOpen] = useState(false);
   const { groups, status: groupsStatus, error: groupsError } = useGroups();
-  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [visibleTrainings, setVisibleTrainings] = useState(trainings);
+  const [visibleNotes, setVisibleNotes] = useState(notes);
+  const [isCalendarLoading, setIsCalendarLoading] = useState(false);
   const [trainingsError, setTrainingsError] = useState<string>();
   const latestTrainingRequestRef = useRef(0);
+  const selectedGroupIdsRef = useRef<string[]>([]);
+  const skipInitialRangeLoadRef = useRef(true);
 
   const parsedTrainings = useMemo(
     () => visibleTrainings.map((training) => ({ ...training, date: new Date(training.date), endDate: training.endDate ? new Date(training.endDate) : undefined })),
@@ -89,6 +97,38 @@ export function TrainingCalendar({
 
   const monthWeeks = getMonthGrid(viewYear, viewMonth);
   const weekDays = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+  const visibleYear = calendarView === "month" ? viewYear : addDays(weekStart, 3).getFullYear();
+  const visibleRange = useMemo(() => getYearRange(visibleYear), [visibleYear]);
+
+  const loadCalendarData = useCallback(async (groupIds: string[], range: CalendarRange) => {
+    const requestId = latestTrainingRequestRef.current + 1;
+    latestTrainingRequestRef.current = requestId;
+    setTrainingsError(undefined);
+    setIsCalendarLoading(true);
+
+    try {
+      const loadedCalendarData = await getTrainings(groupIds, range);
+      if (latestTrainingRequestRef.current === requestId) {
+        setVisibleTrainings(loadedCalendarData.trainings);
+        setVisibleNotes(loadedCalendarData.notes);
+      }
+    } catch (error) {
+      if (latestTrainingRequestRef.current === requestId) {
+        setTrainingsError(error instanceof Error ? error.message : "Не удалось загрузить тренировки.");
+      }
+    } finally {
+      if (latestTrainingRequestRef.current === requestId) setIsCalendarLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (skipInitialRangeLoadRef.current) {
+      skipInitialRangeLoadRef.current = false;
+      return;
+    }
+
+    void loadCalendarData(selectedGroupIdsRef.current, visibleRange);
+  }, [loadCalendarData, visibleRange]);
 
   const goRelative = (delta: number) => {
     if (calendarView === "week") {
@@ -124,6 +164,7 @@ export function TrainingCalendar({
       : weekTitle(weekStart);
 
   const selectDay = (key: string) => {
+    if (isCalendarLoading) return;
     setSelectedDay(key);
     setIsDayPanelOpen(true);
   };
@@ -136,15 +177,23 @@ export function TrainingCalendar({
     if (calendarView === "week") setWeekStart(startOfWeek(nextDate));
   };
 
-  const saveVisibleTraining = (training: {
-    id: string;
-    groupId: string;
-    groupName: string;
-    groupColorName: string;
-    description: string | null;
-    startTime: string;
-    endTime: string;
-  }) => {
+  const saveVisibleTraining = (
+    training: {
+      id: string;
+      groupId: string;
+      groupName: string;
+      groupColorName: string;
+      description: string | null;
+      startTime: string;
+      endTime: string;
+    },
+    repeatEveryWeek?: boolean
+  ) => {
+    if (repeatEveryWeek) {
+      void loadCalendarData(selectedGroupIdsRef.current, visibleRange);
+      return;
+    }
+
     const nextTraining: TrainingItem = {
       id: training.id,
       groupId: training.groupId,
@@ -153,32 +202,29 @@ export function TrainingCalendar({
       endDate: training.endTime,
       groupName: training.groupName,
       groupColorName: training.groupColorName,
+      clientTraining: null,
     };
 
     setVisibleTrainings((current) => {
       const exists = current.some((item) => item.id === training.id);
       return exists
-        ? current.map((item) => item.id === training.id ? nextTraining : item)
+        ? current.map((item) => item.id === training.id ? { ...nextTraining, clientTraining: item.clientTraining } : item)
         : [...current, nextTraining];
     });
   };
 
-  const selectGroup = async (groupId: string) => {
-    const requestId = latestTrainingRequestRef.current + 1;
-    latestTrainingRequestRef.current = requestId;
-    setSelectedGroupId(groupId);
-    setTrainingsError(undefined);
+  const selectGroups = async (groupIds: string[]) => {
+    selectedGroupIdsRef.current = groupIds;
+    setSelectedGroupIds(groupIds);
+    await loadCalendarData(groupIds, visibleRange);
+  };
 
-    try {
-      const loadedTrainings = await getTrainings(groupId || undefined);
-      if (latestTrainingRequestRef.current === requestId) {
-        setVisibleTrainings(loadedTrainings);
-      }
-    } catch (error) {
-      if (latestTrainingRequestRef.current === requestId) {
-        setTrainingsError(error instanceof Error ? error.message : "Не удалось загрузить тренировки.");
-      }
-    }
+  const toggleGroup = (groupId: string) => {
+    const nextGroupIds = selectedGroupIds.includes(groupId)
+      ? selectedGroupIds.filter((selectedGroupId) => selectedGroupId !== groupId)
+      : [...selectedGroupIds, groupId];
+
+    void selectGroups(nextGroupIds);
   };
 
   return (
@@ -218,7 +264,7 @@ export function TrainingCalendar({
                   </button>
                 </div>
 
-                <div className="relative grid w-[7.75rem] shrink-0 grid-cols-2 rounded-xl bg-surface-muted p-1 min-[360px]:w-[8.75rem] sm:w-auto sm:min-w-44" aria-label="Вид календаря">
+                <div className="relative grid w-[7.75rem] shrink-0 grid-cols-2 rounded-xl border border-border/70 bg-surface-muted p-1 shadow-sm min-[360px]:w-[8.75rem] sm:w-auto sm:min-w-44" aria-label="Вид календаря">
                   <span
                     aria-hidden="true"
                     className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-lg bg-white shadow-sm transition-transform duration-200 ease-out motion-reduce:transition-none ${
@@ -232,7 +278,7 @@ export function TrainingCalendar({
                     className={`relative z-10 rounded-lg px-2 py-2 text-xs transition-colors duration-200 ease-out sm:px-4 sm:text-sm ${
                       calendarView === "month"
                         ? "font-semibold text-foreground"
-                        : "text-muted hover:text-foreground"
+                        : "text-muted hover:bg-accent/[0.05] hover:text-foreground"
                     }`}
                   >
                     Месяц
@@ -244,7 +290,7 @@ export function TrainingCalendar({
                     className={`relative z-10 rounded-lg px-2 py-2 text-xs transition-colors duration-200 ease-out sm:px-4 sm:text-sm ${
                       calendarView === "week"
                         ? "font-semibold text-foreground"
-                        : "text-muted hover:text-foreground"
+                        : "text-muted hover:bg-accent/[0.05] hover:text-foreground"
                     }`}
                   >
                     Неделя
@@ -263,10 +309,10 @@ export function TrainingCalendar({
                   <>
                     <button
                       type="button"
-                      onClick={() => void selectGroup("")}
-                      aria-pressed={selectedGroupId === ""}
+                      onClick={() => void selectGroups([])}
+                      aria-pressed={selectedGroupIds.length === 0}
                       className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition duration-200 ease-out ${
-                        selectedGroupId === ""
+                        selectedGroupIds.length === 0
                           ? "bg-accent text-white shadow-[0_10px_24px_-16px_rgba(131,93,57,0.8)]"
                           : "bg-surface-muted text-muted hover:-translate-y-0.5 hover:bg-accent-soft hover:text-accent-foreground"
                       }`}
@@ -274,13 +320,13 @@ export function TrainingCalendar({
                       Все группы
                     </button>
                     {groups.map((group) => {
-                      const selected = selectedGroupId === group.id;
+                      const selected = selectedGroupIds.includes(group.id);
                       const colorStyle = getGroupColorStyle(group.colorName);
                       return (
                         <button
                           key={group.id}
                           type="button"
-                          onClick={() => void selectGroup(group.id)}
+                          onClick={() => toggleGroup(group.id)}
                           aria-pressed={selected}
                           className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition duration-200 ease-out hover:-translate-y-0.5 ${
                             selected
@@ -328,6 +374,7 @@ export function TrainingCalendar({
                               key={key}
                               type="button"
                               onClick={() => selectDay(key)}
+                              disabled={isCalendarLoading}
                               aria-pressed={isSelected}
                               className={`group relative flex min-h-16 flex-col items-center px-1 py-2 text-center transition duration-200 ease-out sm:min-h-24 sm:px-1.5 sm:py-3 lg:min-h-32 xl:min-h-36 ${
                                 isSelected
@@ -379,6 +426,7 @@ export function TrainingCalendar({
                         key={key}
                         type="button"
                         onClick={() => selectDay(key)}
+                        disabled={isCalendarLoading}
                         aria-pressed={isSelected}
                         className={`group relative flex min-h-24 flex-col items-center px-1 py-2.5 text-center transition duration-200 ease-out sm:min-h-72 sm:px-2 sm:py-4 ${
                           isSelected
@@ -422,9 +470,30 @@ export function TrainingCalendar({
           <DaySchedulePanel
             dateKey={selectedDay}
             trainings={trainingsByDay.get(selectedDay) ?? []}
+            notes={visibleNotes.filter((note) => note.date === selectedDay)}
+            onClientTrainingSaved={(clientTraining) => {
+              setVisibleTrainings((current) => current.map((training) =>
+                training.id === clientTraining.trainingId
+                  ? { ...training, clientTraining }
+                  : training
+              ));
+            }}
             onDateChange={showRelativeDay}
-            onClose={() => setIsDayPanelOpen(false)}
-            onTrainingDeleted={(trainingId) => {
+            onNoteSaved={(savedNote) => {
+              setVisibleNotes((current) => current.some((note) => note.id === savedNote.id)
+                ? current.map((note) => note.id === savedNote.id ? savedNote : note)
+                : [...current, savedNote]);
+            }}
+            onNoteDeleted={(noteId) => setVisibleNotes((current) => current.filter((note) => note.id !== noteId))}
+            onClose={() => {
+              setIsDayPanelOpen(false);
+              setSelectedDay(null);
+            }}
+            onTrainingDeleted={(trainingId, deleteAllAfterThis) => {
+              if (deleteAllAfterThis) {
+                void selectGroups(selectedGroupIds);
+                return;
+              }
               setVisibleTrainings((current) => current.filter((training) => training.id !== trainingId));
             }}
             onTrainingSaved={saveVisibleTraining}

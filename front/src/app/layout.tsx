@@ -33,7 +33,10 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-background text-foreground">
-        <GroupsProvider key={user?.id ?? "anonymous"} enabled={user?.role === "COACH"}>
+        <GroupsProvider
+          key={user?.id ?? "anonymous"}
+          enabled={user?.role === "COACH" || user?.role === "STUDENT"}
+        >
           <div className="flex min-h-screen min-w-0 flex-col">
             <SiteHeader />
             <div className="min-w-0 flex-1">{children}</div>

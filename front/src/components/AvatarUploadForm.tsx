@@ -41,12 +41,12 @@ export function AvatarUploadForm({
           </form>
           {avatarUrl && (
             <form action={removeAvatarAction}>
-              <button
-                type="submit"
-                className="text-sm text-muted hover:text-danger"
+              <SubmitButton
+                pendingText="Удаление…"
+                className="text-sm text-muted hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Удалить аватар
-              </button>
+              </SubmitButton>
             </form>
           )}
         </div>

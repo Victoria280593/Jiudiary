@@ -31,13 +31,34 @@ function ProfileIcon() {
   );
 }
 
+function KnowledgeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 5.5A2.5 2.5 0 016.5 3H11a2 2 0 012 2v16a2 2 0 00-2-2H6.5A2.5 2.5 0 014 16.5v-11z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20 5.5A2.5 2.5 0 0017.5 3H13v18a2 2 0 012-2h2.5a2.5 2.5 0 002.5-2.5v-11z" />
+    </svg>
+  );
+}
+
+function AnalyticsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 19V9m5 10V5m5 14v-7m5 7V3" />
+    </svg>
+  );
+}
+
 export function TopNavigation({ role }: { role: Role }) {
   const pathname = usePathname();
   const navigationRef = useRef<HTMLElement>(null);
 
   const profileIsActive = pathname.startsWith("/dashboard/profile");
-  const studentSectionIsActive = pathname.startsWith("/dashboard/student/coach");
-  const calendarIsActive = !profileIsActive && !studentSectionIsActive;
+  const analyticsIsActive = pathname.startsWith("/dashboard/analytics");
+  const knowledgeIsActive = pathname.startsWith("/dashboard/knowledge");
+  const peopleSectionIsActive = role === "STUDENT"
+    ? pathname.startsWith("/dashboard/student/coach")
+    : role === "COACH" && pathname.startsWith("/students");
+  const calendarIsActive = !profileIsActive && !peopleSectionIsActive && !analyticsIsActive && !knowledgeIsActive;
 
   useLayoutEffect(() => {
     const navigation = navigationRef.current;
@@ -71,18 +92,25 @@ export function TopNavigation({ role }: { role: Role }) {
   return (
     <nav ref={navigationRef} aria-label="Основная навигация" className="top-navigation">
       <span className="nav-active-indicator" aria-hidden="true" />
-      <Link href="/dashboard/profile" data-active={profileIsActive} aria-current={profileIsActive ? "page" : undefined} className="nav-item">
-        <ProfileIcon />
-        <span className="nav-profile-label"><span className="nav-profile-prefix">Мой </span>профиль</span>
-      </Link>
       <Link href="/" data-active={calendarIsActive} aria-current={calendarIsActive ? "page" : undefined} className="nav-item">
         <CalendarIcon />
         <span>Календарь</span>
       </Link>
+      {role !== "ADMIN" && (
+        <Link href="/dashboard/analytics" data-active={analyticsIsActive} aria-current={analyticsIsActive ? "page" : undefined} className="nav-item">
+          <AnalyticsIcon />
+          <span>Аналитика</span>
+        </Link>
+      )}
       {role === "STUDENT" ? (
-        <Link href="/dashboard/student/coach" data-active={studentSectionIsActive} aria-current={studentSectionIsActive ? "page" : undefined} className="nav-item">
+        <Link href="/dashboard/student/coach" data-active={peopleSectionIsActive} aria-current={peopleSectionIsActive ? "page" : undefined} className="nav-item">
           <ProfileIcon />
-          <span>Тренер</span>
+          <span>Команда</span>
+        </Link>
+      ) : role === "COACH" ? (
+        <Link href="/students" data-active={peopleSectionIsActive} aria-current={peopleSectionIsActive ? "page" : undefined} className="nav-item">
+          <UsersIcon />
+          <span>Команда</span>
         </Link>
       ) : (
         <span className="nav-item nav-item-disabled" data-active="false" aria-disabled="true">
@@ -90,6 +118,10 @@ export function TopNavigation({ role }: { role: Role }) {
           <span>Ученики</span>
         </span>
       )}
+      <Link href="/dashboard/knowledge" data-active={knowledgeIsActive} aria-current={knowledgeIsActive ? "page" : undefined} className="nav-item">
+        <KnowledgeIcon />
+        <span className="text-center leading-[0.95rem]">База<br />знаний</span>
+      </Link>
     </nav>
   );
 }

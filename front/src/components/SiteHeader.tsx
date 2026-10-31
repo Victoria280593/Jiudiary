@@ -3,6 +3,7 @@ import type { Role } from "@prisma/client";
 import { logoutAction } from "@/app/actions/auth";
 import { Avatar } from "@/components/Avatar";
 import { TopNavigation } from "@/components/SidebarNavigation";
+import { SubmitButton } from "@/components/SubmitButton";
 import { UserMenu } from "@/components/UserMenu";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -54,7 +55,9 @@ export async function SiteHeader() {
           <div className="user-menu-popover">
             <Link href="/dashboard/profile" className="user-menu-action">Мой профиль</Link>
             <form action={logoutAction}>
-              <button type="submit" className="user-menu-action w-full text-left">Выйти из аккаунта</button>
+              <SubmitButton pendingText="Выходим…" className="user-menu-action w-full text-left disabled:cursor-wait disabled:opacity-60">
+                Выйти из аккаунта
+              </SubmitButton>
             </form>
           </div>
         </UserMenu>
