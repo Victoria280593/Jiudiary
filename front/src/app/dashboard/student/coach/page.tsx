@@ -95,8 +95,8 @@ export default async function StudentCoachPage({
                 <Avatar src={null} name={trainer.name} size={46} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-foreground">{trainer.name}</p>
-                  {trainer.beltName && <p className="text-xs text-muted">Пояс: {trainer.beltName}</p>}
-                  <p className="text-xs text-muted">Учеников: {trainer.studentsCount}</p>
+                  {trainer.beltName && <p className="text-sm font-medium text-muted">Пояс: {trainer.beltName}</p>}
+                  <p className="text-sm font-medium text-muted">Учеников: {trainer.studentsCount}</p>
                 </div>
                 <StudentTrainerRemoveButton coachId={trainer.id} coachName={trainer.name} />
               </div>
@@ -198,9 +198,9 @@ export default async function StudentCoachPage({
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-foreground">{trainer.name}</p>
                       {trainer.beltName && (
-                        <p className="mt-1 text-xs text-muted">Пояс: {trainer.beltName}</p>
+                        <p className="mt-1 text-sm font-medium text-muted">Пояс: {trainer.beltName}</p>
                       )}
-                      <p className="mt-1 text-xs text-muted">Учеников: {trainer.studentsCount}</p>
+                      <p className="mt-1 text-sm font-medium text-muted">Учеников: {trainer.studentsCount}</p>
                     </div>
                   </div>
                   <StudentTrainerRequestButton
