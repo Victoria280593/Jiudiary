@@ -51,10 +51,10 @@ h1 { margin: 0; color: var(--navy); font-size: clamp(28px, 4vw, 42px); letter-sp
 .primary-button.compact { min-height: 42px; }
 .secondary-button { border: 1px solid var(--line); color: var(--muted); }
 .secondary-button:hover { border-color: var(--teal); color: var(--teal-dark); }
-.table-wrap { overflow-x: auto; }
-.users-table-wrap { overflow: visible; }
-table { width: 100%; border-collapse: collapse; white-space: nowrap; }
-.users-table { table-layout: fixed; white-space: normal; }
+.table-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.users-table-wrap { overflow-x: auto; }
+table { width: 100%; min-width: 680px; border-collapse: collapse; white-space: nowrap; }
+.users-table { min-width: 1180px; table-layout: fixed; white-space: normal; }
 .users-table th, .users-table td { padding-right: 12px; padding-left: 12px; overflow-wrap: anywhere; font-size: 16px; }
 .users-table th { font-size: 12px; }
 .users-table td { line-height: 1.4; }
@@ -151,25 +151,37 @@ code { color: #80919a; font-family: ui-monospace, SFMono-Regular, Consolas, mono
 .audit-event { display: inline-flex; padding: 5px 9px; border-radius: 999px; background: #e9edf5; color: #536787; font-size: 11px; font-weight: 800; }
 @media (max-width: 760px) {
     .shell { display: block; }
-    .sidebar { width: 100%; padding: 18px; }
-    .navigation { margin-top: 22px; }
+    .sidebar { width: 100%; padding: 14px 14px 12px; }
+    .brand { font-size: 16px; }
+    .navigation { display: flex; gap: 6px; margin-top: 16px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+    .navigation::-webkit-scrollbar { display: none; }
+    .navigation-link { flex: 0 0 auto; min-height: 44px; padding: 10px 12px; }
+    .navigation-link.active { box-shadow: inset 0 -3px 0 var(--warm); }
     .sidebar-footer { display: none; }
-    .main-content { width: 100%; padding: 36px 18px; }
-    .page-header { align-items: flex-start; flex-direction: column; }
+    .main-content { width: 100%; padding: 28px 14px 36px; }
+    .page-header { align-items: flex-start; flex-direction: column; gap: 18px; margin-bottom: 22px; }
+    .page-header p { line-height: 1.45; }
+    h1 { font-size: clamp(28px, 9vw, 36px); }
     .header-actions { align-items: flex-start; flex-direction: column; gap: 12px; }
+    .header-actions .primary-button { width: 100%; }
     .form-grid { grid-template-columns: 1fr; }
     .form-field-wide { grid-column: auto; }
-    .form-panel { padding: 18px; }
+    .form-panel, .detail-panel { padding: 18px; }
     .topology-grid { grid-template-columns: 1fr; }
     .panel { border-radius: 12px; }
     .toolbar { padding: 16px; }
-    th, td { padding-right: 16px; padding-left: 16px; }
-}
-@media (max-width: 1100px) {
-    .users-table-wrap { overflow: visible; }
-    .users-table, .users-table tbody, .users-table tr, .users-table td { display: block; width: 100%; }
-    .users-table thead { display: none; }
-    .users-table tr { padding: 12px 16px; border-top: 1px solid #edf2f1; }
-    .users-table td { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 12px; padding: 7px 0; border: 0; }
-    .users-table td::before { color: var(--muted); content: attr(data-label); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .section-intro { align-items: flex-start; flex-direction: column; gap: 18px; padding: 18px; }
+    .monitor-tabs { width: 100%; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+    .monitor-tabs::-webkit-scrollbar { display: none; }
+    .monitor-tab { flex: 0 0 auto; min-height: 44px; padding: 12px 13px; }
+    .search-row { flex-wrap: wrap; }
+    .search-row input { flex: 1 1 100%; width: 100%; }
+    .search-row .primary-button, .search-row .secondary-button { flex: 1 1 0; }
+    th, td { padding-right: 14px; padding-left: 14px; }
+    .detail-heading, .section-heading { flex-direction: column; }
+    .detail-list { grid-template-columns: 1fr; gap: 0; }
+    .user-detail-grid { grid-template-columns: 1fr; gap: 14px; }
+    .topology-card { padding: 18px; }
+    .login-card { width: min(100% - 28px, 420px); padding: 26px 20px; }
+    .login-brand { margin-bottom: 32px; }
 }
